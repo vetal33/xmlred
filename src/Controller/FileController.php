@@ -46,7 +46,6 @@ class FileController extends AbstractController
                 $entityManager->flush();
             }
         }
-        dump($form);
 
         return $this->render('file/index.html.twig', [
             'fileForm' => $form->createView(),
