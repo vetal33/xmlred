@@ -1,0 +1,19 @@
+{{ form_start(fileForm) }}
+<div class="card-body">
+    <div class="form-group">
+        <div class="input-group">
+            <div class="custom-file">
+                {{ form_widget(fileForm.xmlFileName) }}
+                {{ form_label(fileForm.xmlFileName) }}
+
+                {#                    <input type="file" class="custom-file-input" id="exampleInputFile" name="xml-file">
+                                     <label class="custom-file-label" for="exampleInputFile">Choose file</label>#}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card-footer">
+    <button type="submit" class="btn btn-primary">Submit</button>
+</div>
+{{ form_end(fileForm) }}
+{#<form method="post" role="form" action="{{ path('upload') }}" enctype="multipart/form-data">#}
