@@ -3,12 +3,10 @@
     <div class="form-group">
         <div class="input-group">
             <div class="custom-file">
-                {{ form_widget(fileForm.xmlFileName) }}
-                {{ form_label(fileForm.xmlFileName) }}
-
-                {#                    <input type="file" class="custom-file-input" id="exampleInputFile" name="xml-file">
-                                     <label class="custom-file-label" for="exampleInputFile">Choose file</label>#}
+                {{ form_widget(fileForm.xmlFile) }}
+                {{ form_label(fileForm.xmlFile) }}
             </div>
+            {{ form_errors(fileForm.xmlFile) }}
         </div>
     </div>
 </div>
@@ -16,4 +14,3 @@
     <button type="submit" class="btn btn-primary">Submit</button>
 </div>
 {{ form_end(fileForm) }}
-{#<form method="post" role="form" action="{{ path('upload') }}" enctype="multipart/form-data">#}
