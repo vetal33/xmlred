@@ -27,6 +27,7 @@ class File
     private $addDate;
 
     /**
+     * @var string|null
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $xmlFileName;
@@ -76,4 +77,27 @@ class File
 
         return $this;
     }
+
+    /**
+     * @return string|null
+     */
+    public function getXmlFileName(): ?string
+    {
+        return $this->xmlFileName;
+    }
+
+
+    /**
+     * @param string|null $xmlFileName
+     * @return File
+     */
+    public function setXmlFileName(?string $xmlFileName): self
+    {
+        $this->xmlFileName = $xmlFileName;
+        return $this;
+    }
+
+
+
+
 }
