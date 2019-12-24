@@ -29,6 +29,11 @@ class File
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
+    private $xmlFileName;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
     private $comment;
 
     public function getId(): ?int
