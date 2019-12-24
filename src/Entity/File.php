@@ -88,6 +88,7 @@ class File
 
 
     /**
+     *
      * @param string|null $xmlFileName
      * @return File
      */
