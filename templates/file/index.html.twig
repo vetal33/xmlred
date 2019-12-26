@@ -1,13 +1,22 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Hello FileController!{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('jsonTree/jsonTree.css') }}">
+{% endblock %}
+
 {% block javascripts %}
     {{ parent() }}
     <script src="{{ asset('js/services.js') }}"></script>
+    <script src="{{ asset('jsonTree/jsonTree.js') }}"></script>
 {% endblock %}
 
 {% block content %}
     <div class="col-6">
         {% include 'file/_form_xml.html.twig' %}
+    </div>
+    <div id="wrapper">
+
     </div>
 {% endblock %}

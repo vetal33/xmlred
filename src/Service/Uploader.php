@@ -31,4 +31,10 @@ class Uploader
 
     }
 
+    public function getXml(string $filePath): \SimpleXMLElement
+    {
+        $destination = $this->uploadPath . '/normative_xml/' . $filePath;
+        return $xml = simplexml_load_file($destination);
+    }
+
 }

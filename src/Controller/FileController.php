@@ -6,6 +6,7 @@ use App\Entity\File;
 use App\Form\FileFormType;
 use App\Service\Uploader;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,8 +21,8 @@ class FileController extends AbstractController
 {
 
     /**
-     * @Route("/", name="home")
-     * @param Request $request *
+     * @Route("/", name="home", methods={"GET","POST"}, options={"expose"=true})
+     * @param Request $request
      * @param EntityManagerInterface $entityManager
      * @param Uploader $uploader
      * @return Response
@@ -33,17 +34,25 @@ class FileController extends AbstractController
         $form = $this->createForm(FileFormType::class, $file);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        //$uploadedFile = $form['xmlFile']->getData();
+
+
+        if ($request->isXmlHttpRequest()) {
             /**@var UploadedFile $uploadedFile */
-            $uploadedFile = $form['xmlFile']->getData();
+            $uploadedFile = $request->files->get('xmlFile');
+
             if ($uploadedFile) {
                 $newFilename = $uploader->uploadXML($uploadedFile);
+                $xmlObj = $uploader->getXml($newFilename);
+                if ($xmlObj) {
+                    $file->setXmlFileName($newFilename);
+                    $file->setAddDate(new \DateTime());
+                    $entityManager->persist($file);
+                    $entityManager->flush();
+                    return new JsonResponse(json_encode($xmlObj), Response::HTTP_OK);
+                }
 
-                $file->setXmlFileName($newFilename);
-                $file->setAddDate(new \DateTime());
 
-                $entityManager->persist($file);
-                $entityManager->flush();
             }
         }
 
