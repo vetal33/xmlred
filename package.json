@@ -1,0 +1,20 @@
+{
+  "name": "xmlred",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "vetal33 <v.bitko@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "admin-lte": "3.0",
+    "bootstrap": "^4.4.1",
+    "jquery": "^3.4.1"
+  },
+  "devDependencies": {
+    "@symfony/webpack-encore": "^0.27.0",
+    "core-js": "^3.0.0",
+    "webpack-notifier": "^1.6.0"
+  },
+  "scripts": {
+    "watch": "encore dev --watch"
+  }
+}
