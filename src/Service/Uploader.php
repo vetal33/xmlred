@@ -12,10 +12,16 @@ class Uploader
      * @var string
      */
     private $uploadPath;
+    /**
+     * @var string
+     */
+    private $shapePath;
 
-    public function __construct(string $uploadPath)
+
+    public function __construct(string $uploadPath, string $shapePath)
     {
         $this->uploadPath = $uploadPath;
+        $this->shapePath = $shapePath;
     }
 
     public function uploadXML(UploadedFile $uploadedFile): string
@@ -31,10 +37,29 @@ class Uploader
 
     }
 
-    public function getXml(string $filePath): \SimpleXMLElement
+    public function getSimpleXML(string $filePath): \SimpleXMLElement
     {
         $destination = $this->uploadPath . '/normative_xml/' . $filePath;
         return $xml = simplexml_load_file($destination);
     }
+
+
+    /**
+     * @return string
+     */
+    public function getShapePath(): string
+    {
+        return $this->shapePath;
+    }
+
+    /**
+     * @param string $shapePath
+     */
+    public function setShapePath(string $shapePath): void
+    {
+        $this->shapePath = $shapePath;
+    }
+
+
 
 }
