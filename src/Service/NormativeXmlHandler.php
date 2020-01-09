@@ -74,7 +74,6 @@ class NormativeXmlHandler
      */
     private function createLinestring(array $coord): Linestring
     {
-        dump($coord);
         $linestring = new Linestring();
         foreach ($coord as $key => $coords) {
             $Point = new Point($coords['Y'], $coords['X']);
