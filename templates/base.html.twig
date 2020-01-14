@@ -14,7 +14,6 @@
     <body class="hold-transition sidebar-mini layout-top-nav">
     <!-- Site wrapper -->
     <div class="wrapper">
-        <!-- Navbar -->
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
             <!-- Left navbar links -->
             <ul class="navbar-nav">
@@ -28,21 +27,39 @@
                     <a href="#" class="nav-link">Contact</a>
                 </li>
             </ul>
-            {#  <form class="form-inline ml-3">
-                  <div class="input-group input-group-sm">
-                      <input class="form-control form-control-navbar" type="search" placeholder="Search"
-                             aria-label="Search">
-                      <div class="input-group-append">
-                          <button class="btn btn-navbar" type="submit">
-                              <i class="fas fa-search"></i>
-                          </button>
-                      </div>
-                  </div>
-              </form>#}
+            <ul class="navbar-nav ml-auto">
+                {% block sidebarUserPanel %}
+                    {% if  app.user %}
+                        {% if app.user.avatar.path is defined and app.user.avatar.path is not empty %}
+                            {% set imagePath = 'build/users_images/' ~ app.user.client.id ~ '/' ~ app.user.avatar.path %}
+                        {% else %}
+                            {% set imagePath = 'build/images/user2-160x160.jpg' %}
+                        {% endif %}
+                        <li class="nav-item dropdown">
+                            <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true"
+                               aria-expanded="false" class="nav-link dropdown-toggle">
+                                {{ app.user.username }}
+                            </a>
+                            <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
+                                <li>
+                                    <a href="{{ path('app_logout') }}" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt mr-2"></i>
+                                        Вийти
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a href="{{ path('app_login') }}" class="nav-link"><i class="fas fa-sign-in-alt nav-icon"
+                                                                                  aria-hidden="true"></i>
+                                Увійти
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endblock sidebarUserPanel %}
+            </ul>
         </nav>
-        <!-- /.navbar -->
-
-        <!-- Main Sidebar Container -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
             <a href="" class="brand-link elevation-4">

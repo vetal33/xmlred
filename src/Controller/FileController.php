@@ -27,7 +27,7 @@ class FileController extends AbstractController
 {
 
     /**
-     * @Route("/", name="home", methods={"GET","POST"}, options={"expose"=true})
+     * @Route("/", name="homepage", methods={"GET","POST"}, options={"expose"=true})
      * @param Request $request
      * @param EntityManagerInterface $entityManager
      * @param Uploader $uploader
