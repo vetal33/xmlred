@@ -447,7 +447,7 @@ var jsonTree = (function() {
                             <div class="jsontree_value jsontree_value_' + self.type + '">\
                                 <b>' + sym[0] + '</b>\
                                 <span class="jsontree_show-more">&hellip;</span>\
-                                <ul class="jsontree_child-nodes"></ul>\
+                                <ul class="jsontree_child-nodes list-unstyled"></ul>\
                                 <b>' + sym[1] + '</b>' +
                             '</div>' + comma +
                         '</div>';
@@ -695,7 +695,7 @@ var jsonTree = (function() {
      */
     function Tree(jsonObj, domEl) {
         this.wrapper = document.createElement('ul');
-        this.wrapper.className = 'jsontree_tree clearfix';
+        this.wrapper.className = 'jsontree_tree clearfix list-unstyled';
         
         this.rootNode = null;
         
