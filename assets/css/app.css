@@ -1,2 +1,6 @@
 @import "~bootstrap/dist/css/bootstrap.min.css";
 @import "~admin-lte";
+@import "~leaflet";
+@import "map.css";
+@import "~@fortawesome/fontawesome-free/css/all.css";
+@import "button_up.css";
