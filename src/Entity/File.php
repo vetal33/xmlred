@@ -33,6 +33,12 @@ class File
     private $xmlFileName;
 
     /**
+     * @var string|null
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $xmlOriginalName;
+
+    /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $comment;
@@ -98,7 +104,23 @@ class File
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
+    public function getXmlOriginalName(): ?string
+    {
+        return $this->xmlOriginalName;
+    }
 
 
+    /**
+     * @param string|null $xmlOriginalName
+     * @return File
+     */
+    public function setXmlOriginalName(?string $xmlOriginalName): self
+    {
+        $this->xmlOriginalName = $xmlOriginalName;
+        return $this;
+    }
 
 }

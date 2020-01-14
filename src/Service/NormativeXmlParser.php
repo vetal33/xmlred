@@ -7,7 +7,7 @@ namespace App\Service;
 use App\Service\Interfaces\ParserXml;
 use phpDocumentor\Reflection\DocBlock\Tags\Return_;
 
-class ParserXmlNormative implements ParserXml
+class NormativeXmlParser implements ParserXml
 {
     /**@var array All the lines in xml-file */
     private $polylines = [];
@@ -61,7 +61,7 @@ class ParserXmlNormative implements ParserXml
             $currentPoints[$value] = $this->findNode($dataXml, $key);
             if ($this->ifArrayOrList($currentPoints[$value])) {
                 foreach ($currentPoints[$value] as $item => $node) {
-                    $currentPoints[$value][$item] = $this->getGeometry($node);
+                    $currentPoints[$value][$item]['coordinates'] = $this->getGeometry($node);
                 }
             } else {
                 $currentPoints[$value] = $this->getGeometry($currentPoints[$value]);
@@ -142,7 +142,6 @@ class ParserXmlNormative implements ParserXml
     private function getCurrentPoints(array $data)
     {
         array_pop($data);
-        dump($data);
         $dataCoordinate = $this->array_intersect_key_withoutSort($data);
         $dataCoordinate[] = reset($dataCoordinate);
 
@@ -152,7 +151,6 @@ class ParserXmlNormative implements ParserXml
     private function array_intersect_key_withoutSort(array $data)
     {
         $dataCoordinate = array_map(function ($value){
-            //dump($value);
             if(array_key_exists((int)$value, $this->points)){
                 return $this->points[$value];
             }
