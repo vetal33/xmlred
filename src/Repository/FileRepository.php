@@ -19,6 +19,21 @@ class FileRepository extends ServiceEntityRepository
         parent::__construct($registry, File::class);
     }
 
+
+    public function transformPointFrom3857to4326(string $point)
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_AsText(st_transform(st_transform(ST_GeomFromText(:polygon, 106303), 4284), 4326))');
+            /*->prepare('select ST_AsText(st_transform(st_transform(st_transform(ST_GeomFromText(:polygon, 106303), 4284), 4326), 3857)');*/
+            /*->prepare('select ST_AsText(st_transform(ST_GeomFromText(:polygon, 3857), 4326))');*/
+        $stmt->bindParam('polygon', $point);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll()['0']['st_astext'];
+    }
+
     // /**
     //  * @return File[] Returns an array of File objects
     //  */
