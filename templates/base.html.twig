@@ -42,6 +42,12 @@
                             </a>
                             <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
                                 <li>
+                                    <a href="{{ path('account') }}" class="dropdown-item">
+                                        <i class="far fa-id-badge mr-2"></i>
+                                        Кабінет
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="{{ path('app_logout') }}" class="dropdown-item">
                                         <i class="fas fa-sign-out-alt mr-2"></i>
                                         Вийти
@@ -121,6 +127,7 @@
 
 
     {% block javascripts %}
+        <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise"></script>
         {{ encore_entry_script_tags('app') }}
     {% endblock %}
     </body>

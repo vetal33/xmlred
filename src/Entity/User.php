@@ -36,6 +36,16 @@ class User implements UserInterface
      */
     private $password;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $registerAt;
+
+    public function __construct()
+    {
+        $this->registerAt = new \DateTime();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -60,7 +70,7 @@ class User implements UserInterface
      */
     public function getUsername(): string
     {
-        return (string) $this->email;
+        return (string)$this->email;
     }
 
     /**
@@ -87,7 +97,7 @@ class User implements UserInterface
      */
     public function getPassword(): string
     {
-        return (string) $this->password;
+        return (string)$this->password;
     }
 
     public function setPassword(string $password): self
@@ -113,4 +123,30 @@ class User implements UserInterface
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
     }
+
+    /**
+     * @param string|null $size
+     * @return string
+     */
+    public function getAvatarUrl(string $size = null): string
+    {
+        $url = 'https://robohash.org/' . $this->getEmail();
+        if ($size)
+            $url .= sprintf('?size=%dx%d', $size, $size);
+
+        return $url;
+    }
+
+    public function getRegisterAt(): ?\DateTimeInterface
+    {
+        return $this->registerAt;
+    }
+
+    public function setRegisterAt(\DateTimeInterface $registerAt): self
+    {
+        $this->registerAt = $registerAt;
+
+        return $this;
+    }
+
 }
