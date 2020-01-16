@@ -1,12 +1,10 @@
-import '../css/app.css';
-
 const $ = require('jquery');
 
-import 'bootstrap';
+import '../css/app.css';
 import 'admin-lte';
-import './services';
-import 'leaflet';
-import './map';
+import 'bootstrap';
+
 import './button_up';
+
 
 

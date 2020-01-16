@@ -3,17 +3,18 @@
 {% block title %}Hello FileController!{% endblock %}
 {% block stylesheets %}
     {{ parent() }}
+    {{ encore_entry_link_tags('map') }}
     <link rel="stylesheet" href="{{ asset('jsonTree/jsonTree.css') }}">
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    {{ encore_entry_script_tags('map') }}
     <script src="{{ asset('jsonTree/jsonTree.js') }}"></script>
 {% endblock %}
 
 {% block content %}
     <a id="button" class="btn btn-block btn-outline-warning"><i class="fas fa-chevron-up mt-2"></i></a>
-
     <div class="row mt-3">
         <div class="col-6" id = "text-content">
             <div class="col-6">

@@ -17,9 +17,11 @@ $(function () {
     });
 
     let boundaryStyle = {
-        "color": "#ff7800",
+        "color": "#ff735b",
         "weight": 5,
-        "opacity": 0.65
+        "opacity": 1,
+        "fillOpacity": 0.05,
+        "fillColor": "#5bff10",
     };
 
     function sendFile(data) {
@@ -46,7 +48,7 @@ $(function () {
                 if (dataJson.errors.length > 0) {
                     createBlockErrors(dataJson.errors);
                 } else {
-                    addGeometryToMap(dataJson.boundary, boundaryStyle);
+                    addMejaToMap(dataJson.boundary, boundaryStyle);
                     addZonyToMap(dataJson.zony, style);
                     visualizeXML(dataJson);
                     infoBox.onAdd();
@@ -72,13 +74,18 @@ $(function () {
         });
     }
 
-    function addGeometryToMap(data, style) {
+    let normativeGroup;
+
+    function addMejaToMap(data, style) {
         let geoJsonObj = JSON.parse(data);
         if (typeof (geoJsonObj) == "object") {
-            let polygon = L.geoJSON(geoJsonObj, {
+            let polygonMeja = L.geoJSON(geoJsonObj, {
                 style: style,
             }).addTo(mymap);
-            mymap.fitBounds(polygon.getBounds());
+
+            polygonMeja.nameLayer = "mejaGeoJSON";
+            mymap.fitBounds(polygonMeja.getBounds());
+            normativeGroup = L.layerGroup([polygonMeja]);
         }
     }
 
@@ -103,15 +110,26 @@ $(function () {
             return item_new;
         });
 
-        let polygon = L.geoJSON(new_data, {
-            style: style,
-
-        }).addTo(mymap);
+        clearLayersZony();
 
         geojson = L.geoJson(new_data, {
             style: style,
-            onEachFeature: onEachFeature
+            onEachFeature: onEachFeature,
         }).addTo(mymap);
+
+        layersControl.addOverlay(geojson, 'zony');
+    }
+
+    /**
+     * Remove zonyLayers from map
+     */
+    function clearLayersZony() {
+        mymap.eachLayer(function (layer) {
+            if (layer.nameLayer && layer.nameLayer === "zonyGeoJSON") {
+                mymap.removeLayer(layer)
+                layersControl.removeLayer(geojson)
+            }
+        });
     }
 
     function getColor(value) {
@@ -130,7 +148,7 @@ $(function () {
             opacity: 1,
             color: 'white',
             dashArray: '3',
-            fillOpacity: 0.4
+            fillOpacity: 0.5
         };
     }
 
@@ -156,16 +174,16 @@ $(function () {
     }
 
     function zoomToFeature(e) {
-        console.log(e.target);
         mymap.fitBounds(e.target.getBounds());
     }
 
     function onEachFeature(feature, layer) {
-        layer.on({
-            mouseover: highlightFeature,
-            mouseout: resetHighlight,
-            click: zoomToFeature
-        });
+        layer.nameLayer = "zonyGeoJSON",
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight,
+                click: zoomToFeature
+            });
     }
 
 
@@ -203,6 +221,7 @@ $(function () {
         return div;
     };
 
+
     function createBlockErrors(data) {
         let div = document.createElement('div');
         let htmlDiv = '<div class="alert alert-warning alert-dismissible" id="error"> ' +
@@ -212,7 +231,7 @@ $(function () {
         $(div).prepend(htmlDiv);
 
         $.each(data, function (index, value) {
-           $(div).find('#error').append(value + '<br>');
+            $(div).find('#error').append(value + '<br>');
         });
 
         textContent.prepend(div);

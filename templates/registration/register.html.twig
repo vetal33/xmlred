@@ -6,13 +6,16 @@
     <body class="hold-transition login-page">
     <div class="login-box">
         <div class="login-logo">
-            <a href="{{ path('home') }}"><b>XML</b>red</a>
+            <a href="{{ path('homepage') }}"><b>XML</b>red</a>
         </div>
         <!-- /.login-logo -->
         <div class="card">
             <div class="card-body login-card-body">
                 <p class="login-box-msg">Зареєструватись</p>
                 {{ form_start(registrationForm) }}
+{#                {% if error %}
+                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                {% endif %}#}
              {#   <button class="btn">Register</button>#}
 
                {# <form method="post">#}
