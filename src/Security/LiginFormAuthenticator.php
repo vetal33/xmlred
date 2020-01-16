@@ -92,7 +92,11 @@ class LiginFormAuthenticator extends AbstractFormLoginAuthenticator implements P
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
-        if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
+
+        $targetPath = $this->getTargetPath($request->getSession(), $providerKey);
+        $array = explode('/', $targetPath);
+
+        if ($targetPath && end($array) !== "load") {
             return new RedirectResponse($targetPath);
         }
 

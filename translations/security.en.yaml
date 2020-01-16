@@ -1,1 +1,3 @@
 "Username could not be found.": "Такого користува не знайдено!"
+"Invalid credentials.": "Не вірний пароль"
+"Invalid CSRF token.": "Не вірний CSRF токен"

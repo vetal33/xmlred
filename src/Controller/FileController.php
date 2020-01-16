@@ -9,6 +9,7 @@ use App\Service\NormativeXmlParser;
 use App\Service\Uploader;
 use App\Service\ValidateHelper;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -89,6 +90,7 @@ class FileController extends AbstractController
     }
 
     /**
+     * @IsGranted("ROLE_USER")
      * @Route("/load",methods={"GET","POST"}, options={"expose"=true})
      * @param Uploader $uploader
      * @return Response
@@ -97,6 +99,8 @@ class FileController extends AbstractController
 
     public function openShp(Uploader $uploader): Response
     {
+      /*  $this->denyAccessUnlessGranted('ROLE_USER');*/
+
         $response = new StreamedResponse(function () use ($uploader) {
             $outputStream = fopen('php://output', 'wb');
             $fileStream = $uploader->download();
