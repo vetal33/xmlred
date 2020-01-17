@@ -1,5 +1,5 @@
 {% extends 'base.html.twig' %}
-
+{% form_theme registrationForm 'registration/form_errors.html.twig' %}
 {% block title %}Register{% endblock %}
 
 {% block body %}
@@ -29,6 +29,7 @@
                         </div>
                     {% endif %}#}
                     <div class="input-group mb-3">
+                        {{ form_errors(registrationForm.email) }}
                         {{ form_widget(registrationForm.email) }}
                         <div class="input-group-append">
                             <div class="input-group-text">
@@ -37,6 +38,7 @@
                         </div>
                     </div>
                     <div class="input-group mb-3">
+                        {{ form_errors(registrationForm.plainPassword) }}
                         {{ form_widget(registrationForm.plainPassword) }}
                         <div class="input-group-append">
                             <div class="input-group-text">
