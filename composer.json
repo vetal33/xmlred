@@ -8,6 +8,7 @@
         "ext-json": "*",
         "gasparesganga/php-shapefile": "^3.1",
         "jsor/doctrine-postgis": "^1.7",
+        "league/html-to-markdown": "^4.9",
         "oneup/flysystem-bundle": "^3.4",
         "sensio/framework-extra-bundle": "^5.1",
         "symfony/asset": "4.4.*",
@@ -30,7 +31,10 @@
         "symfony/validator": "4.4.*",
         "symfony/web-link": "4.4.*",
         "symfony/webpack-encore-bundle": "^1.7",
-        "symfony/yaml": "4.4.*"
+        "symfony/yaml": "4.4.*",
+        "twig/cssinliner-extra": "^3.0",
+        "twig/extra-bundle": "^3.0",
+        "twig/inky-extra": "^3.0"
     },
     "require-dev": {
         "symfony/debug-pack": "*",

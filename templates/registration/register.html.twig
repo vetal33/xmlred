@@ -38,14 +38,23 @@
                         </div>
                     </div>
                     <div class="input-group mb-3">
-                        {{ form_errors(registrationForm.plainPassword) }}
-                        {{ form_widget(registrationForm.plainPassword) }}
+                        {{ form_errors(registrationForm.plainPassword.first) }}
+                        {{ form_widget(registrationForm.plainPassword.first) }}
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="fas fa-lock"></span>
                             </div>
                         </div>
                     </div>
+                <div class="input-group mb-3">
+                    {{ form_errors(registrationForm.plainPassword.second) }}
+                    {{ form_widget(registrationForm.plainPassword.second) }}
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-lock"></span>
+                        </div>
+                    </div>
+                </div>
 {#                    <input type="hidden" name="_csrf_token"
                            value="{{ csrf_token('authenticate') }}">#}
                     <div class="row ">

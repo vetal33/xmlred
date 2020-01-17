@@ -102,6 +102,12 @@
     "league/flysystem": {
         "version": "1.0.63"
     },
+    "league/html-to-markdown": {
+        "version": "4.9.1"
+    },
+    "lorenzo/pinky": {
+        "version": "1.0.5"
+    },
     "monolog/monolog": {
         "version": "1.25.3"
     },
@@ -531,8 +537,17 @@
     "symfony/yaml": {
         "version": "v4.4.2"
     },
+    "tijsverkoyen/css-to-inline-styles": {
+        "version": "2.2.2"
+    },
+    "twig/cssinliner-extra": {
+        "version": "v3.0.1"
+    },
     "twig/extra-bundle": {
         "version": "v3.0.0"
+    },
+    "twig/inky-extra": {
+        "version": "v3.0.1"
     },
     "twig/twig": {
         "version": "v3.0.0"
