@@ -5,13 +5,14 @@ namespace App\Service;
 
 use App\Repository\FileRepository;
 use Shapefile\Geometry\Linestring;
-use Shapefile\Geometry\MultiPolygon;
 use Shapefile\Geometry\Polygon;
 use Shapefile\Shapefile;
 use Shapefile\ShapefileException;
 use Shapefile\ShapefileWriter;
 use Shapefile\Geometry\Point;
 use Shapefile\ShapefileReader;
+use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 class NormativeXmlSaver
 {
@@ -25,49 +26,86 @@ class NormativeXmlSaver
      */
     private $fileRepository;
 
+    private $errors = [];
+    /**
+     * @var Security
+     */
+    private $security;
 
-    public function __construct(string $shapePath, FileRepository $fileRepository)
+
+    public function __construct(string $shapePath, FileRepository $fileRepository, Security $security)
     {
         $this->shapePath = $shapePath;
         $this->fileRepository = $fileRepository;
+        $this->security = $security;
+    }
+
+    public function toGeoJson(array $coord)
+    {
+        $data = [];
+        foreach ($coord as $key => $value) {
+            if (count(reset($value)) > 2) {
+                foreach ($value as $item => $valMulti) {
+                    $polygon = $this->arrayToPolygon($valMulti['coordinates']);
+
+                    $wkt = $this->convertToWGS($polygon);
+                    $data[$key][$item]['coordinates'] = $this->getGeoJson($wkt);
+                    $data[$key][$item]['name'] = $valMulti['ZoneNumber'];
+                    $data[$key][$item]['km2'] = $valMulti['Km2'];
+                }
+            } else {
+                $polygon = $this->arrayToPolygon($value);
+
+                $wkt = $this->convertToWGS($polygon);
+                $data[$key] = $this->getGeoJson($wkt);
+            }
+        }
+        return $data;
     }
 
     public function toShape(array $coord)
     {
         try {
-            $data = [];
-
             foreach ($coord as $key => $value) {
-                $shapefileWriter = $this->createShapeFile($key);
+                $shapeFileWriter = $this->createShapeFile($key);
 
                 if (count(reset($value)) > 2) {
                     foreach ($value as $item => $valMulti) {
-                        $linestring = $this->createLinestring($valMulti['coordinates']);
-                        $polygon = $this->createPolygon($linestring);
-                        $shapefileWriter->writeRecord($polygon);
-                        $wkt = $this->convertToWGS($polygon);
-                        $data[$key][$item]['coordinates'] = $this->getGeoJson($wkt);
-                        $data[$key][$item]['name'] = $valMulti['ZoneNumber'];
-                        $data[$key][$item]['km2'] = $valMulti['Km2'];
+                        $polygon = $this->arrayToPolygon($valMulti['coordinates']);
+                        $shapeFileWriter->writeRecord($polygon);
                     }
                 } else {
-                    $linestring = $this->createLinestring($value);
-                    $polygon = $this->createPolygon($linestring);
-
-                    $shapefileWriter->writeRecord($polygon);
-                    $wkt = $this->convertToWGS($polygon);
-                    $data[$key] = $this->getGeoJson($wkt);
+                    $polygon = $this->arrayToPolygon($value);
+                    $shapeFileWriter->writeRecord($polygon);
                 }
             }
-            dump($data);
-            return $data;
+
+            return true;
 
         } catch (ShapefileException $e) {
-            // Print detailed error information
-            echo "Error Type: " . $e->getErrorType()
+            $this->errors[] = "Error Type: " . $e->getErrorType()
                 . "\nMessage: " . $e->getMessage()
                 . "\nDetails: " . $e->getDetails();
+            // Print detailed error information
+            /*            echo "Error Type: " . $e->getErrorType()
+                            . "\nMessage: " . $e->getMessage()
+                            . "\nDetails: " . $e->getDetails();*/
+
+            dump($this->getErrors());
+            return false;
         }
+    }
+
+    /**
+     * @param array $coord
+     * @return Polygon
+     */
+    private function arrayToPolygon(array $coord): Polygon
+    {
+        $linestring = $this->createLinestring($coord);
+        $polygon = $this->createPolygon($linestring);
+
+        return $polygon;
     }
 
 
@@ -98,15 +136,30 @@ class NormativeXmlSaver
         return $linestring;
     }
 
+
     private function createShapeFile($name): ShapefileWriter
     {
+        $userFolder = preg_replace('/[^\p{L}\p{N}\s]/u', '', $this->security->getUser()->getUsername());
+        dump($userFolder);
+        $this->makeDir($userFolder);
         $data = date('y-m-d');
-        $destination = $this->shapePath . '/export/' . $name . '-' . $data . '-' . uniqid() . '.shp';
+        $destination = $this->shapePath . '/export/' . $userFolder . '/' . $name . '-' . $data . '-' . uniqid() . '.shp';
+        dump($destination);
+
+
         /** @var ShapefileWriter $shapefileWriter */
         $shapefileWriter = new ShapefileWriter($destination);
         $shapefileWriter->setShapeType(Shapefile::SHAPE_TYPE_POLYGON);
 
         return $shapefileWriter;
+    }
+
+    private function makeDir(string $dir): void
+    {
+        $pathName = $this->shapePath . '/export/' . $dir;
+        if (!file_exists($pathName)) {
+            mkdir($pathName);
+        }
     }
 
     private function convertToWGS(Polygon $polygon): string
@@ -131,6 +184,15 @@ class NormativeXmlSaver
 
         return $wktPolygon->getArray();
     }
+
+    /**
+     * @return array
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+
 
     private function addToZip(string $folder)
     {

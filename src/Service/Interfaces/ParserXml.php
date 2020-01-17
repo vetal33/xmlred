@@ -6,6 +6,6 @@ namespace App\Service\Interfaces;
 
 interface ParserXml
 {
-    public function parse(\SimpleXMLElement $simpleXMLElement): array ;
+    public function parse(\SimpleXMLElement $simpleXMLElement);
 
 }

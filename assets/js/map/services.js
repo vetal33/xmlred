@@ -1,6 +1,7 @@
 $(function () {
     const overlay = $('#shp-card .overlay');
     const textContent = $('#text-content');
+    const btnDownloadShp = $('#btn-download-shp');
 
     overlay[0].hidden = true;
     $('.custom-file-input').on('change', function (event) {
@@ -37,6 +38,7 @@ $(function () {
             },
             success: function (data) {
                 $('#error').parent('div').remove();
+                $(btnDownloadShp).removeClass('disabled');
 
 
                 overlay[0].hidden = true;
@@ -46,8 +48,11 @@ $(function () {
                 console.log(dataJson.errors.length);
 
                 if (dataJson.errors.length > 0) {
+                    $(btnDownloadShp).addClass('disabled');
+                    $('#shp-card').attr('data-name', "");
                     createBlockErrors(dataJson.errors);
                 } else {
+                    $(btnDownloadShp).attr('href', '/load?name='+ dataJson.newXmlName);
                     addMejaToMap(dataJson.boundary, boundaryStyle);
                     addZonyToMap(dataJson.zony, style);
                     visualizeXML(dataJson);
@@ -67,7 +72,8 @@ $(function () {
     function visualizeXML(data) {
         let wrapper = document.getElementById("wrapper");
         let tree = jsonTree.create(data.origXml, wrapper);
-        $('#original_name_file').html(data.origXmlname);
+        $('#original_name_file').html(data.origXmlName);
+        $('#shp-card').attr('data-name', data.newXmlName);
 
         tree.expand(function (node) {
             return node.childNodes.length < 2 || node.label === 'phoneNumbers';
@@ -220,7 +226,6 @@ $(function () {
 
         return div;
     };
-
 
     function createBlockErrors(data) {
         let div = document.createElement('div');

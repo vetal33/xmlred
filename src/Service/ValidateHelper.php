@@ -6,7 +6,7 @@ namespace App\Service;
 
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints\File as FileConstraint;
-use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ValidateHelper
@@ -21,7 +21,11 @@ class ValidateHelper
         $this->validator = $validator;
     }
 
-    public function validateNormativeXml(UploadedFile $file): ConstraintViolationList
+    /**
+     * @param UploadedFile $file
+     * @return ConstraintViolationListInterface
+     */
+    public function validateNormativeXml(UploadedFile $file): ConstraintViolationListInterface
     {
         $errors = $this->validator->validate($file, [
             new FileConstraint([
@@ -29,11 +33,10 @@ class ValidateHelper
                 'mimeTypes' => [
                     'text/xml',
                 ],
-                'mimeTypesMessage' => 'Будь-ласка завантажте валідний файл',
+                'mimeTypesMessage' => 'Будь-ласка завантажте валідний файл (*.xml)',
                 'maxSizeMessage' => 'Файл не повинен перевищувати 10Mb',
             ]),
         ]);
         return $errors;
     }
-
 }

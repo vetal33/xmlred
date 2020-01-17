@@ -42,45 +42,53 @@ class FileController extends AbstractController
     {
         $data = [];
         $file = new File;
+
         $form = $this->createForm(FileFormType::class, $file);
 
         if ($request->isXmlHttpRequest()) {
+            /**@var UploadedFile $uploadedFile */
             $uploadedFile = $request->files->get('xmlFile');
             $errors = $validateHelper->validateNormativeXml($uploadedFile);
 
-            if (0 == count($errors)) {
-                /**@var UploadedFile $uploadedFile */
-                if ($uploadedFile) {
-
-                    $uploader->download($uploadedFile);
-
-                    $newFilename = $uploader->uploadXML($uploadedFile);
-                    $xmlObj = $uploader->getSimpleXML($newFilename);
-
-                    if ($xmlObj) {
-                        $array = $normativeXmlParser->parse($xmlObj);
-                        $boundary = $normativeXmlParser->parceDataXml($array);
-
-                        if ($boundary['boundary']) {
-                            $data = $normativeXmlSaver->toShape($boundary);
-                            $data['origXml'] = $xmlObj;
-                            $data['origXmlname'] = $uploader->getOriginalName();
-                            $data['errors'] = [];
-                            $file->setXmlFileName($newFilename);
-                            $file->setAddDate(new \DateTime());
-                            $file->setXmlOriginalName($uploader->getOriginalName());
-                            $entityManager->persist($file);
-                            $entityManager->flush();
-                        }
-
-                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                    }
-
-                }
+            if (0 != count($errors)) {
+                $data['errors'][] = $errors[0]->getMessage();
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
             }
 
-            $data['errors'][] = $errors[0]->getMessage();
+            $uploader->uploadXML($uploadedFile);
+            $xmlObj = $uploader->getSimpleXML($uploader->getNewNameFile());
+
+            if (!$xmlObj) {
+                $data['errors'] = $uploader->getErrors();
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+            }
+
+            $parseXml = $normativeXmlParser->parse($xmlObj);
+
+            if (!$parseXml) {
+                $data['errors'] = $normativeXmlParser->getErrors();
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+            }
+
+            //$boundary = $normativeXmlParser->parseDataXml($array);
+            dump($parseXml);
+
+            $data = $normativeXmlSaver->toGeoJson($parseXml);
+            dump($data);
+
+            $data['origXml'] = $xmlObj;
+            $data['origXmlName'] = $uploader->getOriginalName();
+            $data['newXmlName'] = $uploader->getNewNameFile();
+            $data['errors'] = [];
+            /* $file->setXmlFileName($newFilename);
+             $file->setAddDate(new \DateTime());
+             $file->setXmlOriginalName($uploader->getOriginalName());
+             $entityManager->persist($file);
+             $entityManager->flush();*/
+
             return new JsonResponse(json_encode($data), Response::HTTP_OK);
+
+
         }
 
         return $this->render('file/index.html.twig', [
@@ -91,15 +99,27 @@ class FileController extends AbstractController
 
     /**
      * @IsGranted("ROLE_USER")
-     * @Route("/load",methods={"GET","POST"}, options={"expose"=true})
+     * @Route("/load",name = "downloadShp", methods={"GET","POST"}, options={"expose"=true})
      * @param Uploader $uploader
+     * @param Request $request
+     * @param NormativeXmlParser $normativeXmlParser
+     * @param NormativeXmlSaver $normativeXmlSaver
      * @return Response
-     * @throws \Exception
      */
 
-    public function openShp(Uploader $uploader): Response
+    public function downloadShp(Uploader $uploader, Request $request, NormativeXmlParser $normativeXmlParser, NormativeXmlSaver $normativeXmlSaver): Response
     {
-      /*  $this->denyAccessUnlessGranted('ROLE_USER');*/
+        //$this->denyAccessUnlessGranted('ROLE_USER');
+
+        $name = $request->query->get('name');
+        $xmlObj = $uploader->getSimpleXML($name);
+        $parseXml = $normativeXmlParser->parse($xmlObj);
+        dump($xmlObj);
+        dump($parseXml);
+        $data = $normativeXmlSaver->toShape($parseXml);
+        dump($data);
+        die;
+
 
         $response = new StreamedResponse(function () use ($uploader) {
             $outputStream = fopen('php://output', 'wb');

@@ -15,6 +15,8 @@ class NormativeXmlParser implements ParserXml
     /**@var array All the points in xml-file */
     private $points = [];
 
+    private $errors = [];
+
     /**
      * Setting tree-object that we used
      * @var array
@@ -27,12 +29,14 @@ class NormativeXmlParser implements ParserXml
     ];
 
 
-    public function parse(\SimpleXMLElement $simpleXMLElement): array
+    public function parse(\SimpleXMLElement $simpleXMLElement)
     {
         $array = json_decode(json_encode($simpleXMLElement), true);
-        $this->getPolyline($array);
-        $this->getPoints($array);
-        return $array;
+        if ($this->getPolyline($array) && $this->getPoints($array)) {
+            $result = $this->parseDataXml($array);
+            return $result;
+        }
+        return false;
     }
 
     public function findNode(array $dataXml, array $keys): array
@@ -54,7 +58,7 @@ class NormativeXmlParser implements ParserXml
         return $str;
     }
 
-    public function parceDataXml(array $dataXml)
+    public function parseDataXml(array $dataXml)
     {
         $currentPoints = [];
         foreach ($this->settingFields as $value => $key) {
@@ -110,33 +114,41 @@ class NormativeXmlParser implements ParserXml
         return $userdata;
     }
 
+
     /**
      * @param array $data
-     * @return array
+     * @return array|bool
      */
-
     private function getPolyline(array $data)
     {
-        foreach ($data['InfoPart']['MetricInfo']['Polyline']['PL'] as $value) {
-            $this->polylines[$value['ULID']] = $value['Points']['P'];
+        try {
+            foreach ($data['InfoPart']['MetricInfo']['Polyline']['PL'] as $value) {
+                $this->polylines[$value['ULID']] = $value['Points']['P'];
+            }
+            return $this->polylines;
+        } catch (\Exception $exception) {
+            $this->errors[] = $exception->getMessage();
+            return false;
         }
-
-        return $this->polylines;
-
     }
+
 
     /**
      * @param array $data
-     * @return array
+     * @return array|bool
      */
     private function getPoints(array $data)
     {
-        foreach ($data['InfoPart']['MetricInfo']['PointInfo']['Point'] as $value) {
-            $this->points[$value['UIDP']]['X'] = $value['X'];
-            $this->points[$value['UIDP']]['Y'] = $value['Y'];
+        try {
+            foreach ($data['InfoPart']['MetricInfo']['PointInfo']['Point'] as $value) {
+                $this->points[$value['UIDP']]['X'] = $value['X'];
+                $this->points[$value['UIDP']]['Y'] = $value['Y'];
+            }
+            return $this->points;
+        } catch (\Exception $exception) {
+            $this->errors[] = $exception->getMessage();
+            return false;
         }
-
-        return $this->points;
     }
 
     private function getCurrentPoints(array $data)
@@ -150,14 +162,24 @@ class NormativeXmlParser implements ParserXml
 
     private function array_intersect_key_withoutSort(array $data)
     {
-        $dataCoordinate = array_map(function ($value){
-            if(array_key_exists((int)$value, $this->points)){
+        $dataCoordinate = array_map(function ($value) {
+            if (array_key_exists((int)$value, $this->points)) {
                 return $this->points[$value];
             }
         }, $data);
 
         return $dataCoordinate;
     }
+
+    /**
+     * @return array
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+
+
 
 
 }

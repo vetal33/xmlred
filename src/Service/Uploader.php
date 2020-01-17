@@ -18,16 +18,20 @@ class Uploader
      * @var string
      */
     private $shapePath;
-    /**
-     * @var string
-     */
+
+    /** @var string   */
     private $originalName;
+
+    /** @var string   */
+    private $newNameFile;
 
     const XML_NORMATIVE = 'normative_xml';
     /**
      * @var FilesystemInterface
      */
     private $filesystem;
+
+    private $errors = [];
 
     /**
      * Uploader constructor.
@@ -43,23 +47,19 @@ class Uploader
         $this->filesystem = $publicUploadsFilesystem;
     }
 
+
     /**
-     *
      * @param UploadedFile $uploadedFile
-     * @return string
      */
-    public function uploadXML(UploadedFile $uploadedFile): string
+    public function uploadXML(UploadedFile $uploadedFile): void
     {
         $originalName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
 
         $destination = $this->uploadPath . '/' . self::XML_NORMATIVE;
 
-        $newFilename = $originalName . "-" . uniqid() . "." . $uploadedFile->guessClientExtension();
+        $this->newNameFile = $originalName . "-" . uniqid() . "." . $uploadedFile->guessClientExtension();
         $this->originalName = $originalName . "." . $uploadedFile->guessClientExtension();
-        $uploadedFile->move($destination, $newFilename);
-
-        return $newFilename;
-
+        $uploadedFile->move($destination, $this->newNameFile);
     }
 
     public function download()
@@ -72,10 +72,23 @@ class Uploader
         return $resource;
     }
 
-    public function getSimpleXML(string $filePath): \SimpleXMLElement
+    /**
+     * @param string $filePath
+     * @return bool|\SimpleXMLElement
+     */
+    public function getSimpleXML(string $filePath)
     {
+        libxml_use_internal_errors(true);
         $destination = $this->uploadPath . '/' . self::XML_NORMATIVE . '/' . $filePath;
-        return $xml = simplexml_load_file($destination);
+        $xml = simplexml_load_file($destination);
+        if ($xml) {
+            return $xml;
+        } else {
+            foreach (libxml_get_errors() as $error) {
+                $this->errors[] = $error->message;
+            }
+        }
+        return false;
     }
 
 
@@ -102,5 +115,25 @@ class Uploader
     {
         return $this->originalName;
     }
+
+    /**
+     * @return array
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNewNameFile(): string
+    {
+        return $this->newNameFile;
+    }
+
+
+
+
 
 }
