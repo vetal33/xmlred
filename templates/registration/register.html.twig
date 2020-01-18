@@ -13,39 +13,48 @@
             <div class="card-body login-card-body">
                 <p class="login-box-msg">Зареєструватись</p>
                 {{ form_start(registrationForm) }}
-{#                {% if error %}
-                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-                {% endif %}#}
-             {#   <button class="btn">Register</button>#}
+                {#                {% if error %}
+                                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                                {% endif %}#}
+                {#   <button class="btn">Register</button>#}
 
-               {# <form method="post">#}
-{#                    {% if error %}
-                        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-                    {% endif %}#}
+                {# <form method="post">#}
+                {#                    {% if error %}
+                                        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                                    {% endif %}#}
 
-{#                    {% if app.user %}
-                        <div class="mb-3">
-                            You are logged in as {{ app.user.username }}, <a href="{{ path('app_logout') }}">Logout</a>
-                        </div>
-                    {% endif %}#}
-                    <div class="input-group mb-3">
-                        {{ form_errors(registrationForm.email) }}
-                        {{ form_widget(registrationForm.email) }}
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-envelope"></span>
-                            </div>
+                {#                    {% if app.user %}
+                                        <div class="mb-3">
+                                            You are logged in as {{ app.user.username }}, <a href="{{ path('app_logout') }}">Logout</a>
+                                        </div>
+                                    {% endif %}#}
+                <div class="input-group mb-3">
+                    {{ form_errors(registrationForm.email) }}
+                    {{ form_widget(registrationForm.email) }}
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-envelope"></span>
                         </div>
                     </div>
-                    <div class="input-group mb-3">
-                        {{ form_errors(registrationForm.plainPassword.first) }}
-                        {{ form_widget(registrationForm.plainPassword.first) }}
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-lock"></span>
-                            </div>
+                </div>
+                <div class="input-group mb-3">
+                    {{ form_errors(registrationForm.plainPassword) }}
+                    {{ form_widget(registrationForm.plainPassword) }}
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-lock"></span>
                         </div>
                     </div>
+                </div>
+{#                <div class="input-group mb-3">
+                    {{ form_errors(registrationForm.plainPassword.first) }}
+                    {{ form_widget(registrationForm.plainPassword.first) }}
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-lock"></span>
+                        </div>
+                    </div>
+                </div>
                 <div class="input-group mb-3">
                     {{ form_errors(registrationForm.plainPassword.second) }}
                     {{ form_widget(registrationForm.plainPassword.second) }}
@@ -54,23 +63,23 @@
                             <span class="fas fa-lock"></span>
                         </div>
                     </div>
-                </div>
-{#                    <input type="hidden" name="_csrf_token"
-                           value="{{ csrf_token('authenticate') }}">#}
-                    <div class="row ">
-                        <div class="col-6 icheck-primary">
-                            {{ form_widget(registrationForm.agreeTerms) }}
-                            {{ form_label(registrationForm.agreeTerms) }}
-                        </div>
-                        <!-- /.col -->
-                        <div class="col-6">
-                            <button type="submit" class="btn btn-primary btn-block">Зареєструватись</button>
-                        </div>
-                        <!-- /.col -->
+                </div>#}
+                {#                    <input type="hidden" name="_csrf_token"
+                                           value="{{ csrf_token('authenticate') }}">#}
+                <div class="row ">
+                    <div class="col-6 icheck-primary">
+                        {{ form_widget(registrationForm.agreeTerms) }}
+                        {{ form_label(registrationForm.agreeTerms) }}
                     </div>
+                    <!-- /.col -->
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary btn-block">Зареєструватись</button>
+                    </div>
+                    <!-- /.col -->
+                </div>
 
                 {{ form_end(registrationForm) }}
-        {#        </form>#}
+                {#        </form>#}
 
                 {#           <div class="social-auth-links text-center mb-3">
                                <p>- OR -</p>

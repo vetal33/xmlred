@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Repository\UserRepository;
-use App\Security\LiginFormAuthenticator;
+use App\Security\LoginFormAuthenticator;
 use App\Service\CodeGenerator;
 use App\Service\Mailer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,7 +22,7 @@ class RegistrationController extends AbstractController
      * @param Request $request
      * @param UserPasswordEncoderInterface $passwordEncoder
      * @param GuardAuthenticatorHandler $guardHandler
-     * @param LiginFormAuthenticator $authenticator
+     * @param LoginFormAuthenticator $authenticator
      * @param Mailer $mailer
      * @param CodeGenerator $codeGenerator
      * @return Response
@@ -31,7 +31,7 @@ class RegistrationController extends AbstractController
         Request $request,
         UserPasswordEncoderInterface $passwordEncoder,
         GuardAuthenticatorHandler $guardHandler,
-        LiginFormAuthenticator $authenticator,
+        LoginFormAuthenticator $authenticator,
         Mailer $mailer,
         CodeGenerator $codeGenerator): Response
     {
@@ -54,15 +54,18 @@ class RegistrationController extends AbstractController
             $entityManager->flush();
 
             $mailer->sendConfirmationMessage($user);
+            return $this->render('registration/account_request.html.twig', [
+                'user' => $user,
+            ]);
 
             // do anything else you need here, like send an email
 
-            return $guardHandler->authenticateUserAndHandleSuccess(
+/*            return $guardHandler->authenticateUserAndHandleSuccess(
                 $user,
                 $request,
                 $authenticator,
                 'main' // firewall name in security.yaml
-            );
+            );*/
         }
 
         return $this->render('registration/register.html.twig', [

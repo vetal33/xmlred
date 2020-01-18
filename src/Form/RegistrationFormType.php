@@ -31,44 +31,60 @@ class RegistrationFormType extends AbstractType
                     ]),
                 ],
             ])
-            ->add('plainPassword', RepeatedType::class, [
-                'type' => PasswordType::class,
-                'first_options' => [
-                    'mapped' => false,
-                    'attr' => ['class' => 'form-control', 'placeholder' => 'Password'],
-                    'constraints' => [
-                        new NotBlank([
-                            'message' => 'Please enter a password',
-                        ]),
-                        new Length([
-                            'min' => 6,
-                            'minMessage' => 'Your password should be at least {{ limit }} characters',
-                            // max length allowed by Symfony for security reasons
-                            'max' => 4096,
-                        ]),
-                    ],
+            ->add('plainPassword', PasswordType::class, [
+                'mapped' => false,
+                'attr' => ['class' => 'form-control', 'placeholder' => 'Password'],
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'Please enter a password',
+                    ]),
+                    new Length([
+                        'min' => 6,
+                        'minMessage' => 'Your password should be at least {{ limit }} characters',
+                        // max length allowed by Symfony for security reasons
+                        'max' => 4096,
+                    ]),
                 ],
-                'second_options' => [
-                    'mapped' => false,
-                    'attr' => ['class' => 'form-control', 'placeholder' => 'Repeat password'],
-                    'constraints' => [
-                        new NotBlank([
-                            'message' => 'Please enter a password',
-                        ]),
-                        new Length([
-                            'min' => 6,
-                            'minMessage' => 'Your password should be at least {{ limit }} characters',
-                            // max length allowed by Symfony for security reasons
-                            'max' => 4096,
-                        ]),
-                    ],
-                ]
-
-                // instead of being set onto the object directly,
-                // this is read and encoded in the controller
-
 
             ]);
+        /* ->add('plainPassword', RepeatedType::class, [
+             'type' => PasswordType::class,
+             'first_options' => [
+                 'mapped' => false,
+                 'attr' => ['class' => 'form-control', 'placeholder' => 'Password'],
+                 'constraints' => [
+                     new NotBlank([
+                         'message' => 'Please enter a password',
+                     ]),
+                     new Length([
+                         'min' => 6,
+                         'minMessage' => 'Your password should be at least {{ limit }} characters',
+                         // max length allowed by Symfony for security reasons
+                         'max' => 4096,
+                     ]),
+                 ],
+             ],
+             'second_options' => [
+                 'mapped' => false,
+                 'attr' => ['class' => 'form-control', 'placeholder' => 'Repeat password'],
+                 'constraints' => [
+                     new NotBlank([
+                         'message' => 'Please enter a password',
+                     ]),
+                     new Length([
+                         'min' => 6,
+                         'minMessage' => 'Your password should be at least {{ limit }} characters',
+                         // max length allowed by Symfony for security reasons
+                         'max' => 4096,
+                     ]),
+                 ],
+             ],
+
+             // instead of being set onto the object directly,
+             // this is read and encoded in the controller
+
+
+         ]);*/
     }
 
     public function configureOptions(OptionsResolver $resolver)

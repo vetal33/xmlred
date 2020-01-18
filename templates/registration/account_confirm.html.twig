@@ -1,21 +1,19 @@
 {% extends 'base.html.twig' %}
 {% block content %}
     <div class="container">
-        <div class="row">
-            <div class="card card-widget widget-user">
-                <!-- Add the bg color to the header using any of the bg-* classes -->
+        <div class="row justify-content-center">
+            <div class="card card-widget widget-user mt-5">
                 <div class="widget-user-header bg-info">
                     <h3 class="widget-user-username">{{ user.email }}</h3>
                 </div>
                 <div class="widget-user-image">
-                    <img class="img-circle elevation-2" src="{{ app.user.avatarUrl(100) }}" alt="User Avatar">
+                    <img class="img-circle elevation-2 bg-light" src="{{ user.avatarUrl(100) }}" alt="User Avatar">
                 </div>
                 <div class="card-footer">
-                    <div class="row">
-                        <div>Вітаємо! Ви успішно підтвердили свій аккаунт</div>
-                        <div><a href="{{ path('homepage') }}">Перейти на головну</a></div>
+                    <div>
+                        <p>Вітаємо! Ви успішно підтвердили свій аккаунт</p>
+                        <div><a href="{{ path('app_login') }}">Увійти</a><a class="float-right" href="{{ path('homepage') }}">Перейти на головну</a></div>
                     </div>
-                    <!-- /.row -->
                 </div>
             </div>
         </div>

@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 mt-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="card-title">Дякуємо за реєстрацію! </h1>
+                    </div>
+                    <div class="card-body text-center">
+                        <h5>Перевірти свою поштову скриньку і завершіть реєстрацію, підтвердивши свою електронну
+                            пошту</h5>
+                        <h4>{{ user.email }}</h4>
+                        <p class="text-left mt-5">Якщо ви не отримали листа на e-mail:</p>
+                        <ul class="text-left mt-3">
+                            <li>перевірте спам чи інші папки</li>
+                            <li>перевірте чи коректна адреса елекронної пошти</li>
+                            <li>якщо ви не вирішили свою проблему зверніться <a href="mailto:xmlred.xyz@gmail.com">xmlred.xyz@gmail.com</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

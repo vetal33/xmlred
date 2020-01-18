@@ -1,15 +1,23 @@
-<h2>Дякуємо за реєстрацію на сайті
-    <a href="{{ url('homepage') }}">
-        XmlRed
-    </a>!
-</h2>
-
-<p>
-    {#    You signed up as {{ username }} the following email:#}
-</p>
-<p>{{ user.email }}</p>
-
-<p>
-    <a href="{{ path('register_email_confirmation', {'code': user.confirmationCode }) }}">Click here to activate your account</a>
-    (this link is valid until )
-</p>
+{% apply inky_to_html|inline_css(source('@css/email.css')) %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Дякуємо за реєстрацію на сайті
+                <a href="{{ url('homepage') }}">XmlRed!</a>
+            </h3>
+        </div>
+        <div class="card-body">
+            <h2>{{ user.email }}</h2>
+            <p>
+                <a href="{{ url('register_email_confirmation', {'code': user.confirmationCode }) }}">Натисніть тут для
+                    активації вашого аккаунту</a>
+            </p>
+        </div>
+        <div class="card-footer">
+            <p>З питань підтримки звертайтесь<p>
+            <p><a href="mailto:xmlred.xyz@gmail.com">
+                    xmlred.xyz@gmail.com
+                </a>
+            <p>
+        </div>
+    </div>
+{% endapply %}

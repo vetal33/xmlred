@@ -18,12 +18,14 @@ security:
             anonymous: lazy
             guard:
                 authenticators:
-                    - App\Security\LiginFormAuthenticator
+                    - App\Security\LoginFormAuthenticator
             logout:
                 path: app_logout
             remember_me:
                 secret:   '%kernel.secret%'
                 lifetime: 864000 # 10 days in seconds
+            pattern: ^/
+            user_checker: App\Security\UserChecker
 
                 # where to redirect after logout
                 # target: app_any_route

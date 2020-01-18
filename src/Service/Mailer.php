@@ -28,7 +28,7 @@ class Mailer
         $email = (new TemplatedEmail())
             ->from(new Address($this::FROM_ADDRESS, 'XmlRed'))
             ->to(new Address($user->getEmail()))
-            ->subject('Welcome to the Space Bar!')
+            ->subject('Ласкаво просимо на XmlRed!')
             ->htmlTemplate('email/simple.html.twig')
             ->context([
                 'user' => $user,
