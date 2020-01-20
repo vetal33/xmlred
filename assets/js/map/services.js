@@ -4,13 +4,13 @@ $(function () {
     const btnDownloadShp = $('#btn-download-shp');
 
     overlay[0].hidden = true;
+
     $('.custom-file-input').on('change', function (event) {
         let inputFile = event.currentTarget;
         $(inputFile).parent()
             .find('.custom-file-label')
             .html(inputFile.files[0].name);
         let fileXML = $("#file_form_xmlFile")[0].files[0];
-        //console.log(fileXML);
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
@@ -138,6 +138,12 @@ $(function () {
         });
     }
 
+    /**
+     * Налаштування кольорів, для відображення зон на карті
+     * @param value
+     * @returns {string}
+     */
+
     function getColor(value) {
         return value > 1.2 ? '#a63603' :
             value > 1 ? '#e6550d' :
@@ -228,18 +234,31 @@ $(function () {
     };
 
     function createBlockErrors(data) {
-        let div = document.createElement('div');
+        let divElement = document.createElement('div');
         let htmlDiv = '<div class="alert alert-warning alert-dismissible" id="error"> ' +
             '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>' +
             '<h5><i class="icon fas fa-exclamation-triangle"></i> Виникла помилка!</h5></div>';
 
-        $(div).prepend(htmlDiv);
+        $(divElement).prepend(htmlDiv);
 
         $.each(data, function (index, value) {
-            $(div).find('#error').append(value + '<br>');
+            $(divElement).find('#error').append(value + '<br>');
         });
 
-        textContent.prepend(div);
+        textContent.prepend(divElement);
     }
 
+    function createTableShp(data) {
+        console.log(data);
+        const tableShp = document.createElement('');
+
+        let htmlDiv = '<tr><td>$13 USD</td><td>$13 USD</td>' +
+            '<td><a href="#" class="text-muted"><i class="fas fa-search"></i></a></td></tr>';
+
+        $.each(data, function (index, value) {
+            $(divElement).find('#error').append(value + '<br>');
+        });
+
+
+    }
 });

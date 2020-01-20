@@ -32,6 +32,23 @@ class NormativeXmlSaver
      */
     private $security;
 
+    /**
+     * @var string
+     */
+    private $destination;
+
+    /**
+     * @var string
+     */
+    private $userFolderName;
+
+
+    /**
+     * NormativeXmlSaver constructor.
+     * @param string $shapePath
+     * @param FileRepository $fileRepository
+     * @param Security $security
+     */
 
     public function __construct(string $shapePath, FileRepository $fileRepository, Security $security)
     {
@@ -66,6 +83,10 @@ class NormativeXmlSaver
     public function toShape(array $coord)
     {
         try {
+            $this->userFolderName = preg_replace('/[^\p{L}\p{N}\s]/u', '', $this->security->getUser()->getUsername());
+            $this->makeDir($this->userFolderName);
+            $this->destination = $this->shapePath . '/export/' . $this->userFolderName;
+
             foreach ($coord as $key => $value) {
                 $shapeFileWriter = $this->createShapeFile($key);
 
@@ -80,18 +101,14 @@ class NormativeXmlSaver
                 }
             }
 
+            $this->addToZip();
             return true;
 
         } catch (ShapefileException $e) {
+            // Print detailed error information
             $this->errors[] = "Error Type: " . $e->getErrorType()
                 . "\nMessage: " . $e->getMessage()
                 . "\nDetails: " . $e->getDetails();
-            // Print detailed error information
-            /*            echo "Error Type: " . $e->getErrorType()
-                            . "\nMessage: " . $e->getMessage()
-                            . "\nDetails: " . $e->getDetails();*/
-
-            dump($this->getErrors());
             return false;
         }
     }
@@ -139,16 +156,10 @@ class NormativeXmlSaver
 
     private function createShapeFile($name): ShapefileWriter
     {
-        $userFolder = preg_replace('/[^\p{L}\p{N}\s]/u', '', $this->security->getUser()->getUsername());
-        dump($userFolder);
-        $this->makeDir($userFolder);
-        $data = date('y-m-d');
-        $destination = $this->shapePath . '/export/' . $userFolder . '/' . $name . '-' . $data . '-' . uniqid() . '.shp';
-        dump($destination);
-
+        $fileName = $this->destination . '/' . $name . '_' . date('y-m-d') . '_' . uniqid() . '.shp';
 
         /** @var ShapefileWriter $shapefileWriter */
-        $shapefileWriter = new ShapefileWriter($destination);
+        $shapefileWriter = new ShapefileWriter($fileName);
         $shapefileWriter->setShapeType(Shapefile::SHAPE_TYPE_POLYGON);
 
         return $shapefileWriter;
@@ -165,6 +176,7 @@ class NormativeXmlSaver
     private function convertToWGS(Polygon $polygon): string
     {
         $wkt = $this->fileRepository->transformPointFrom3857to4326($polygon->getWKT());
+        dump($wkt);
 
         return $wkt;
     }
@@ -194,9 +206,34 @@ class NormativeXmlSaver
     }
 
 
-    private function addToZip(string $folder)
+    private function addToZip()
     {
-        //TODO
+        if ($this->destination) {
+            chdir(sys_get_temp_dir());
+
+            $zipFile = new \ZipArchive();
+            $zipPath = $this->userFolderName . '_' . date('y-m-d') . '.zip';
+
+            $result = $zipFile->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+            if (!$result) {
+                $this->errors = 'Не вдалось зберегти zip файл!';
+                return false;
+            }
+
+            $dir = array_diff(scandir('C:/OSPanel/domains/xmlred/public/shp/export/vbitko3gmailcom'), ['.', '..']);
+
+            foreach ($dir as $value) {
+                $file = 'C:/OSPanel/domains/xmlred/public/shp/export/vbitko3gmailcom/' . $value;
+                $zipFile->addFile($file, $value);
+            }
+            $zipFile->close();
+            return sys_get_temp_dir() . $zipPath;
+        } else {
+            $this->errors = 'Виникли проблеми із збереження в  zip файл!';
+            return false;
+        }
+
+
     }
 
 

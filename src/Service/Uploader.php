@@ -132,8 +132,4 @@ class Uploader
         return $this->newNameFile;
     }
 
-
-
-
-
 }
