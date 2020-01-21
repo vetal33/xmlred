@@ -42,13 +42,15 @@ class NormativeXmlSaver
 
     public function toGeoJson(array $coord)
     {
+        $numberZone = $this->getNumberZoneFromCoord(reset($coord));
+
         $data = [];
         foreach ($coord as $key => $value) {
             if (count(reset($value)) > 2) {
                 foreach ($value as $item => $valMulti) {
                     $polygon = $this->arrayToPolygon($valMulti['coordinates']);
 
-                    $wkt = $this->convertToWGS($polygon);
+                    $wkt = $this->convertToWGS($polygon, $numberZone);
                     $data[$key][$item]['coordinates'] = $this->getGeoJson($wkt);
                     $data[$key][$item]['name'] = $valMulti['ZoneNumber'];
                     $data[$key][$item]['km2'] = $valMulti['Km2'];
@@ -56,11 +58,21 @@ class NormativeXmlSaver
             } else {
                 $polygon = $this->arrayToPolygon($value);
 
-                $wkt = $this->convertToWGS($polygon);
+                $wkt = $this->convertToWGS($polygon, $numberZone);
                 $data[$key] = $this->getGeoJson($wkt);
             }
         }
         return $data;
+    }
+
+    private function getNumberZoneFromCoord(array $array)
+    {
+        if (array_key_exists('Y', $array[0])) {
+
+            $zone = substr($array[0]['Y'],0,1);
+            return (integer)('10630' . $zone);
+        }
+        return false;
     }
 
     public function toShape(array $coord)
@@ -162,9 +174,9 @@ class NormativeXmlSaver
         }
     }
 
-    private function convertToWGS(Polygon $polygon): string
+    private function convertToWGS(Polygon $polygon, int $zone): string
     {
-        $wkt = $this->fileRepository->transformPointFrom3857to4326($polygon->getWKT());
+        $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
 
         return $wkt;
     }

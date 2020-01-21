@@ -20,14 +20,13 @@ class FileRepository extends ServiceEntityRepository
     }
 
 
-    public function transformPointFrom3857to4326(string $point)
+    public function transformFeatureFromSC63to4326(string $feature, int $zone)
     {
         $stmt = $this->getEntityManager()
             ->getConnection()
-            ->prepare('select ST_AsText(st_transform(st_transform(ST_GeomFromText(:polygon, 106303), 4284), 4326))');
-            /*->prepare('select ST_AsText(st_transform(st_transform(st_transform(ST_GeomFromText(:polygon, 106303), 4284), 4326), 3857)');*/
-            /*->prepare('select ST_AsText(st_transform(ST_GeomFromText(:polygon, 3857), 4326))');*/
-        $stmt->bindParam('polygon', $point);
+            ->prepare('select ST_AsText(st_transform(st_transform(ST_GeomFromText(:polygon, :zone), 4284), 4326))');
+        $stmt->bindParam(':polygon', $feature);
+        $stmt->bindParam(':zone', $zone);
 
         $stmt->execute();
 
