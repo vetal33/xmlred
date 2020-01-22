@@ -4,6 +4,7 @@ $(function () {
     const btnDownloadShp = $('#btn-download-shp');
 
     let numberScale = [];
+    let grades =[];
 
     overlay[0].hidden = true;
     $('.custom-file-input').on('change', function (event) {
@@ -151,6 +152,10 @@ $(function () {
         for (let i = 0; i < 3; i++) {
             numberScale.push(numberScale[i] + numbShift);
         }
+
+        grades = numberScale;
+        grades.unshift(0);
+
     }
 
 
@@ -166,7 +171,8 @@ $(function () {
         });
     }
 
-    function getColor(value, numberScale) {
+    function getColor(value) {
+
         return value > numberScale[3] ? '#a63603' :
             value > numberScale[2] ? '#e6550d' :
                 value > numberScale[1] ? '#fd8d3c' :
@@ -177,7 +183,7 @@ $(function () {
 
     function style(feature) {
         return {
-            fillColor: getColor(feature.properties.km2, numberScale),
+            fillColor: getColor(feature.properties.km2),
             weight: 2,
             opacity: 1,
             color: 'white',
@@ -238,10 +244,11 @@ $(function () {
 
     let legend = L.control({position: 'bottomright'});
 
+
+
     legend.onAdd = function (map) {
 
         let div = L.DomUtil.create('div', 'info legend list-unstyled'),
-            grades = [0, 0.8, 0.9, 1, 1.2],
             labels = [];
 
         // loop through our density intervals and generate a label with a colored square for each interval
@@ -249,7 +256,7 @@ $(function () {
         for (let i = 0; i < grades.length; i++) {
             div.innerHTML +=
                 '<div><i style="background:' + getColor(grades[i] + 0.1) + '"></i> <p>' +
-                grades[i] + (grades[i + 1] ? '&ndash;' + '&nbsp;' + grades[i + 1] : '+') + '</p></div>';
+                grades[i] + ' ' + (grades[i + 1] ? '&ndash;' + '&nbsp;' + grades[i + 1] : '+') + '</p></div>';
         }
 
         return div;
