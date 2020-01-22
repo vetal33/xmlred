@@ -64,7 +64,7 @@ $(function () {
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 overlay[0].hidden = true;
-                console.log('fail');
+
             },
         })
     }
