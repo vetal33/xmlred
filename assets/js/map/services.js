@@ -3,6 +3,8 @@ $(function () {
     const textContent = $('#text-content');
     const btnDownloadShp = $('#btn-download-shp');
 
+    let numberScale = [];
+
     overlay[0].hidden = true;
     $('.custom-file-input').on('change', function (event) {
         let inputFile = event.currentTarget;
@@ -10,7 +12,7 @@ $(function () {
             .find('.custom-file-label')
             .html(inputFile.files[0].name);
         let fileXML = $("#file_form_xmlFile")[0].files[0];
-        //console.log(fileXML);
+
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
@@ -44,15 +46,13 @@ $(function () {
                 overlay[0].hidden = true;
 
                 let dataJson = JSON.parse(data);
-                console.log(dataJson);
-                console.log(dataJson.errors.length);
 
                 if (dataJson.errors.length > 0) {
                     $(btnDownloadShp).addClass('disabled');
                     $('#shp-card').attr('data-name', "");
                     createBlockErrors(dataJson.errors);
                 } else {
-                    $(btnDownloadShp).attr('href', '/load?name='+ dataJson.newXmlName);
+                    $(btnDownloadShp).attr('href', '/load?name=' + dataJson.newXmlName);
                     addMejaToMap(dataJson.boundary, boundaryStyle);
                     addZonyToMap(dataJson.zony, style);
                     visualizeXML(dataJson);
@@ -70,7 +70,7 @@ $(function () {
     }
 
     function visualizeXML(data) {
-        let wrapper = document.getElementById("wrapper");
+        let wrapper = document.getElementByIdq("wrapper");
         let tree = jsonTree.create(data.origXml, wrapper);
         $('#original_name_file').html(data.origXmlName);
         $('#shp-card').attr('data-name', data.newXmlName);
@@ -116,6 +116,7 @@ $(function () {
             return item_new;
         });
 
+        setNumberScale(data);
         clearLayersZony();
 
         geojson = L.geoJson(new_data, {
@@ -125,6 +126,33 @@ $(function () {
 
         layersControl.addOverlay(geojson, 'zony');
     }
+
+
+    function setNumberScale(data) {
+
+        /**  Створюємо масив з значеннями Км2    */
+
+        let zonyArray = data.map(function (item) {
+            return +item.km2;
+        });
+
+        function compareNumeric(a, b) {
+            if (a > b) return 1;
+            if (a == b) return 0;
+            if (a < b) return -1;
+        }
+
+        /**  Сортуємо масив    */
+        zonyArray.sort(compareNumeric);
+
+        let numbShift = (zonyArray[zonyArray.length - 1] - zonyArray[0]) / 5;
+
+        numberScale[0] = zonyArray[0] + numbShift;
+        for (let i = 0; i < 3; i++) {
+            numberScale.push(numberScale[i] + numbShift);
+        }
+    }
+
 
     /**
      * Remove zonyLayers from map
@@ -138,18 +166,18 @@ $(function () {
         });
     }
 
-    function getColor(value) {
-        return value > 1.2 ? '#a63603' :
-            value > 1 ? '#e6550d' :
-                value > 0.9 ? '#fd8d3c' :
-                    value > 0.8 ? '#fdbe85' :
+    function getColor(value, numberScale) {
+        return value > numberScale[3] ? '#a63603' :
+            value > numberScale[2] ? '#e6550d' :
+                value > numberScale[1] ? '#fd8d3c' :
+                    value > numberScale[0] ? '#fdbe85' :
                         '#feedde';
 
     }
 
     function style(feature) {
         return {
-            fillColor: getColor(feature.properties.km2),
+            fillColor: getColor(feature.properties.km2, numberScale),
             weight: 2,
             opacity: 1,
             color: 'white',
@@ -159,7 +187,7 @@ $(function () {
     }
 
     function highlightFeature(e) {
-        var layer = e.target;
+        let layer = e.target;
 
         layer.setStyle({
             weight: 4,
