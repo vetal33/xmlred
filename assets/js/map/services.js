@@ -64,13 +64,13 @@ $(function () {
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 overlay[0].hidden = true;
-
+                console.log('fail');
             },
         })
     }
 
     function visualizeXML(data) {
-        let wrapper = document.getElementByIdq("wrapper");
+        let wrapper = document.getElementById("wrapper");
         let tree = jsonTree.create(data.origXml, wrapper);
         $('#original_name_file').html(data.origXmlName);
         $('#shp-card').attr('data-name', data.newXmlName);
@@ -182,7 +182,7 @@ $(function () {
             opacity: 1,
             color: 'white',
             dashArray: '3',
-            fillOpacity: 0.5
+            fillOpacity: 0.6
         };
     }
 
