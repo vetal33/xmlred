@@ -1,0 +1,106 @@
+module.exports = function (data) {
+
+    let geojson;
+
+    let new_data = data.map(function (item) {
+        let coord = JSON.parse(item.coordinates);
+        let item_new = {
+            "type": "Feature",
+            "properties": {
+                "code": item.code,
+                "popupContent": item.code,
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": coord.coordinates,
+            },
+        };
+
+        return item_new;
+    });
+
+    clearLayersZony();
+
+    geojson = L.geoJson(new_data, {
+        style: style,
+        onEachFeature: onEachFeature,
+    }).bindPopup(function (layer) {
+        console.log(layer);
+        return "шифр - " + layer.feature.properties.popupContent;
+    }).addTo(mymap);
+
+    layersControl.addOverlay(geojson, 'lands');
+    $('#marker-lands').html('<i class="fas fa-check text-success"></i>');
+
+    /**
+     * Remove landsLayers from map
+     */
+    function clearLayersZony() {
+        mymap.eachLayer(function (layer) {
+            if (layer.nameLayer && layer.nameLayer === "landsGeoJSON") {
+                mymap.removeLayer(layer)
+                layersControl.removeLayer(geojson)
+            }
+        });
+    }
+
+    /**
+     * Налаштування кольорів, для відображення зон на карті
+     * @param value
+     * @returns {string}
+     */
+
+    function getColor(value) {
+
+        return (value === '8в' || value === '178в') ? '#a63603' :
+            (value === '6в' || value === '55д') ? '#e6550d' :
+                (value === '5б' || value === '121е') ? '#fd8d3c' :
+                    (value === '103д' || value === '29г') ? '#fdbe85' :
+                        generateColor();
+
+    }
+
+   function generateColor(){
+        let r=255;
+        let g=Math.floor(Math.random() * (256));
+        let b=Math.floor(Math.random() * (256));
+
+        return '#' + r.toString(16) + g.toString(16) + b.toString(16);
+   }
+
+    /**
+     * Повертає об'єкт Style з кольором в залежності від значення Км2
+     * @param feature
+     * @returns {{fillColor: *, color: string, fillOpacity: number, weight: number, opacity: number, dashArray: string}}
+     */
+
+    function style(feature) {
+
+        return {
+            fillColor: getColor(feature.properties.code),
+            weight: 0,
+            opacity: 1,
+            color: 'white',
+            dashArray: '1',
+            fillOpacity: 0.6
+        };
+    }
+
+    function onEachFeature(feature, layer) {
+        layer.nameLayer = "landsGeoJSON",
+            layer.on({
+/*                mouseover: highlightFeature,
+                mouseout: resetHighlight,*/
+                //click: onMapClick(),
+            });
+    }
+
+/*    function onMapClick(e) {
+        popup
+            .setLatLng(e.latlng)
+            .setContent("You clicked the map at " + e.latlng.toString())
+            .openOn(mymap);
+    }*/
+
+    return true;
+};

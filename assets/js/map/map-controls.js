@@ -1,8 +1,9 @@
 $(document).ready(function () {
+
     /**
-     * button full extent zoom
+     * Створюємо кнопку Full extent
      */
-    let fullzoom = L.Control.extend({
+    let fullzoomButton = L.Control.extend({
         options: {
             position: 'topleft',
         },
@@ -21,5 +22,8 @@ $(document).ready(function () {
             return container;
         }
     });
-    mymap.addControl(new fullzoom());
+
+    mymap.addControl(new fullzoomButton());
+
+
 });

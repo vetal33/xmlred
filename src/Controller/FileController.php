@@ -47,6 +47,8 @@ class FileController extends AbstractController
 
         if ($request->isXmlHttpRequest()) {
             /**@var UploadedFile $uploadedFile */
+
+            dump($uploadedFile = $request->files);
             $uploadedFile = $request->files->get('xmlFile');
             $errors = $validateHelper->validateNormativeXml($uploadedFile);
 
@@ -116,8 +118,14 @@ class FileController extends AbstractController
         $parseXml = $normativeXmlParser->parse($xmlObj);
         dump($xmlObj);
         dump($parseXml);
-        $data = $normativeXmlSaver->toShape($parseXml);
-        dump($data);
+        $result = $normativeXmlSaver->toShape($parseXml);
+        dump($result);
+
+        if(!$result) {
+            die;
+        }
+
+
         die;
 
 

@@ -27,7 +27,6 @@ class FileRepository extends ServiceEntityRepository
             ->prepare('select ST_AsText(st_transform(st_transform(ST_GeomFromText(:polygon, :zone), 4284), 4326))');
         $stmt->bindParam(':polygon', $feature);
         $stmt->bindParam(':zone', $zone);
-
         $stmt->execute();
 
         return $stmt->fetchAll()['0']['st_astext'];
