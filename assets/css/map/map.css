@@ -1,3 +1,5 @@
+@import "../map/map-style-setting.css";
+
 #mapid {
     height: 580px;
 }
@@ -25,3 +27,9 @@
     opacity: 0.7;
 }
 
+/*.custom .leaflet-popup-tip,*/
+.leaflet-popup-content-wrapper {
+    background: rgba(255,255,255,0.8);
+    color: #5c3512;
+    border-radius: 4px;
+}
