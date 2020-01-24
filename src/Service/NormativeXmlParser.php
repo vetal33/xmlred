@@ -33,6 +33,7 @@ class NormativeXmlParser implements ParserXml
     public function parse(\SimpleXMLElement $simpleXMLElement)
     {
         $array = json_decode(json_encode($simpleXMLElement), true);
+        //dump($array);
         if ($this->getPolyline($array) && $this->getPoints($array)) {
             $result = $this->parseDataXml($array);
             return $result;
@@ -53,12 +54,6 @@ class NormativeXmlParser implements ParserXml
         return $dataXml;
     }
 
-    private function getNodeString()
-    {
-        $str = '[InfoPart]';
-        return $str;
-    }
-
     public function parseDataXml(array $dataXml)
     {
         $currentPoints = [];
@@ -71,19 +66,33 @@ class NormativeXmlParser implements ParserXml
             } else {
                 $currentPoints[$value] = $this->getGeometry($currentPoints[$value]);
             }
-
         }
-
         return $currentPoints;
     }
 
+
     private function getGeometry(array $data)
     {
+        $coordinates = [];
+
         if (array_key_exists('Externals', $data)) {
             $valueUlid = $this->getUlid($data['Externals']);
             if ($valueUlid !== '' && array_key_exists((int)$valueUlid, $this->polylines)) {
-                return $this->getCurrentPoints($this->polylines[(int)$valueUlid]);
+                $coordinates['external'] = $this->getCurrentPoints($this->polylines[(int)$valueUlid]);
             }
+            if (array_key_exists('Internals', $data['Externals'])) {
+                $valueUlidInternal = $this->getUlidInternal($data['Externals']['Internals']);
+                if (!$valueUlidInternal) {
+                    $coordinates['internal'] = [];
+                }
+
+                foreach ($valueUlidInternal as $value) {
+                    if (array_key_exists((int)$value, $this->polylines)) {
+                        $coordinates['internal'][] = $this->getCurrentPoints($this->polylines[(int)$value]);
+                    }
+                }
+            }
+            return $coordinates;
         } else {
             return array();
         }
@@ -100,15 +109,31 @@ class NormativeXmlParser implements ParserXml
             return true;
         }
         return false;
-
     }
 
+    /**
+     *
+     * @param $externals
+     * @return string
+     */
     private function getUlid($externals)
     {
         $userdata = '';
-        array_walk_recursive($externals, function ($item, $key) use (&$userdata) {
+        array_walk_recursive($externals['Boundary'], function ($item, $key) use (&$userdata) {
             if ($key === 'ULID') {
                 $userdata = $item;
+            }
+        }, $userdata);
+
+        return $userdata;
+    }
+
+    private function getUlidInternal($internal)
+    {
+        $userdata = [];
+        array_walk_recursive($internal, function ($item, $key) use (&$userdata) {
+            if ($key === 'ULID') {
+                $userdata[] = $item;
             }
         }, $userdata);
 
@@ -179,5 +204,4 @@ class NormativeXmlParser implements ParserXml
     {
         return $this->errors;
     }
-
 }

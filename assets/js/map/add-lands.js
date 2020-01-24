@@ -25,7 +25,6 @@ module.exports = function (data) {
         style: style,
         onEachFeature: onEachFeature,
     }).bindPopup(function (layer) {
-        console.log(layer);
         return "шифр - " + layer.feature.properties.popupContent;
     }).addTo(mymap);
 
@@ -60,16 +59,16 @@ module.exports = function (data) {
 
     }
 
-   function generateColor(){
-        let r=255;
-        let g=Math.floor(Math.random() * (256));
-        let b=Math.floor(Math.random() * (256));
+    function generateColor() {
+        let r = 255;
+        let g = Math.floor(Math.random() * (256));
+        let b = Math.floor(Math.random() * (256));
 
         return '#' + r.toString(16) + g.toString(16) + b.toString(16);
-   }
+    }
 
     /**
-     * Повертає об'єкт Style з кольором в залежності від значення Км2
+     * Повертає об'єкт Style з кольором в залежності від угіддя
      * @param feature
      * @returns {{fillColor: *, color: string, fillOpacity: number, weight: number, opacity: number, dashArray: string}}
      */
@@ -87,20 +86,8 @@ module.exports = function (data) {
     }
 
     function onEachFeature(feature, layer) {
-        layer.nameLayer = "landsGeoJSON",
-            layer.on({
-/*                mouseover: highlightFeature,
-                mouseout: resetHighlight,*/
-                //click: onMapClick(),
-            });
+        layer.nameLayer = "landsGeoJSON"
     }
-
-/*    function onMapClick(e) {
-        popup
-            .setLatLng(e.latlng)
-            .setContent("You clicked the map at " + e.latlng.toString())
-            .openOn(mymap);
-    }*/
 
     return true;
 };

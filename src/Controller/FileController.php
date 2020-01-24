@@ -46,9 +46,8 @@ class FileController extends AbstractController
         $form = $this->createForm(FileFormType::class, $file);
 
         if ($request->isXmlHttpRequest()) {
-            /**@var UploadedFile $uploadedFile */
 
-            dump($uploadedFile = $request->files);
+            /**@var UploadedFile $uploadedFile */
             $uploadedFile = $request->files->get('xmlFile');
             $errors = $validateHelper->validateNormativeXml($uploadedFile);
 
@@ -72,11 +71,7 @@ class FileController extends AbstractController
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             }
 
-            //$boundary = $normativeXmlParser->parseDataXml($array);
-            dump($parseXml);
-
             $data = $normativeXmlSaver->toGeoJson($parseXml);
-            dump($data);
 
             $data['origXml'] = $xmlObj;
             $data['origXmlName'] = $uploader->getOriginalName();
@@ -89,8 +84,6 @@ class FileController extends AbstractController
              $entityManager->flush();*/
 
             return new JsonResponse(json_encode($data), Response::HTTP_OK);
-
-
         }
 
         return $this->render('file/index.html.twig', [
@@ -116,7 +109,7 @@ class FileController extends AbstractController
         $name = $request->query->get('name');
         $xmlObj = $uploader->getSimpleXML($name);
         $parseXml = $normativeXmlParser->parse($xmlObj);
-        dump($xmlObj);
+       // dump($xmlObj);
         dump($parseXml);
         $result = $normativeXmlSaver->toShape($parseXml);
         dump($result);
@@ -126,7 +119,7 @@ class FileController extends AbstractController
         }
 
 
-        die;
+        //die;
 
 
         $response = new StreamedResponse(function () use ($uploader) {

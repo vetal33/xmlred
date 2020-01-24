@@ -10,9 +10,7 @@ use Shapefile\Shapefile;
 use Shapefile\ShapefileException;
 use Shapefile\ShapefileWriter;
 use Shapefile\Geometry\Point;
-use Shapefile\ShapefileReader;
 use Symfony\Component\Security\Core\Security;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 class NormativeXmlSaver
 {
@@ -63,26 +61,32 @@ class NormativeXmlSaver
 
         $data = [];
         foreach ($coord as $key => $value) {
-            if (count(reset($value)) > 2) {
+
+            if (!array_key_exists('external', $value)) {
                 foreach ($value as $item => $valMulti) {
-                    //dump($valMulti);
-                    $polygon = $this->arrayToPolygon($valMulti['coordinates']);
+                    if (array_key_exists('internal', $valMulti['coordinates'])) {
+                        $polygon = $this->arrayToPolygon($valMulti['coordinates']['external'], $valMulti['coordinates']['internal']);
+                    } else {
+                        $polygon = $this->arrayToPolygon($valMulti['coordinates']['external']);
+                    }
 
                     $wkt = $this->convertToWGS($polygon, $numberZone);
                     $data[$key][$item]['coordinates'] = $this->getGeoJson($wkt);
 
-                    if (array_key_exists('ZoneNumber',$valMulti)) {
+                    if (array_key_exists('ZoneNumber', $valMulti)) {
                         $data[$key][$item]['name'] = $valMulti['ZoneNumber'];
                         $data[$key][$item]['km2'] = $valMulti['Km2'];
-                    } if(array_key_exists('LocalFactorCode', $valMulti)) {
+                    }
+                    if (array_key_exists('LocalFactorCode', $valMulti)) {
                         $data[$key][$item]['name'] = $valMulti['NameFactor'];
                         $data[$key][$item]['code'] = $valMulti['LocalFactorCode'];
-                    } if(array_key_exists('CodeAgroGroup', $valMulti)) {
+                    }
+                    if (array_key_exists('CodeAgroGroup', $valMulti)) {
                         $data[$key][$item]['code'] = $valMulti['CodeAgroGroup'];
                     }
                 }
             } else {
-                $polygon = $this->arrayToPolygon($value);
+                $polygon = $this->arrayToPolygon($value['external']);
 
                 $wkt = $this->convertToWGS($polygon, $numberZone);
                 $data[$key] = $this->getGeoJson($wkt);
@@ -93,9 +97,8 @@ class NormativeXmlSaver
 
     private function getNumberZoneFromCoord(array $array)
     {
-        if (array_key_exists('Y', $array[0])) {
-
-            $zone = substr($array[0]['Y'],0,1);
+        if (array_key_exists('Y', $array['external'][0])) {
+            $zone = substr($array['external'][0]['Y'], 0, 1);
             return (integer)('10630' . $zone);
         }
         return false;
@@ -111,18 +114,22 @@ class NormativeXmlSaver
             foreach ($coord as $key => $value) {
                 $shapeFileWriter = $this->createShapeFile($key);
 
-                if (count(reset($value)) > 2) {
+                if (!array_key_exists('external', $value)) {
                     foreach ($value as $item => $valMulti) {
-                        $polygon = $this->arrayToPolygon($valMulti['coordinates']);
+                        if (array_key_exists('internal', $valMulti['coordinates'])) {
+                            $polygon = $this->arrayToPolygon($valMulti['coordinates']['external'], $valMulti['coordinates']['internal']);
+                        } else {
+                            $polygon = $this->arrayToPolygon($valMulti['coordinates']['external']);
+                        }
                         $shapeFileWriter->writeRecord($polygon);
                     }
                 } else {
-                    $polygon = $this->arrayToPolygon($value);
+                    $polygon = $this->arrayToPolygon($value['external']);
                     $shapeFileWriter->writeRecord($polygon);
                 }
             }
 
-            $this->addToZip();
+            // $this->addToZip();
             return true;
 
         } catch (ShapefileException $e) {
@@ -136,26 +143,45 @@ class NormativeXmlSaver
 
     /**
      * @param array $coord
+     * @param array $coordInternal
      * @return Polygon
      */
-    private function arrayToPolygon(array $coord): Polygon
+    private function arrayToPolygon(array $coord, array $coordInternal = []): Polygon
     {
-        $linestring = $this->createLinestring($coord);
-        $polygon = $this->createPolygon($linestring);
+        $linestringInternal = [];
+        $linestringOuter = $this->createLinestring($coord);
+
+        if ($coordInternal) {
+            foreach ($coordInternal as $coord) {
+                $linestringInternal[] = $this->createLinestring($coord);
+            }
+        }
+        $polygon = $linestringInternal !== '' ? $this->createPolygon($linestringOuter, $linestringInternal) : $this->createPolygon($linestringOuter);
 
         return $polygon;
     }
 
 
     /**
-     * @param Linestring $linestring
+     * @param Linestring $linestringOut
+     * @param array $linestringInArray
      * @return Polygon|null
      */
-    private function createPolygon(Linestring $linestring): ?Polygon
+    private function createPolygon(Linestring $linestringOut, array $linestringInArray = [])
     {
+
+        if (!$linestringOut->isClosedRing()) {
+            return false;
+        }
+
         $polygon = new Polygon();
-        if ($linestring->isClosedRing()) {
-            $polygon->addRing($linestring);
+        $polygon->addRing($linestringOut);
+        if ($linestringInArray) {
+            foreach ($linestringInArray as $linestringIn) {
+                if ($linestringIn->isClosedRing()) {
+                    $polygon->addRing($linestringIn);
+                }
+            }
         }
         return $polygon;
     }
@@ -196,6 +222,7 @@ class NormativeXmlSaver
 
     private function convertToWGS(Polygon $polygon, int $zone): string
     {
+
         $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
         return $wkt;
     }
@@ -251,9 +278,5 @@ class NormativeXmlSaver
             $this->errors = 'Виникли проблеми із збереження в  zip файл!';
             return false;
         }
-
-
     }
-
-
 }

@@ -119,7 +119,7 @@ module.exports = function (data) {
         let layer = e.target;
 
         layer.setStyle({
-            weight: 4,
+            weight: 3,
             color: '#666',
             dashArray: '',
             fillOpacity: 0.7

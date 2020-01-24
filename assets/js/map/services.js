@@ -4,7 +4,6 @@ $(function () {
     const btnDownloadShp = $('#btn-download-shp');
 
 
-
     overlay[0].hidden = true;
 
     $('.custom-file-input').on('change', function (event) {
@@ -48,12 +47,16 @@ $(function () {
                 } else {
                     $(btnDownloadShp).attr('href', '/load?name=' + dataJson.newXmlName);
                     addMejaToMap(dataJson.boundary, boundaryStyle);
-                    addZonyToMap(dataJson.zony);
-                    addLocalToMap(dataJson.localFactor);
-                    addLandsToMap(dataJson.lands);
-
+                    if (dataJson.zony) {
+                        addZonyToMap(dataJson.zony);
+                    }
+                    if (dataJson.localFactor) {
+                        addLocalToMap(dataJson.localFactor);
+                    }
+                    if (dataJson.lands) {
+                        addLandsToMap(dataJson.lands);
+                    }
                     visualizeXML(dataJson);
-
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -107,7 +110,6 @@ $(function () {
     }
 
     function createTableShp(data) {
-        console.log(data);
         const tableShp = document.createElement('');
 
         let htmlDiv = '<tr><td>$13 USD</td><td>$13 USD</td>' +

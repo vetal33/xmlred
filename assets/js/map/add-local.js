@@ -24,6 +24,8 @@ module.exports = function (data) {
     geojson = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
+    }).bindPopup(function (layer) {
+        return layer.feature.properties.name;
     }).addTo(mymap);
 
     layersControl.addOverlay(geojson, 'local-factors');

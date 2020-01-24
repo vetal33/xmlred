@@ -8,4 +8,9 @@ $(document).ready(function () {
         "fillColor": "#5bff10",
     };
 
+    window.selectlandsStyle = {
+        "color": "#ff735b",
+        "weight": 0,
+        "opacity": 0,
+    };
 });
