@@ -9,8 +9,8 @@ $(document).ready(function () {
     };
 
     window.selectlandsStyle = {
-        "color": "#ff735b",
-        "weight": 0,
-        "opacity": 0,
+        "color": "#666",
+        "weight": 2,
+        "opacity": 1,
     };
 });

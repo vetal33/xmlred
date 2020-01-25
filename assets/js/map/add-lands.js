@@ -86,7 +86,47 @@ module.exports = function (data) {
     }
 
     function onEachFeature(feature, layer) {
-        layer.nameLayer = "landsGeoJSON"
+        layer.nameLayer = "landsGeoJSON";
+        layer.on({
+            click: selectFeature
+        });
+    }
+
+    function selectFeature(e) {
+        let layer = e.target;
+        resetHighlight();
+
+        let coords = layer.feature.geometry.coordinates;
+        let selected = getCoords(coords);
+
+        let selectedLayer = L.geoJSON(selected).addTo(mymap);
+        selectedLayer.nameLayer = "Selected";
+        selectedLayer.setStyle(selectlandsStyle);
+
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            selectedLayer.bringToFront();
+        }
+    }
+
+    function getCoords(coords) {
+        return coords.map(function (item) {
+            return {
+                "type": "Feature",
+                "nameLayer": "Selected",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": item,
+                }
+            }
+        });
+    }
+
+    function resetHighlight() {
+        mymap.eachLayer(function (layer) {
+            if (typeof layer.nameLayer !== "undefined" && layer.nameLayer === "Selected") {
+                mymap.removeLayer(layer);
+            }
+        });
     }
 
     return true;
