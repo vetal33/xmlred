@@ -28,7 +28,7 @@ module.exports = function (data) {
         return "шифр - " + layer.feature.properties.popupContent;
     }).addTo(mymap);
 
-    layersControl.addOverlay(geojson, 'lands');
+    layersControl.addOverlay(geojson, 'Грунти');
     $('#marker-lands').html('<i class="fas fa-check text-success"></i>');
 
     /**

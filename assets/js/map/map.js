@@ -2,7 +2,7 @@ $(document).ready(function () {
 
     /**  Створюєм глобальний об'єкт Map   */
 
-    window.mymap = L.map('mapid').setView([48.5, 31], 6);
+    window.mymap = L.map('map').setView([48.5, 31], 6);
 
 
     /** Створюєм карту MapBox  */
@@ -51,6 +51,6 @@ $(document).ready(function () {
 
     window.layersControl = L.control.layers(baseLayersMap).addTo(mymap);
 
-    layersControl.addOverlay(kadastr, 'kadastr');
+    layersControl.addOverlay(kadastr, 'Кадастрова карта');
 
 });

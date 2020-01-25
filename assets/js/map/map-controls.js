@@ -23,7 +23,31 @@ $(document).ready(function () {
         }
     });
 
+    /**
+     * Створюємо кнопку Clear
+     */
+    let clearButton = L.Control.extend({
+        options: {
+            position: 'topleft',
+        },
+        onAdd: function (map) {
+            let container = L.DomUtil.create('a', 'btn btn-default');
+            container.innerHTML += '<i class="fas fa-eraser"></i>';
+            container.type = "button";
+            container.title = "Clear selected";
+            container.onclick = function () {
+                mymap.eachLayer(function (layer) {
+                    if (typeof layer.nameLayer !== "undefined" && layer.nameLayer === "Selected") {
+                        mymap.removeLayer(layer);
+                    }
+                });
+            };
+            return container;
+        }
+    });
+
     mymap.addControl(new fullzoomButton());
+    mymap.addControl(new clearButton());
 
 
 });

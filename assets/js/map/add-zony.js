@@ -29,7 +29,7 @@ module.exports = function (data) {
         onEachFeature: onEachFeature,
     }).addTo(mymap);
 
-    layersControl.addOverlay(geojson, 'zony');
+    layersControl.addOverlay(geojson, 'Економіко-пл. зони');
     $('#marker-zony').html('<i class="fas fa-check text-success"></i>');
 
     function setNumberScale(data) {

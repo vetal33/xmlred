@@ -28,7 +28,7 @@ module.exports = function (data) {
         return layer.feature.properties.name;
     }).addTo(mymap);
 
-    layersControl.addOverlay(geojson, 'local-factors');
+    layersControl.addOverlay(geojson, 'Локальні фактори');
     $('#marker-local').html('<i class="fas fa-check text-success"></i>');
 
 

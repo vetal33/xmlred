@@ -1,7 +1,7 @@
 @import "../map/map-style-setting.css";
 
-#mapid {
-    height: 580px;
+#map {
+    height: 735px;
 }
 .info {
     padding: 6px 8px;
