@@ -113,6 +113,7 @@ class NormativeXmlSaver
 
             foreach ($coord as $key => $value) {
                 $shapeFileWriter = $this->createShapeFile($key);
+                $shapeFileWriter = $this->createFields($shapeFileWriter, $key);
 
                 if (!array_key_exists('external', $value)) {
                     foreach ($value as $item => $valMulti) {
@@ -121,6 +122,8 @@ class NormativeXmlSaver
                         } else {
                             $polygon = $this->arrayToPolygon($valMulti['coordinates']['external']);
                         }
+
+                        $polygon = $this->setDataToField($polygon,$key,$valMulti);
                         $shapeFileWriter->writeRecord($polygon);
                     }
                 } else {
@@ -139,6 +142,30 @@ class NormativeXmlSaver
                 . "\nDetails: " . $e->getDetails();
             return false;
         }
+    }
+
+    /**
+     * Додає дані в поля *.shp файлів
+     *
+     * @param Polygon $polygon
+     * @param string $layerName
+     * @param array $data
+     * @return Polygon
+     */
+    private function setDataToField(Polygon $polygon, string $layerName, array $data): Polygon
+    {
+        if ($layerName === "localFactor") {
+            $polygon->setData('name', $data['NameFactor'] );
+        }
+        if ($layerName === "lands") {
+            $polygon->setData('name', $data['CodeAgroGroup'] );
+        }
+        if ($layerName === "zony") {
+            $polygon->setData('name', $data['ZoneNumber'] );
+            $polygon->setData('km2', $data['Km2'] );
+        }
+
+        return $polygon;
     }
 
     /**
@@ -201,6 +228,10 @@ class NormativeXmlSaver
     }
 
 
+    /**
+     * @param $name
+     * @return ShapefileWriter
+     */
     private function createShapeFile($name): ShapefileWriter
     {
         $fileName = $this->destination . '/' . $name . '_' . date('y-m-d') . '_' . uniqid() . '.shp';
@@ -212,6 +243,34 @@ class NormativeXmlSaver
         return $shapefileWriter;
     }
 
+    /**
+     * Додає поля в таблицю *.shp файлів
+     *
+     * @param ShapefileWriter $shapefileWriter
+     * @param string $nameLayer
+     * @return ShapefileWriter
+     */
+    private function createFields(ShapefileWriter $shapefileWriter, string $nameLayer): ShapefileWriter
+    {
+        $shapefileWriter->setCharset('utf-8');
+
+        if ($nameLayer === "lands") {
+            $shapefileWriter->addCharField('name', 10);
+        }
+        if ($nameLayer === "localFactor") {
+            $shapefileWriter->addCharField('name');
+        }
+        if ($nameLayer === "zony") {
+            $shapefileWriter->addCharField('name', 10);
+            $shapefileWriter->addFloatField('km2', 4,2);
+        }
+
+        return $shapefileWriter;
+    }
+
+    /**
+     * @param string $dir
+     */
     private function makeDir(string $dir): void
     {
         $pathName = $this->shapePath . '/export/' . $dir;

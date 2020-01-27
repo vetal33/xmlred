@@ -38,7 +38,12 @@ class FileController extends AbstractController
      * @return Response
      * @throws \Exception
      */
-    public function index(Request $request, EntityManagerInterface $entityManager, Uploader $uploader, NormativeXmlParser $normativeXmlParser, NormativeXmlSaver $normativeXmlSaver, ValidateHelper $validateHelper): Response
+    public function index(Request $request,
+                          EntityManagerInterface $entityManager,
+                          Uploader $uploader, NormativeXmlParser
+                          $normativeXmlParser, NormativeXmlSaver
+                          $normativeXmlSaver, ValidateHelper
+                          $validateHelper): Response
     {
         $data = [];
         $file = new File;
@@ -70,6 +75,11 @@ class FileController extends AbstractController
                 $data['errors'] = $normativeXmlParser->getErrors();
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             }
+
+            if($this->isGranted('ROLE_USER')) {
+                $result = $normativeXmlSaver->toShape($parseXml);
+            }
+
 
             $data = $normativeXmlSaver->toGeoJson($parseXml);
 
