@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+    <div class="content-wrapper">
+        <section class="content-header">
+        </section>
+        <section class="content">
+            <div class="error-page">
+                <h2 class="headline text-warning"> {{ status_code }}</h2>
+                <div class="error-content pt-4">
+                    <h3><i class="fas fa-exclamation-triangle text-warning"></i> Такої сторінки не існує.</h3>
+                    <p>
+                        {% if  exception.code > 0 or is_granted('ROLE_ADMIN') %}
+                            {{ exception.message }}
+                        {% else %}
+                            {{ status_text }}
+                        {% endif %}
+                         Ви можете перейти на
+                        <a href="{{ path('homepage') }}">головну сторінка</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}

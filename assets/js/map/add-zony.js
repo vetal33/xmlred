@@ -22,6 +22,7 @@ module.exports = function (data) {
     });
 
     setNumberScale(data);
+
     clearLayersZony();
 
     geojson = L.geoJson(new_data, {
