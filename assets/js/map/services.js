@@ -21,7 +21,7 @@ $(function () {
 
     function sendFile(data) {
         $.ajax({
-            url: '/',
+            url: Routing.generate('homepage'),
             method: 'POST',
             data: data,
             dataType: 'json',

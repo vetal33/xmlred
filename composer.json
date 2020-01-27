@@ -6,6 +6,8 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-json": "*",
+        "ext-zip": "*",
+        "friendsofsymfony/jsrouting-bundle": "^2.5",
         "gasparesganga/php-shapefile": "^3.1",
         "jsor/doctrine-postgis": "^1.7",
         "league/html-to-markdown": "^4.9",
@@ -35,8 +37,7 @@
         "symfony/yaml": "4.4.*",
         "twig/cssinliner-extra": "^3.0",
         "twig/extra-bundle": "^3.0",
-        "twig/inky-extra": "^3.0",
-        "ext-zip": "*"
+        "twig/inky-extra": "^3.0"
     },
     "require-dev": {
         "symfony/debug-pack": "*",

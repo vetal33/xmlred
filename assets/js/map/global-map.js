@@ -9,4 +9,3 @@ import '../map/services';
 import 'leaflet';
 import '../map/leaflet-bing-layer';
 import '../map/map-controls';
-import {win} from "leaflet/src/core/Browser";
