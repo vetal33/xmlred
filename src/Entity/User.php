@@ -53,6 +53,13 @@ class User implements UserInterface
     private $confirmationCode;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $folderName;
+
+    /**
      * @var bool
      *
      * @ORM\Column(type="boolean")
@@ -258,5 +265,28 @@ class User implements UserInterface
 
         return $this;
     }
+
+
+    /**
+     * @return string|null
+     */
+    public function getFolderName(): ?string
+    {
+        return $this->folderName;
+    }
+
+
+    /**
+     * @param string $folderName
+     * @return User
+     */
+    public function setFolderName(string $folderName): self
+    {
+        $this->folderName = $folderName;
+        return $this;
+    }
+
+
+
 
 }

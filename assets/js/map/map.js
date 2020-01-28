@@ -42,6 +42,7 @@ $(document).ready(function () {
      * Створюєм набор додткових шарів для відображення(можна влючить-виключить кожен)
      * @type {{kadastr: *}}
      */
+
     let overlayMap = {
         "kadastr": kadastr,
     };

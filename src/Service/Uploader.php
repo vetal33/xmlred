@@ -31,6 +31,12 @@ class Uploader
      */
     private $filesystem;
 
+    /**
+     * @var string
+     */
+    private $uniquePostfix;
+
+
     private $errors = [];
 
     /**
@@ -45,6 +51,7 @@ class Uploader
         $this->uploadPath = $uploadPath;
         $this->shapePath = $shapePath;
         $this->filesystem = $publicUploadsFilesystem;
+        $this->uniquePostfix = uniqid();
     }
 
 
@@ -57,7 +64,7 @@ class Uploader
 
         $destination = $this->uploadPath . '/' . self::XML_NORMATIVE;
 
-        $this->newNameFile = $originalName . "-" . uniqid() . "." . $uploadedFile->guessClientExtension();
+        $this->newNameFile = $originalName . "-" . $this->uniquePostfix . "." . $uploadedFile->guessClientExtension();
         $this->originalName = $originalName . "." . $uploadedFile->guessClientExtension();
         $uploadedFile->move($destination, $this->newNameFile);
     }
@@ -131,5 +138,15 @@ class Uploader
     {
         return $this->newNameFile;
     }
+
+    /**
+     * @return string
+     */
+    public function getUniquePostfix(): string
+    {
+        return $this->uniquePostfix;
+    }
+
+
 
 }

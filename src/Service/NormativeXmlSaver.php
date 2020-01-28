@@ -10,11 +10,10 @@ use Shapefile\Shapefile;
 use Shapefile\ShapefileException;
 use Shapefile\ShapefileWriter;
 use Shapefile\Geometry\Point;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class NormativeXmlSaver
 {
-
     /**
      * @var string
      */
@@ -25,10 +24,11 @@ class NormativeXmlSaver
     private $fileRepository;
 
     private $errors = [];
+
     /**
-     * @var Security
+     * @var object|string
      */
-    private $security;
+    private $user;
 
     /**
      * @var string
@@ -38,30 +38,39 @@ class NormativeXmlSaver
     /**
      * @var string
      */
-    private $userFolderName;
-
+    private $uniquePostfix;
 
     /**
      * NormativeXmlSaver constructor.
      * @param string $shapePath
      * @param FileRepository $fileRepository
-     * @param Security $security
+     * @param Uploader $uploader
+     * @param TokenStorageInterface $tokenStorage
      */
 
-    public function __construct(string $shapePath, FileRepository $fileRepository, Security $security)
+    public function __construct(string $shapePath,
+                                FileRepository $fileRepository,
+                                Uploader $uploader,
+                                TokenStorageInterface $tokenStorage)
     {
         $this->shapePath = $shapePath;
         $this->fileRepository = $fileRepository;
-        $this->security = $security;
+        $this->user = $tokenStorage->getToken()->getUser();
+        $this->uniquePostfix = $uploader->getUniquePostfix();
     }
 
-    public function toGeoJson(array $coord)
+    /**
+     * Створюєм GeoJson фай для подальшого відображення на карті
+     *
+     * @param array $coord
+     * @return array
+     */
+    public function toGeoJson(array $coord): array
     {
         $numberZone = $this->getNumberZoneFromCoord(reset($coord));
 
         $data = [];
         foreach ($coord as $key => $value) {
-
             if (!array_key_exists('external', $value)) {
                 foreach ($value as $item => $valMulti) {
                     if (array_key_exists('internal', $valMulti['coordinates'])) {
@@ -95,8 +104,16 @@ class NormativeXmlSaver
         return $data;
     }
 
+    /**
+     * Отримуємо номер зони системи координат СК-63, для подальшого вокорисатння у перерахунку
+     *
+     * @param array $array
+     * @return bool|int
+     */
     private function getNumberZoneFromCoord(array $array)
     {
+        //TODO треба переписать, не подобається
+
         if (array_key_exists('Y', $array['external'][0])) {
             $zone = substr($array['external'][0]['Y'], 0, 1);
             return (integer)('10630' . $zone);
@@ -104,15 +121,21 @@ class NormativeXmlSaver
         return false;
     }
 
-    public function toShape(array $coord)
+    /**
+     * Функція для створення shp файлів використовуєчи масив із вихідними даними
+     *
+     * @param array $coord
+     * @return bool
+     */
+    public function toShape(array $coord): bool
     {
         try {
-            $this->userFolderName = preg_replace('/[^\p{L}\p{N}\s]/u', '', $this->security->getUser()->getUsername());
-            $this->makeDir($this->userFolderName);
-            $this->destination = $this->shapePath . '/export/' . $this->userFolderName;
+            $userFolderName = $this->user->getFolderName();
+            $this->makeDir($userFolderName);
+            $this->destination = $this->shapePath . '/export/' . $userFolderName;
 
             foreach ($coord as $key => $value) {
-                $shapeFileWriter = $this->createShapeFile($key);
+                $shapeFileWriter = $this->createShapeFile($key, $this->uniquePostfix);
                 $shapeFileWriter = $this->createFields($shapeFileWriter, $key);
 
                 if (!array_key_exists('external', $value)) {
@@ -123,7 +146,7 @@ class NormativeXmlSaver
                             $polygon = $this->arrayToPolygon($valMulti['coordinates']['external']);
                         }
 
-                        $polygon = $this->setDataToField($polygon,$key,$valMulti);
+                        $polygon = $this->setDataToField($polygon, $key, $valMulti);
                         $shapeFileWriter->writeRecord($polygon);
                     }
                 } else {
@@ -132,7 +155,6 @@ class NormativeXmlSaver
                 }
             }
 
-            // $this->addToZip();
             return true;
 
         } catch (ShapefileException $e) {
@@ -155,14 +177,14 @@ class NormativeXmlSaver
     private function setDataToField(Polygon $polygon, string $layerName, array $data): Polygon
     {
         if ($layerName === "localFactor") {
-            $polygon->setData('name', $data['NameFactor'] );
+            $polygon->setData('name', $data['NameFactor']);
         }
         if ($layerName === "lands") {
-            $polygon->setData('name', $data['CodeAgroGroup'] );
+            $polygon->setData('name', $data['CodeAgroGroup']);
         }
         if ($layerName === "zony") {
-            $polygon->setData('name', $data['ZoneNumber'] );
-            $polygon->setData('km2', $data['Km2'] );
+            $polygon->setData('name', $data['ZoneNumber']);
+            $polygon->setData('km2', $data['Km2']);
         }
 
         return $polygon;
@@ -192,15 +214,13 @@ class NormativeXmlSaver
     /**
      * @param Linestring $linestringOut
      * @param array $linestringInArray
-     * @return Polygon|null
+     * @return Polygon|bool
      */
     private function createPolygon(Linestring $linestringOut, array $linestringInArray = [])
     {
-
         if (!$linestringOut->isClosedRing()) {
             return false;
         }
-
         $polygon = new Polygon();
         $polygon->addRing($linestringOut);
         if ($linestringInArray) {
@@ -210,31 +230,33 @@ class NormativeXmlSaver
                 }
             }
         }
+
         return $polygon;
     }
 
     /**
-     * @param array $coord
+     * @param array $coords
      * @return Linestring
      */
-    private function createLinestring(array $coord): Linestring
+    private function createLinestring(array $coords): Linestring
     {
         $linestring = new Linestring();
-        foreach ($coord as $key => $coords) {
-            $point = new Point($coords['Y'], $coords['X']);
+        foreach ($coords as $key => $coord) {
+            $point = new Point($coord['Y'], $coord['X']);
             $linestring->addPoint($point);
         }
+
         return $linestring;
     }
 
-
     /**
-     * @param $name
+     * @param string $name
+     * @param string $uniqueName
      * @return ShapefileWriter
      */
-    private function createShapeFile($name): ShapefileWriter
+    private function createShapeFile(string $name, string $uniqueName): ShapefileWriter
     {
-        $fileName = $this->destination . '/' . $name . '_' . date('y-m-d') . '_' . uniqid() . '.shp';
+        $fileName = $this->destination . '/' . $name . '_' . date('y-m-d') . '_' . $uniqueName . '.shp';
 
         /** @var ShapefileWriter $shapefileWriter */
         $shapefileWriter = new ShapefileWriter($fileName);
@@ -262,7 +284,7 @@ class NormativeXmlSaver
         }
         if ($nameLayer === "zony") {
             $shapefileWriter->addCharField('name', 10);
-            $shapefileWriter->addFloatField('km2', 4,2);
+            $shapefileWriter->addFloatField('km2', 4, 2);
         }
 
         return $shapefileWriter;
@@ -279,13 +301,26 @@ class NormativeXmlSaver
         }
     }
 
+    /**
+     * Конвертуєм координати із СК-63 в WGS
+     *
+     * @param Polygon $polygon
+     * @param int $zone
+     * @return string
+     */
     private function convertToWGS(Polygon $polygon, int $zone): string
     {
-
         $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
+
         return $wkt;
     }
 
+    /**
+     * Перетворює WKT в GeoJson використовуючи бібліотеку для роботи з shp(Gaspare Sganga)
+     *
+     * @param string $wkt
+     * @return array|string
+     */
     private function getGeoJson(string $wkt)
     {
         $wktPolygon = new Polygon();
@@ -310,32 +345,40 @@ class NormativeXmlSaver
         return $this->errors;
     }
 
-
-    private function addToZip()
+    /**
+     * Створює файл zip в тимчасовій папці і додає туди всі файли з папки клієнта
+     *
+     * @param string $nameFile
+     * @return bool|string
+     */
+    public function addToZip(string $nameFile)
     {
-        if ($this->destination) {
-            chdir(sys_get_temp_dir());
+        chdir(sys_get_temp_dir()); //Змінюємо робочу папку, на Temp, тимчасово, для створення файлу
 
-            $zipFile = new \ZipArchive();
-            $zipPath = $this->userFolderName . '_' . date('y-m-d') . '.zip';
+        $userFolderName = $this->user->getFolderName();
+        $destinationFolder = $this->shapePath . '/export/' . $userFolderName;
 
-            $result = $zipFile->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-            if (!$result) {
-                $this->errors = 'Не вдалось зберегти zip файл!';
-                return false;
-            }
+        $zipFile = new \ZipArchive();
+        $zipPath = $userFolderName . '_' . date('y-m-d') . '.zip';
 
-            $dir = array_diff(scandir('C:/OSPanel/domains/xmlred/public/shp/export/vbitko3gmailcom'), ['.', '..']);
-
-            foreach ($dir as $value) {
-                $file = 'C:/OSPanel/domains/xmlred/public/shp/export/vbitko3gmailcom/' . $value;
-                $zipFile->addFile($file, $value);
-            }
-            $zipFile->close();
-            return sys_get_temp_dir() . $zipPath;
-        } else {
-            $this->errors = 'Виникли проблеми із збереження в  zip файл!';
+        $result = $zipFile->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        if (!$result) {
+            $this->errors = 'Не вдалось зберегти zip файл!';
             return false;
         }
+
+        $dir = array_diff(scandir($destinationFolder), ['.', '..']);
+
+        if (!$dir) {
+            $this->errors = 'Не вдалось зберегти zip файл!, папка з файлами пуста!';
+            return false;
+        }
+        foreach ($dir as $value) {
+            $file = $destinationFolder . '/' . $value;
+            $zipFile->addFile($file, $value);
+        }
+        $zipFile->close();
+
+        return $zipPath;
     }
 }

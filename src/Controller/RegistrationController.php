@@ -40,7 +40,7 @@ class RegistrationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // encode the plain password
+             // encode the plain password
             $user->setPassword(
                 $passwordEncoder->encodePassword(
                     $user,
@@ -48,6 +48,7 @@ class RegistrationController extends AbstractController
                 )
             );
             $user->setConfirmationCode($codeGenerator->getConfirmationCode());
+            $user->setFolderName(preg_replace('/[^\p{L}\p{N}\s]/u', '', $user->getEmail()));
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($user);

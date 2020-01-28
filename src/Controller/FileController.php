@@ -10,12 +10,12 @@ use App\Service\Uploader;
 use App\Service\ValidateHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\Stream;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -80,7 +80,6 @@ class FileController extends AbstractController
                 $result = $normativeXmlSaver->toShape($parseXml);
             }
 
-
             $data = $normativeXmlSaver->toGeoJson($parseXml);
 
             $data['origXml'] = $xmlObj;
@@ -107,45 +106,37 @@ class FileController extends AbstractController
      * @Route("/load",name = "downloadShp", methods={"GET","POST"}, options={"expose"=true})
      * @param Uploader $uploader
      * @param Request $request
-     * @param NormativeXmlParser $normativeXmlParser
      * @param NormativeXmlSaver $normativeXmlSaver
      * @return Response
      */
 
-    public function downloadShp(Uploader $uploader, Request $request, NormativeXmlParser $normativeXmlParser, NormativeXmlSaver $normativeXmlSaver): Response
+    public function downloadShp(Uploader $uploader, Request $request, NormativeXmlSaver $normativeXmlSaver): Response
     {
-        //$this->denyAccessUnlessGranted('ROLE_USER');
-
         $name = $request->query->get('name');
-        $xmlObj = $uploader->getSimpleXML($name);
-        $parseXml = $normativeXmlParser->parse($xmlObj);
-       // dump($xmlObj);
-        dump($parseXml);
-        $result = $normativeXmlSaver->toShape($parseXml);
-        dump($result);
+        $fileName = $normativeXmlSaver->addToZip($name);
 
-        if(!$result) {
+        if(!$fileName) {
             die;
         }
 
+        $stream  = new Stream($fileName);
+        $response = new BinaryFileResponse($stream);
+        clearstatcache(true, $fileName);
 
-        //die;
-
-
-        $response = new StreamedResponse(function () use ($uploader) {
+/*        $response = new StreamedResponse(function () use ($uploader) {
             $outputStream = fopen('php://output', 'wb');
             $fileStream = $uploader->download();
+            dump($fileStream);
             stream_copy_to_stream($fileStream, $outputStream);
         });
-        $response->headers->set('Content-Type', 'text/plain');
+        $response->headers->set('Content-Type', 'application/zip');
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'filename.txt'
+            'test.zip'
         );
-        $response->headers->set('Content-Disposition', $disposition);
+        $response->headers->set('Content-Disposition', $disposition);*/
 
         return $response;
-
     }
 }
