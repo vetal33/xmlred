@@ -25,12 +25,15 @@ module.exports = function (data) {
     geojson = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
-    }).bindPopup(function (layer) {
-        return "шифр - " + layer.feature.properties.popupContent;
     });
 
     /** Додаємо групу до карти    */
     landsLayersGroup.addTo(mymap);
+
+    /** Додаємо написи шарів групи    */
+    landsLayersGroup.eachLayer(function (layer) {
+        layer.bindPopup("шифр - " + layer.feature.properties.popupContent);
+    });
 
     /** Додаємо групу до панелі управління    */
     layersControl.addOverlay(landsLayersGroup, 'Грунти');

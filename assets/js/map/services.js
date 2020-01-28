@@ -56,6 +56,9 @@ $(function () {
                     if (dataJson.lands) {
                         addLandsToMap(dataJson.lands);
                     }
+                    mymap.eachLayer(function (layer) {
+                        console.log(layer);
+                    });
                     visualizeXML(dataJson);
                 }
             },

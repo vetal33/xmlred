@@ -25,19 +25,21 @@ module.exports = function (data) {
     geojson = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
-    }).bindPopup(function (layer) {
-        return layer.feature.properties.name;
     });
 
     /** Додаємо групу до карти    */
     localLayersGroup.addTo(mymap);
+
+    /** Додаємо написи шарів групи    */
+    localLayersGroup.eachLayer(function (layer) {
+        layer.bindPopup("шифр - " + layer.feature.properties.name);
+    });
 
     /** Додаємо групу до панелі управління    */
     layersControl.addOverlay(localLayersGroup, 'Локальні фактори');
 
     $('#marker-local').html('<i class="fas fa-check text-success"></i>');
     $('#local').prop('disabled', false);
-
 
     /**
      * Remove localLayers from map
