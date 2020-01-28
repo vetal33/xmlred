@@ -33,7 +33,7 @@ class NormativeXmlParser implements ParserXml
     public function parse(\SimpleXMLElement $simpleXMLElement)
     {
         $array = json_decode(json_encode($simpleXMLElement), true);
-        //dump($array);
+
         if ($this->getPolyline($array) && $this->getPoints($array)) {
             $result = $this->parseDataXml($array);
             return $result;
@@ -59,6 +59,7 @@ class NormativeXmlParser implements ParserXml
         $currentPoints = [];
         foreach ($this->settingFields as $value => $key) {
             $currentPoints[$value] = $this->findNode($dataXml, $key);
+            $currentPoints[$value] = $this->modifyArray($currentPoints[$value], $value);
             if ($this->ifArrayOrList($currentPoints[$value])) {
                 foreach ($currentPoints[$value] as $item => $node) {
                     $currentPoints[$value][$item]['coordinates'] = $this->getGeometry($node);
@@ -67,7 +68,33 @@ class NormativeXmlParser implements ParserXml
                 $currentPoints[$value] = $this->getGeometry($currentPoints[$value]);
             }
         }
+
         return $currentPoints;
+    }
+
+    /**
+     * Змінюєм масив на вложений у випадку коли одна (зона, грунт, локальний фактор)
+     *
+     * @param array $data
+     * @param string $value
+     * @return array
+     */
+    private function modifyArray(array $data, string $value): array
+    {
+        $modifyArray = [];
+        if ($value === "zony" && is_string(array_key_last($data))) {
+            $modifyArray[0]= $data;
+            return $modifyArray;
+        }
+        if ($value === "localFactor" && is_string(array_key_last($data))) {
+            $modifyArray[0]= $data;
+            return $modifyArray;
+        }
+        if ($value === "lands" && is_string(array_key_last($data))) {
+            $modifyArray[0]= $data;
+            return $modifyArray;
+        }
+        return $data;
     }
 
 
@@ -105,7 +132,7 @@ class NormativeXmlParser implements ParserXml
      */
     private function ifArrayOrList(array $data): bool
     {
-        if (array_key_last($data) > 0) {
+        if (!is_string(array_key_last($data))) {
             return true;
         }
         return false;
