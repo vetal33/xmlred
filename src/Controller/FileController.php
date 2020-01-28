@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  */
 class FileController extends AbstractController
 {
-
     /**
      * @Route("/", name="homepage", methods={"GET","POST"}, options={"expose"=true})
      * @param Request $request

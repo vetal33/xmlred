@@ -3,6 +3,7 @@ module.exports = function (data) {
     let geojson;
     let numberScale = [];
     let grades = [];
+    window.zonyLayersGroup = L.layerGroup();
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);
@@ -28,10 +29,16 @@ module.exports = function (data) {
     geojson = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
-    }).addTo(mymap);
+    });
 
-    layersControl.addOverlay(geojson, 'Економіко-пл. зони');
+    /** Додаємо групу до карти    */
+    zonyLayersGroup.addTo(mymap);
+
+    /** Додаємо групу до панелі управління    */
+    layersControl.addOverlay(zonyLayersGroup, 'Економіко-пл. зони');
+
     $('#marker-zony').html('<i class="fas fa-check text-success"></i>');
+    $('#zony').prop('disabled', false);
 
     function setNumberScale(data) {
 
@@ -107,12 +114,13 @@ module.exports = function (data) {
     }
 
     function onEachFeature(feature, layer) {
-        layer.nameLayer = "zonyGeoJSON",
-            layer.on({
-                mouseover: highlightFeature,
-                mouseout: resetHighlight,
-                click: zoomToFeature
-            });
+        zonyLayersGroup.addLayer(layer);
+        layer.nameLayer = "zonyGeoJSON";
+        layer.on({
+            mouseover: highlightFeature,
+            mouseout: resetHighlight,
+            click: zoomToFeature
+        });
     }
 
 

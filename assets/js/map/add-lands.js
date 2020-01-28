@@ -1,6 +1,7 @@
 module.exports = function (data) {
 
     let geojson;
+    window.landsLayersGroup = L.layerGroup();
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);
@@ -26,10 +27,16 @@ module.exports = function (data) {
         onEachFeature: onEachFeature,
     }).bindPopup(function (layer) {
         return "шифр - " + layer.feature.properties.popupContent;
-    }).addTo(mymap);
+    });
 
-    layersControl.addOverlay(geojson, 'Грунти');
+    /** Додаємо групу до карти    */
+    landsLayersGroup.addTo(mymap);
+
+    /** Додаємо групу до панелі управління    */
+    layersControl.addOverlay(landsLayersGroup, 'Грунти');
+
     $('#marker-lands').html('<i class="fas fa-check text-success"></i>');
+    $('#lands').prop('disabled', false);
 
     /**
      * Remove landsLayers from map
@@ -87,6 +94,7 @@ module.exports = function (data) {
 
     function onEachFeature(feature, layer) {
         layer.nameLayer = "landsGeoJSON";
+        landsLayersGroup.addLayer(layer);
         layer.on({
             click: selectFeature
         });

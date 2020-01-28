@@ -26,7 +26,7 @@ $(document).ready(function () {
         transparent: true,
         version: '1.1.1',
         attribution: "Weather data © 2012 IEM Nexrad"
-    }).addTo(mymap);
+    });
 
 
     /**

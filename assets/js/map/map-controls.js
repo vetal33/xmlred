@@ -49,5 +49,31 @@ $(document).ready(function () {
     mymap.addControl(new fullzoomButton());
     mymap.addControl(new clearButton());
 
+    $(".check-map").change(function () {
+        let layerClicked = $(this).attr("id");
+        switch (layerClicked) {
+            case "zony":
+                toggleLayer(zonyLayersGroup);
+                break;
+            case "local":
+                toggleLayer(localLayersGroup);
+                break;
+            case "lands":
+                toggleLayer(landsLayersGroup);
+                break;
+        }
+    });
 
+    /**
+     * Перемикаю групу шарів, використовуючи checkbox в таблиці
+     *
+     * @param layersGroupName
+     */
+    function toggleLayer(layersGroupName) {
+        if (mymap.hasLayer(layersGroupName)) {
+            mymap.removeLayer(layersGroupName);
+        } else {
+            mymap.addLayer(layersGroupName);
+        }
+    }
 });
