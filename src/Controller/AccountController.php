@@ -10,7 +10,9 @@ class AccountController extends BaseController
 {
     /**
      * @Route("/account", name="account")
+     *
      * @param LoggerInterface $logger
+     *
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function index(LoggerInterface $logger)
