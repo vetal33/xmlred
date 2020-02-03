@@ -42,8 +42,10 @@ $(document).ready(function () {
     }
 
     function createErrorBox(errorObj) {
-        if (errorObj.status < 500) {
+        if (errorObj.status === 404) {
             toastr.error(errorObj.responseJSON, 'Вибачте виникла помилка!',{timeOut: 15000});
+        }else if (errorObj.status === 403) {
+            toastr.info(errorObj.responseJSON, 'Увага!',{timeOut: 20000});
         } else {
             toastr.error('Виникла помилка, вибачте за незручності!');
         }

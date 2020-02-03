@@ -139,7 +139,6 @@ class FileController extends AbstractController
     }
 
     /**
-     * @IsGranted("ROLE_USER")
      * @Route("/verify", name="verifyXml", methods={"POST"}, options={"expose"=true})
      * @param Request $request
      * @param Uploader $uploader
@@ -148,25 +147,28 @@ class FileController extends AbstractController
      */
     public function verifyXml(Request $request, Uploader $uploader, NormativeXmlValidator $normativeXmlValidator)
     {
-        try {
-            $data = [];
-            $fileName = $request->request->get('fileName');
-            $file = $uploader->getSimpleXML($fileName);
+        if ($this->isGranted('ROLE_USER')) {
+            try {
+                $data = [];
+                $fileName = $request->request->get('fileName');
+                $file = $uploader->getSimpleXML($fileName);
 
-            if (!$file) {
-                $error = sprintf('Вибачте!, файл "%s" не знайдено!', $fileName);
-                return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                if (!$file) {
+                    $error = sprintf('Вибачте!, файл "%s" не знайдено!', $fileName);
+                    return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                }
+
+                $normativeXmlValidator->validate($file);
+                if (!empty($normativeXmlValidator->getErrors())) {
+                    $data['validate_errors'] = $normativeXmlValidator->getErrors();
+                }
+
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+
+            } catch (\Exception $exception) {
+                return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
-
-            $normativeXmlValidator->validate($file);
-            if (!empty($normativeXmlValidator->getErrors())) {
-                $data['validate_errors'] = $normativeXmlValidator->getErrors();
-            }
-
-            return new JsonResponse(json_encode($data), Response::HTTP_OK);
-
-        } catch (\Exception $exception) {
-            return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
     }
 }
