@@ -16,7 +16,7 @@ class FileFormType extends AbstractType
     {
         $builder
             ->add('xmlFile', FileType::class,[
-                'attr' => ['class' => 'custom-file-input form-control'],
+                'attr' => ['class' => 'custom-file-input form-control-sm'],
                 'label_attr' => ['class' => 'custom-file-label'],
                 'label' =>'виберіть XML файл',
                 'mapped' => false,

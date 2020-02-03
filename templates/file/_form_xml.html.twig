@@ -1,16 +1,10 @@
-{{ form_start(fileForm) }}
-<div class="card-body">
-    <div class="form-group">
-        <div class="input-group">
-            <div class="custom-file">
-                {{ form_widget(fileForm.xmlFile) }}
-                {{ form_label(fileForm.xmlFile) }}
-            </div>
-            {{ form_errors(fileForm.xmlFile) }}
-        </div>
+<form name="file_form" method="post" enctype="multipart/form-data" class="d-inline-block">
+    <div class="card-body p-0">
+        <input type="file" id="file_form_xmlFile" name="file_form[xmlFile]" required="required" class="custom-file-input form-control-sm d-none" >
+        <label class="btn btn-app btn-control" id="btn-check-xml" for="file_form_xmlFile">
+            <i class="far fa-folder-open text-success"></i> Відкрити
+        </label>
     </div>
-</div>
-{#<div class="card-footer">
-    <button type="submit" class="btn btn-primary">Submit</button>
-</div>#}
-{{ form_end(fileForm) }}
+</form>
+
+

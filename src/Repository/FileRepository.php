@@ -19,6 +19,19 @@ class FileRepository extends ServiceEntityRepository
         parent::__construct($registry, File::class);
     }
 
+    public function transformFeatureFromSC42toSC63(string $feature, int $zone)
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_AsText(st_transform(ST_SetSRID(ST_GeomFromText(:polygon, :zone), 28406), 106304))');
+           // ->prepare('select ST_AsText(st_transform(ST_GeomFromText(:polygon, :zone), 106304))');
+        $stmt->bindParam(':polygon', $feature);
+        $stmt->bindParam(':zone', $zone);
+        $stmt->execute();
+
+        return $stmt->fetchAll()['0']['st_astext'];
+    }
+
 
     public function transformFeatureFromSC63to4326(string $feature, int $zone)
     {

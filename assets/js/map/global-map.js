@@ -9,3 +9,4 @@ import '../map/services';
 import 'leaflet';
 import '../map/leaflet-bing-layer';
 import '../map/map-controls';
+import '../map/check-xml';

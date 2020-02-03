@@ -6,6 +6,7 @@ use App\Entity\File;
 use App\Form\FileFormType;
 use App\Service\NormativeXmlSaver;
 use App\Service\NormativeXmlParser;
+use App\Service\NormativeXmlValidator;
 use App\Service\Uploader;
 use App\Service\ValidateHelper;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,10 +40,7 @@ class FileController extends AbstractController
      */
     public function index(Request $request,
                           EntityManagerInterface $entityManager,
-                          Uploader $uploader, NormativeXmlParser
-                          $normativeXmlParser, NormativeXmlSaver
-                          $normativeXmlSaver, ValidateHelper
-                          $validateHelper): Response
+                          Uploader $uploader, NormativeXmlParser $normativeXmlParser, NormativeXmlSaver $normativeXmlSaver, ValidateHelper $validateHelper): Response
     {
         $data = [];
         $file = new File;
@@ -60,8 +58,9 @@ class FileController extends AbstractController
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             }
 
-            $uploader->uploadXML($uploadedFile);
+            $uploader->uploadFile($uploadedFile);
             $xmlObj = $uploader->getSimpleXML($uploader->getNewNameFile());
+
 
             if (!$xmlObj) {
                 $data['errors'] = $uploader->getErrors();
@@ -75,7 +74,7 @@ class FileController extends AbstractController
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             }
 
-            if($this->isGranted('ROLE_USER')) {
+            if ($this->isGranted('ROLE_USER')) {
                 $result = $normativeXmlSaver->toShape($parseXml);
             }
 
@@ -114,28 +113,62 @@ class FileController extends AbstractController
         $name = $request->query->get('name');
         $fileName = $normativeXmlSaver->addToZip($name);
 
-        if(!$fileName) {
+        if (!$fileName) {
             die;
         }
 
-        $stream  = new Stream($fileName);
+        $stream = new Stream($fileName);
         $response = new BinaryFileResponse($stream);
         clearstatcache(true, $fileName);
 
-/*        $response = new StreamedResponse(function () use ($uploader) {
-            $outputStream = fopen('php://output', 'wb');
-            $fileStream = $uploader->download();
-            dump($fileStream);
-            stream_copy_to_stream($fileStream, $outputStream);
-        });
-        $response->headers->set('Content-Type', 'application/zip');
+        /*        $response = new StreamedResponse(function () use ($uploader) {
+                    $outputStream = fopen('php://output', 'wb');
+                    $fileStream = $uploader->download();
+                    dump($fileStream);
+                    stream_copy_to_stream($fileStream, $outputStream);
+                });
+                $response->headers->set('Content-Type', 'application/zip');
 
-        $disposition = HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            'test.zip'
-        );
-        $response->headers->set('Content-Disposition', $disposition);*/
+                $disposition = HeaderUtils::makeDisposition(
+                    HeaderUtils::DISPOSITION_ATTACHMENT,
+                    'test.zip'
+                );
+                $response->headers->set('Content-Disposition', $disposition);*/
 
         return $response;
+    }
+
+    /**
+     * @Route("/verify", name="verifyXml", methods={"POST"}, options={"expose"=true})
+     * @param Request $request
+     * @param Uploader $uploader
+     * @param NormativeXmlValidator $normativeXmlValidator
+     * @return JsonResponse
+     */
+    public function verifyXml(Request $request, Uploader $uploader, NormativeXmlValidator $normativeXmlValidator)
+    {
+        if ($this->isGranted('ROLE_USER')) {
+            try {
+                $data = [];
+                $fileName = $request->request->get('fileName');
+                $file = $uploader->getSimpleXML($fileName);
+
+                if (!$file) {
+                    $error = sprintf('Вибачте!, файл "%s" не знайдено!', $fileName);
+                    return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                }
+
+                $normativeXmlValidator->validate($file);
+                if (!empty($normativeXmlValidator->getErrors())) {
+                    $data['validate_errors'] = $normativeXmlValidator->getErrors();
+                }
+
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+
+            } catch (\Exception $exception) {
+                return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
     }
 }

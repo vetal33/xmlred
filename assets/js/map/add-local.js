@@ -1,7 +1,6 @@
 module.exports = function (data) {
 
     let geojson;
-    window.localLayersGroup = L.layerGroup();
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);
