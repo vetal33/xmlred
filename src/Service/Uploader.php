@@ -19,10 +19,10 @@ class Uploader
      */
     private $shapePath;
 
-    /** @var string   */
+    /** @var string */
     private $originalName;
 
-    /** @var string   */
+    /** @var string */
     private $newNameFile;
 
     const XML_NORMATIVE = 'normative_xml';
@@ -58,7 +58,7 @@ class Uploader
     /**
      * @param UploadedFile $uploadedFile
      */
-    public function uploadXML(UploadedFile $uploadedFile): void
+    public function uploadFile(UploadedFile $uploadedFile): void
     {
         $originalName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
 
@@ -69,33 +69,22 @@ class Uploader
         $uploadedFile->move($destination, $this->newNameFile);
     }
 
-    public function download()
-    {
-        $filename = 'public/uploads/1.txt';
-
-        $filesystem = $this->filesystem;
-        $resource = $filesystem->readStream('1.txt');
-
-        return $resource;
-    }
-
     /**
      * @param string $filePath
-     * @return bool|\SimpleXMLElement
+     * @return null|\SimpleXMLElement
      */
-    public function getSimpleXML(string $filePath)
+    public function getSimpleXML(string $filePath): ?\SimpleXMLElement
     {
         libxml_use_internal_errors(true);
         $destination = $this->uploadPath . '/' . self::XML_NORMATIVE . '/' . $filePath;
         $xml = simplexml_load_file($destination);
-        if ($xml) {
-            return $xml;
-        } else {
+        if (!$xml) {
             foreach (libxml_get_errors() as $error) {
                 $this->errors[] = $error->message;
             }
+            return null;
         }
-        return false;
+        return $xml;
     }
 
 
@@ -147,6 +136,11 @@ class Uploader
         return $this->uniquePostfix;
     }
 
-
-
+    /**
+     * @return string
+     */
+    public function getUploadPath(): string
+    {
+        return $this->uploadPath;
+    }
 }

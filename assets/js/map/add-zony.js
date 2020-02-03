@@ -3,7 +3,6 @@ module.exports = function (data) {
     let geojson;
     let numberScale = [];
     let grades = [];
-    window.zonyLayersGroup = L.layerGroup();
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);

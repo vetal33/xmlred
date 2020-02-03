@@ -310,6 +310,7 @@ class NormativeXmlSaver
      */
     private function convertToWGS(Polygon $polygon, int $zone): string
     {
+        //$wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
         $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
 
         return $wkt;

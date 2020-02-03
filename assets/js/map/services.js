@@ -1,10 +1,17 @@
-$(function () {
-    const overlay = $('#shp-card .overlay');
+$(document).ready(function () {
+    const overlayShp = $('#shp-card .overlay');
+    const overlayControl = $('#buttons-card .overlay');
     const textContent = $('#text-content');
     const btnDownloadShp = $('#btn-download-shp');
+    const btnValidateXml = $('#btn-validate-xml');
+
+    window.zonyLayersGroup = L.layerGroup();
+    window.localLayersGroup = L.layerGroup();
+    window.landsLayersGroup = L.layerGroup();
 
 
-    overlay[0].hidden = true;
+    overlayShp[0].hidden = true;
+    overlayControl[0].hidden = true;
 
     $('.custom-file-input').on('change', function (event) {
         let inputFile = event.currentTarget;
@@ -28,14 +35,17 @@ $(function () {
             processData: false,
             contentType: false,
             beforeSend: function () {
-                overlay[0].hidden = false;
+                overlayShp[0].hidden = false;
+                overlayControl[0].hidden = false;
             },
             success: function (data) {
-                $('#error').parent('div').remove();
-                $(btnDownloadShp).removeClass('disabled');
 
-
-                overlay[0].hidden = true;
+                overlayShp[0].hidden = true;
+                overlayControl[0].hidden = true;
+                btnValidateXml.removeClass('disabled');
+                btnValidateXml.find('i').addClass('text-success');
+                btnDownloadShp.removeClass('disabled');
+                btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
                 console.log(dataJson);
@@ -45,26 +55,19 @@ $(function () {
                     $('#shp-card').attr('data-name', "");
                     createBlockErrors(dataJson.errors);
                 } else {
+                    setStartPosition();
                     $(btnDownloadShp).attr('href', '/load?name=' + dataJson.newXmlName);
-                    addMejaToMap(dataJson.boundary, boundaryStyle);
-                    if (dataJson.zony) {
-                        addZonyToMap(dataJson.zony);
-                    }
-                    if (dataJson.localFactor) {
-                        addLocalToMap(dataJson.localFactor);
-                    }
-                    if (dataJson.lands) {
-                        addLandsToMap(dataJson.lands);
-                    }
-                    mymap.eachLayer(function (layer) {
-                        console.log(layer);
-                    });
+
+                    addLayers(dataJson);
                     visualizeXML(dataJson);
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                overlay[0].hidden = true;
-                console.log('fail');
+                overlayShp[0].hidden = true;
+                overlayControl[0].hidden = true;
+                toastr.options = {"closeButton": true, };
+                toastr.error('Вибачте виникла помилка!');
+                console.log(jqXHR);
             },
         })
     }
@@ -79,6 +82,7 @@ $(function () {
             return node.childNodes.length < 2 || node.label === 'phoneNumbers';
         });
     }
+
 
     let normativeGroup;
 
@@ -99,6 +103,8 @@ $(function () {
 
     function createBlockErrors(data) {
         let divElement = document.createElement('div');
+        divElement.classList.add("col-12");
+        divElement.classList.add("mt-2");
         let htmlDiv = '<div class="alert alert-warning alert-dismissible" id="error"> ' +
             '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>' +
             '<h5><i class="icon fas fa-exclamation-triangle"></i> Виникла помилка!</h5></div>';
@@ -112,14 +118,34 @@ $(function () {
         textContent.prepend(divElement);
     }
 
-    function createTableShp(data) {
-        const tableShp = document.createElement('');
+    function setStartPosition() {
+        $('#errors-card').remove();
 
-        let htmlDiv = '<tr><td>$13 USD</td><td>$13 USD</td>' +
-            '<td><a href="#" class="text-muted"><i class="fas fa-search"></i></a></td></tr>';
+        landsLayersGroup.remove();
+        zonyLayersGroup.remove();
+        localLayersGroup.remove();
 
-        $.each(data, function (index, value) {
-            $(divElement).find('#error').append(value + '<br>');
-        });
+        $('#local').prop('checked', true);
+        $('#zony').prop('checked', true);
+        $('#lands').prop('checked', true);
+
+        $('#xml-card').removeClass('card-outline card-danger');
+        $('#xml-card').removeClass('card-outline card-success');
+    }
+
+    function addLayers(dataJson) {
+        addMejaToMap(dataJson.boundary, boundaryStyle);
+        if (dataJson.zony) {
+            addZonyToMap(dataJson.zony);
+        }
+        if (dataJson.localFactor) {
+            addLocalToMap(dataJson.localFactor);
+        }
+        if (dataJson.lands) {
+            addLandsToMap(dataJson.lands);
+        }
+/*        mymap.eachLayer(function (layer) {
+            console.log(layer);
+        });*/
     }
 });
