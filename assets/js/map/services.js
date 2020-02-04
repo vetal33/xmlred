@@ -8,6 +8,7 @@ $(document).ready(function () {
     window.zonyLayersGroup = L.layerGroup();
     window.localLayersGroup = L.layerGroup();
     window.landsLayersGroup = L.layerGroup();
+    window.regionsLayersGroup = L.layerGroup();
 
 
     overlayShp[0].hidden = true;
@@ -48,7 +49,6 @@ $(document).ready(function () {
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
-                console.log(dataJson);
 
                 if (dataJson.errors.length > 0) {
                     $(btnDownloadShp).addClass('disabled');
@@ -67,7 +67,6 @@ $(document).ready(function () {
                 overlayControl[0].hidden = true;
                 toastr.options = {"closeButton": true, };
                 toastr.error('Вибачте виникла помилка!');
-                console.log(jqXHR);
             },
         })
     }
@@ -135,8 +134,11 @@ $(document).ready(function () {
 
     function addLayers(dataJson) {
         addMejaToMap(dataJson.boundary, boundaryStyle);
-        if (dataJson.zony) {
-            addZonyToMap(dataJson.zony);
+        if (dataJson.zones) {
+            addZonyToMap(dataJson.zones);
+        }
+        if (dataJson.regions) {
+            addRegionsToMap(dataJson.regions);
         }
         if (dataJson.localFactor) {
             addLocalToMap(dataJson.localFactor);
