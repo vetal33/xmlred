@@ -24,9 +24,10 @@ class NormativeXmlParser implements ParserXml
 
     private $settingFields = [
         'boundary' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation'],
-        'zony' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'EconPlanZones', 'EconPlanZone'],
+        'zones' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'EconPlanZones', 'EconPlanZone'],
         'localFactor' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'LocalFactors', 'LocalFactor'],
         'lands' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'AgroGroups', 'AgroGroup'],
+        'regions' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'EstimatedAreas', 'EstimatedArea'],
     ];
 
 
@@ -82,7 +83,7 @@ class NormativeXmlParser implements ParserXml
     private function modifyArray(array $data, string $value): array
     {
         $modifyArray = [];
-        if ($value === "zony" && is_string(array_key_last($data))) {
+        if ($value === "zones" && is_string(array_key_last($data))) {
             $modifyArray[0]= $data;
             return $modifyArray;
         }
@@ -112,7 +113,6 @@ class NormativeXmlParser implements ParserXml
                 if (!$valueUlidInternal) {
                     $coordinates['internal'] = [];
                 }
-
                 foreach ($valueUlidInternal as $value) {
                     if (array_key_exists((int)$value, $this->polylines)) {
                         $coordinates['internal'][] = $this->getCurrentPoints($this->polylines[(int)$value]);
@@ -184,7 +184,6 @@ class NormativeXmlParser implements ParserXml
             return false;
         }
     }
-
 
     /**
      * @param array $data

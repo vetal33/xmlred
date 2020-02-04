@@ -4,6 +4,7 @@ import '../map/map'
 window.addZonyToMap = require('../map/add-zony');
 window.addLocalToMap = require('../map/add-local');
 window.addLandsToMap = require('../map/add-lands');
+window.addRegionsToMap = require('../map/add-regions');
 import '../map/style'
 import '../map/services';
 import 'leaflet';

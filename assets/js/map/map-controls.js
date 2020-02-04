@@ -36,11 +36,7 @@ $(document).ready(function () {
             container.type = "button";
             container.title = "Clear selected";
             container.onclick = function () {
-                mymap.eachLayer(function (layer) {
-                    if (typeof layer.nameLayer !== "undefined" && layer.nameLayer === "Selected") {
-                        mymap.removeLayer(layer);
-                    }
-                });
+                clearSelected();
             };
             return container;
         }
@@ -60,9 +56,24 @@ $(document).ready(function () {
                 break;
             case "lands":
                 toggleLayer(landsLayersGroup);
+                clearSelected();
+                break;
+            case "regions":
+                toggleLayer(regionsLayersGroup);
                 break;
         }
     });
+
+    /**
+     *  Знімає виділення із шарів з ім'я "Selected"
+     */
+    function clearSelected() {
+        mymap.eachLayer(function (layer) {
+            if (typeof layer.nameLayer !== "undefined" && layer.nameLayer === "Selected") {
+                mymap.removeLayer(layer);
+            }
+        });
+    }
 
     /**
      * Перемикаю групу шарів, використовуючи checkbox в таблиці

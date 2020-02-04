@@ -93,6 +93,10 @@ class NormativeXmlSaver
                     if (array_key_exists('CodeAgroGroup', $valMulti)) {
                         $data[$key][$item]['code'] = $valMulti['CodeAgroGroup'];
                     }
+                    if (array_key_exists('RegionNumber', $valMulti)) {
+                        $data[$key][$item]['name'] = $valMulti['RegionNumber'];
+                        $data[$key][$item]['ki'] = $valMulti['RegionIndex'];
+                    }
                 }
             } else {
                 $polygon = $this->arrayToPolygon($value['external']);
@@ -182,9 +186,13 @@ class NormativeXmlSaver
         if ($layerName === "lands") {
             $polygon->setData('name', $data['CodeAgroGroup']);
         }
-        if ($layerName === "zony") {
+        if ($layerName === "zones") {
             $polygon->setData('name', $data['ZoneNumber']);
             $polygon->setData('km2', $data['Km2']);
+        }
+        if ($layerName === "regions") {
+            $polygon->setData('name', $data['RegionNumber']);
+            $polygon->setData('ki', $data['RegionIndex']);
         }
 
         return $polygon;
@@ -282,9 +290,13 @@ class NormativeXmlSaver
         if ($nameLayer === "localFactor") {
             $shapefileWriter->addCharField('name');
         }
-        if ($nameLayer === "zony") {
+        if ($nameLayer === "zones") {
             $shapefileWriter->addCharField('name', 10);
             $shapefileWriter->addFloatField('km2', 4, 2);
+        }
+        if ($nameLayer === "regions") {
+            $shapefileWriter->addCharField('name', 10);
+            $shapefileWriter->addFloatField('ki', 4, 2);
         }
 
         return $shapefileWriter;
