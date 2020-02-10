@@ -1,8 +1,11 @@
-module.exports = function (data) {
 
-    let geojson;
-    let numberScale = [];
-    let grades = [];
+let legend;
+let infoBox;
+let geojson;
+let numberScale = [];
+let grades = [];
+
+module.exports = function (data) {
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);
@@ -156,7 +159,10 @@ module.exports = function (data) {
     /**
      * Створюємо легенду "Значення коєфіцієнтів Км2"
      */
-    let infoBox = L.control();
+    if(infoBox instanceof L.Control) {
+        mymap.removeControl(infoBox);
+    }
+    infoBox = L.control();
 
     infoBox.onAdd = function (map) {
         this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
@@ -168,14 +174,17 @@ module.exports = function (data) {
     infoBox.update = function (props) {
         this._div.innerHTML = '<h6>Коефіцієнт км2</h6>' + (props ?
             'Зона - <b>' + props.name + '</b><br />' + 'Км2 - ' + props.km2
-            : 'Наведіть для отримання інформації');
+            : 'Наведіть для отрима ння інформації');
     };
 
 
     /**
      * Створюємо легенду "Умовні позначення"
      */
-    let legend = L.control({position: 'bottomright'});
+    if(legend instanceof L.Control) {
+        mymap.removeControl(legend);
+    }
+    legend = L.control({position: 'bottomright'});
 
     legend.onAdd = function (map) {
         let div = L.DomUtil.create('div', 'info legend list-unstyled'),
