@@ -24,9 +24,12 @@
                         <a class="btn btn-app btn-control disabled" id="btn-validate-xml">
                             <i class="far fa-check-square"></i> Перевірити
                         </a>
-                        <a href="{{ path('downloadShp') }}" class="btn btn-app btn-control disabled ml-auto" id="btn-download-shp">
-                            <i class="fas fa-download"></i> Скачати *.shp
-                        </a>
+                        <div class="ml-auto">
+                            {% include 'file/_form_json.html.twig' %}
+                            <a href="{{ path('downloadShp') }}" class="btn btn-app btn-control disabled" id="btn-download-shp">
+                                <i class="fas fa-download"></i> Скачати *.shp
+                            </a>
+                        </div>
                     </div>
                     <div class="overlay v-hidden">
                         <i class="fas fa-2x fa-sync-alt fa-spin"></i>

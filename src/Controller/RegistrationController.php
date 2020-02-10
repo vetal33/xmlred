@@ -7,7 +7,7 @@ use App\Form\RegistrationFormType;
 use App\Repository\UserRepository;
 use App\Security\LoginFormAuthenticator;
 use App\Service\CodeGenerator;
-use App\Service\Mailer;
+use App\Service\MailerSender;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +23,7 @@ class RegistrationController extends AbstractController
      * @param UserPasswordEncoderInterface $passwordEncoder
      * @param GuardAuthenticatorHandler $guardHandler
      * @param LoginFormAuthenticator $authenticator
-     * @param Mailer $mailer
+     * @param MailerSender $mailer
      * @param CodeGenerator $codeGenerator
      * @return Response
      */
@@ -32,7 +32,7 @@ class RegistrationController extends AbstractController
         UserPasswordEncoderInterface $passwordEncoder,
         GuardAuthenticatorHandler $guardHandler,
         LoginFormAuthenticator $authenticator,
-        Mailer $mailer,
+        MailerSender $mailer,
         CodeGenerator $codeGenerator): Response
     {
         $user = new User();
@@ -86,19 +86,17 @@ class RegistrationController extends AbstractController
         $user = $userRepository->findOneBy(['confirmationCode' => $code]);
 
         if ($user === null) {
-            return new Response('404');
+            throw $this->createNotFoundException('Вибачте! Це посилання вже було використане!');
         }
 
         $user->setEnabled(true);
         $user->setConfirmationCode('');
 
         $em = $this->getDoctrine()->getManager();
-
         $em->flush();
 
         return $this->render('registration/account_confirm.html.twig', [
             'user' => $user,
         ]);
     }
-
 }

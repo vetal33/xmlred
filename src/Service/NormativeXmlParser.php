@@ -57,6 +57,7 @@ class NormativeXmlParser implements ParserXml
 
     public function parseDataXml(array $dataXml)
     {
+
         $currentPoints = [];
         foreach ($this->settingFields as $value => $key) {
             $currentPoints[$value] = $this->findNode($dataXml, $key);

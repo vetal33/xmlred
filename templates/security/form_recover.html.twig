@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% form_theme recoverForm 'registration/form_errors.html.twig' %}
+{% block title %}Recover{% endblock %}
+
+{% block body %}
+    <body class="hold-transition login-page">
+    <div class="login-box">
+        <div class="login-logo">
+            <a href="{{ path('homepage') }}"><b>XML</b>red</a>
+        </div>
+        <div class="card">
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">Введіть будь ласка ваш email</p>
+                {{ form_start(recoverForm) }}
+
+                {% if error is defined %}
+                    <div class="alert alert-danger">{{ error|trans }}</div>
+                {% endif %}
+                <div class="input-group mb-3">
+                    {{ form_errors(recoverForm.email) }}
+                    {{ form_widget(recoverForm.email) }}
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-envelope"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <button type="submit" class="btn btn-primary btn-block">Відправити</button>
+                </div>
+                {{ form_end(recoverForm) }}
+            </div>
+        </div>
+    </div>
+    </body>
+
+{% endblock %}
+
