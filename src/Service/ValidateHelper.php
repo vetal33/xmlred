@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints\File as FileConstraint;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class ValidateHelper
 {
@@ -29,14 +30,47 @@ class ValidateHelper
     {
         $errors = $this->validator->validate($file, [
             new FileConstraint([
-                'maxSize' => '100024k',
+                'maxSize' => '20240k',
                 'mimeTypes' => [
                     'text/xml',
                 ],
                 'mimeTypesMessage' => 'Будь-ласка завантажте валідний файл (*.xml)',
-                'maxSizeMessage' => 'Файл не повинен перевищувати 10Mb',
+                'maxSizeMessage' => 'Файл не повинен перевищувати 20Mb',
             ]),
         ]);
+        return $errors;
+    }
+
+    /**
+     * @param UploadedFile $file
+     * @return ConstraintViolationListInterface
+     */
+    public function validateFile(UploadedFile $file): ConstraintViolationListInterface
+    {
+        $errors = $this->validator->validate($file, [
+            new FileConstraint([
+                'maxSize' => '1024k',
+                'maxSizeMessage' => 'Файл не повинен перевищувати 1Mb',
+            ]),
+        ]);
+
+        return $errors;
+    }
+
+
+    /**
+     * @param string $json
+     * @return ConstraintViolationListInterface
+     */
+
+    public function validateJsonString(string $json): ConstraintViolationListInterface
+    {
+        $errors = $this->validator->validate($json, [
+            new  Assert\Json([
+                'message' => 'Будь-ласка завантажте валідний файл (*.json)',
+            ]),
+        ]);
+
         return $errors;
     }
 }

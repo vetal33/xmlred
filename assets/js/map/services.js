@@ -14,7 +14,7 @@ $(document).ready(function () {
     overlayShp[0].hidden = true;
     overlayControl[0].hidden = true;
 
-    $('.custom-file-input').on('change', function (event) {
+    $('#file_form_xmlFile').on('change', function (event) {
         let inputFile = event.currentTarget;
         $(inputFile).parent()
             .find('.custom-file-label')
@@ -24,7 +24,6 @@ $(document).ready(function () {
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
-
     });
 
     function sendFile(data) {
@@ -49,6 +48,7 @@ $(document).ready(function () {
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
+                console.log(dataJson);
 
                 if (dataJson.errors.length > 0) {
                     $(btnDownloadShp).addClass('disabled');
@@ -65,8 +65,7 @@ $(document).ready(function () {
             error: function (jqXHR, textStatus, errorThrown) {
                 overlayShp[0].hidden = true;
                 overlayControl[0].hidden = true;
-                toastr.options = {"closeButton": true, };
-                toastr.error('Вибачте виникла помилка!');
+                servicesThrowErrors(jqXHR);
             },
         })
     }

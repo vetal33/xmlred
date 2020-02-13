@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Service\Interfaces\ParserXml;
 use phpDocumentor\Reflection\DocBlock\Tags\Return_;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class NormativeXmlParser implements ParserXml
 {
@@ -85,15 +86,15 @@ class NormativeXmlParser implements ParserXml
     {
         $modifyArray = [];
         if ($value === "zones" && is_string(array_key_last($data))) {
-            $modifyArray[0]= $data;
+            $modifyArray[0] = $data;
             return $modifyArray;
         }
         if ($value === "localFactor" && is_string(array_key_last($data))) {
-            $modifyArray[0]= $data;
+            $modifyArray[0] = $data;
             return $modifyArray;
         }
         if ($value === "lands" && is_string(array_key_last($data))) {
-            $modifyArray[0]= $data;
+            $modifyArray[0] = $data;
             return $modifyArray;
         }
         return $data;
@@ -105,6 +106,9 @@ class NormativeXmlParser implements ParserXml
         $coordinates = [];
 
         if (array_key_exists('Externals', $data)) {
+            if (!$data['Externals']) {
+                throw new NotFoundHttpException('Контур "' . $data['NameFactor'] . '" - не містить геометрії');
+            }
             $valueUlid = $this->getUlid($data['Externals']);
             if ($valueUlid !== '' && array_key_exists((int)$valueUlid, $this->polylines)) {
                 $coordinates['external'] = $this->getCurrentPoints($this->polylines[(int)$valueUlid]);
