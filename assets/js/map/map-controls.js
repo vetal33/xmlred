@@ -45,6 +45,10 @@ $(document).ready(function () {
     mymap.addControl(new fullzoomButton());
     mymap.addControl(new clearButton());
 
+    /**
+     * Перемикає групу шарів, використовуючи checkbox в таблиці
+     */
+
     $(".check-map").change(function () {
         let layerClicked = $(this).attr("id");
         switch (layerClicked) {
@@ -76,7 +80,7 @@ $(document).ready(function () {
     }
 
     /**
-     * Перемикаю групу шарів, використовуючи checkbox в таблиці
+     * Перемикає групу шарів, використовуючи checkbox в таблиці
      *
      * @param layersGroupName
      */
@@ -87,4 +91,49 @@ $(document).ready(function () {
             mymap.addLayer(layersGroupName);
         }
     }
+
+    /**
+     * Зумує на імпортовану ділянку
+     */
+
+    $('#zoom-to-parcel').on('click', function (e) {
+        e.preventDefault();
+        let boundsStr = $('#geom-from-json').attr("data-bounds");
+        if (boundsStr.trim() !== '') {
+            let bounds = JSON.parse(boundsStr);
+            let arrayBounds = [];
+            arrayBounds.push([bounds._southWest.lat, bounds._southWest.lng],[bounds._northEast.lat, bounds._northEast.lng]);
+
+            mymap.fitBounds(arrayBounds);
+        }
+    });
+
+    /**
+     * Підсвічує локальні фактори на карті при наведенні в таблиці
+     */
+
+    $('body').on('mouseover', '#calculate table tr', function (e) {
+        setStyleIn($(this).attr("data-id"));
+    });
+
+    $('body').on('mouseout', '#calculate table tr', function (e) {
+        setStyleOut($(this).attr("data-id"));
+    });
+
+    function setStyleIn(id){
+        intersectLocalLayersGroup.eachLayer(function (layer) {
+            if (Number(layer.feature.properties.id) === Number(id)) {
+                layer.setStyle(intersectLocalsSelectedStyle);
+            }
+        });
+    }
+
+    function setStyleOut(id){
+        intersectLocalLayersGroup.eachLayer(function (layer) {
+            if (Number(layer.feature.properties.id) === Number(id)) {
+                layer.setStyle(intersectLocalsStyle);
+            }
+        });
+    }
+
 });

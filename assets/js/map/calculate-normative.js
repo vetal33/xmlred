@@ -1,22 +1,18 @@
 $(document).ready(function () {
     const overlay = $('#feature-card .overlay');
-    /*   const xmlCard = $('#xml-card');*/
-
-    /*    overlay[0].hidden = true;*/
 
     $('body').on('click', '#feature-from-json', function (e) {
         e.preventDefault();
         let nameFile = $('#shp-card').attr('data-name');
         let feature = $('#geom-from-json').val();
-        console.log(feature);
+
         if (nameFile.trim() !== '' && feature.trim() !== '') {
             checkFile(nameFile, feature);
+        } else {
+            toastr.options = {"closeButton": true,};
+            toastr.error('Відсуті шари Нормативної грошової оцінки!');
         }
     });
-
-    /*    $('#feature-from-json').on('click', function (e) {
-
-        });*/
 
     function checkFile(fileName, feature) {
         $.ajax({
@@ -30,19 +26,15 @@ $(document).ready(function () {
             success: function (data) {
                 overlay[0].hidden = true;
                 let dataJson = JSON.parse(data);
-                console.log(data);
+
                 if (dataJson.errors) {
-                    console.log(dataJson.errors);
-                    //$('#errors-card').remove();
-                    //createErrorsCard(dataJson.validate_errors);
-                    //xmlCard.addClass('card-outline card-danger');
                     toastr.options = {"closeButton": true,};
                     toastr.error(dataJson.errors);
                 } else {
-                    createNormativeTable(JSON.parse(data))
+                    createNormativeTable(JSON.parse(data));
+                    addIntersectLayers(JSON.parse(data));
                     toastr.options = {"closeButton": true,};
                     toastr.success('Нормативна грошова оцінка успішно порахована!');
-                    //xmlCard.addClass('card-outline card-success');
                 }
             },
             error: function (jqXHR) {
@@ -60,30 +52,75 @@ $(document).ready(function () {
 
     function createNormativeTable(data) {
         $('#calculate').remove();
-        console.log(data);
-        let area = (Math.round(data.area)/10000).toFixed(4) + ' га';
+        let area = (Math.round(data.area) / 10000).toFixed(4);
+        let areaStr = area + ' га';
 
-        $('#feature-card-area').html(area);
-        let basePrice = 115.25 + '&nbsp;' + 'грн.';
+        $('#feature-card-area').html(areaStr);
+
+        if (typeof data.pub !== 'undefined') {
+            $('#feature-card-cud-num').html(data.pub[0].cadnum);
+        } else {
+            $('#feature-card-cud-num').html('не визначено');
+        }
+
+
+        let basePrice = 115.25;
+        let basePriceStr = basePrice + '&nbsp;' + 'грн.';
         let normativeTable = $('<div id="calculate" class="p-2"><h6 class="text-truncate ml-3 mt-4">Розрахунок</h6>' +
-            '<table class="table table-sm pl-2 pr-2 bc-gray">' +
+            '<table class="table table-hover table-sm pl-2 pr-2 bc-gray">' +
             '<tbody id="normativeTable">' +
-            '<tr><td class="pl-3">Базова вартість</td><td class="text-center">' + basePrice + '</td><td class="text-center"></td></tr>' +
+            '<tr><td class="pl-3">Базова вартість</td><td class="text-center">' + basePriceStr + '</td></tr>' +
             '<tr><td class="pl-3"><span class="text-bold test-success">' + data.zone.name + '</span> економіко-планувальна зона</td><td class="text-center">' +
-            data.zone.km2 + '</td><td class="text-center"></td></tr>' +
+            data.zone.km2 + '</td></tr>' +
             '</tbody></table></div>');
         $('#feature-card .card-body').append(normativeTable);
-        $.each(data.local, function (index, value) {
-            console.log(value);
-            console.log(value.area);
 
-           /* let dataLoc = JSON.parse(value)
-            console.log(dataLoc);*/
-            let percent = Math.round((value.area/data.area)*100).toFixed() + ' %';
-            let row = '<tr><td class="pl-3 text-primary"><small>' + value.name + '</small></td><td class="text-center pr-1"><small>' + percent + '</small></td></tr>';
+        $.each(data.local, function (index, value) {
+            let percent = Math.round((value.area / data.area) * 100).toFixed() + '%';
+            let row = '<tr data-id="' + value.id + '"><td class="pl-3 text-primary"><small>' + value.name + '</small></td><td class="text-center pr-1"><small>' + percent + '</small></td></tr>';
             let str = normativeTable.find('#normativeTable').append(row);
         });
+        let price = (Math.round(basePrice * parseFloat(data.zone.km2) * area * 10000 * 100) / 100).toFixed(2);
+        let priceStr = price + ' грн.';
+        let total = '<tr><td class="pl-3" colspan="2">Разом: ' + basePrice + ' * ' + data.zone.km2 + ' * ' + '1.0' + ' * ' + area + ' = <strong>' + priceStr + '</strong></td></tr>';
+        normativeTable.find('#normativeTable').append(total);
     }
 
+    /**
+     * Додаємо шари перетину з локальними факторами до карти
+     *
+     * @param data
+     */
+    function addIntersectLayers(data) {
+        let geojson;
 
+        let new_data = data.local.map(function (item) {
+            let coord = JSON.parse(item.geom);
+
+            return item_new = {
+                "type": "Feature",
+                "properties": {
+                    "code": item.code,
+                    "id": item.id,
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": coord.coordinates,
+                },
+            };
+        });
+
+        geojson = L.geoJson(new_data, {
+            style: intersectLocalsStyle,
+            onEachFeature: onEachFeature,
+        });
+
+        /** Додаємо групу до карти    */
+        intersectLocalLayersGroup.addTo(mymap);
+    }
+
+    function onEachFeature(feature, layer) {
+        layer.nameLayer = "IntersectGeoJSON";
+        intersectLocalLayersGroup.addLayer(layer);
+    }
 });

@@ -106,6 +106,9 @@ class FileRepository extends ServiceEntityRepository
         if ($typeFeature === 'MULTIPOLYGON') {
             $result = explode('(((', $wkt);
             $coord = explode(' ', $result[1]);
+        } elseif ($typeFeature === 'POLYGON'){
+            $result = explode('((', $wkt);
+            $coord = explode(' ', $result[1]);
         }
 
         return $coord[0];
@@ -170,7 +173,7 @@ class FileRepository extends ServiceEntityRepository
         }
         $geomIntersect = $this->isIntersectAsGeom($geom1, $geom2);
 
-        return $this->calcArea($geomIntersect);
+        return $geomIntersect;
     }
 
     /**
@@ -213,6 +216,59 @@ class FileRepository extends ServiceEntityRepository
 
         return $result[0]['geom'];
     }
+
+    public function transformFromSK63To3857($wkt)
+    {
+        $zone = $this->getZoneFromCoords($wkt);
+
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_AsText(st_transform(st_transform(ST_GeomFromText(:polygon, :zone), 4284), 3857))');
+        $stmt->bindParam('polygon', $wkt);
+        $stmt->bindParam(':zone', $zone);
+
+        $stmt->execute();
+        return $stmt->fetchAll()['0']['st_astext'];
+
+    }
+
+    /**
+     * Повертає центроїд геометрії ($geom)
+     *
+     * @param $geom
+     * @return bool|mixed
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function getCentroid($geom)
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_AsText(ST_Centroid(ST_GeomFromText(:POLYGON, 3857)))');
+        $stmt->bindParam('POLYGON', $geom);
+
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        if (empty($result)) {
+            return false;
+        }
+
+        return $result['0']['st_astext'];
+    }
+
+    /**
+     * @param string $wkt
+     * @return array
+     */
+    public function wktPointToArray(string $wkt): array
+    {
+        $wkt = ltrim($wkt, 'POINT(');
+        $wkt = rtrim($wkt, ')');
+        $array = explode(' ', $wkt);
+
+        return $array;
+    }
+
 
 
 

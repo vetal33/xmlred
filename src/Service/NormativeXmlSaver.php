@@ -420,7 +420,7 @@ class NormativeXmlSaver
         $geomBoundary = $this->fileRepository->getGeomFromJsonAsWkt($layers['boundary']);
 
         if (!$this->intersectBoundary($geomBoundary, $feature)) {
-            $this->errors[] = 'Ділянка не перетинається з межою!';
+            $this->errors[] = 'Ділянка знаходиться за межами населеного пункту!';
             return false;
         }
 
@@ -440,11 +440,14 @@ class NormativeXmlSaver
         $areaMax = 0;
         foreach ($zones as $zone) {
             $geomZone = $this->fileRepository->getGeomFromJsonAsWkt($zone['coordinates']);
-            $area = $this->fileRepository->isIntersectAsArea($geomZone, $feature);
-            if ($area && $area > $areaMax) {
-                $areaMax = $area;
-                $this->featureNormative['zone']['name'] = $zone['name'];
-                $this->featureNormative['zone']['km2'] = $zone['km2'];
+            $geomIntersect = $this->fileRepository->isIntersectAsArea($geomZone, $feature);
+            if ($geomIntersect) {
+                $area = $this->fileRepository->calcArea($geomIntersect);
+                if ($area > $areaMax) {
+                    $areaMax = $area;
+                    $this->featureNormative['zone']['name'] = $zone['name'];
+                    $this->featureNormative['zone']['km2'] = $zone['km2'];
+                }
             }
         }
     }
@@ -452,14 +455,28 @@ class NormativeXmlSaver
     private function intersectLocal(array $locals, string $feature)
     {
         $arrayCurrent = [];
+        $id = 1;
         foreach ($locals as $local) {
             $geomLocal = $this->fileRepository->getGeomFromJsonAsWkt($local['coordinates']);
-            $area = $this->fileRepository->isIntersectAsArea($geomLocal, $feature);
-            if ($area) {
+            $geomIntersect = $this->fileRepository->isIntersectAsArea($geomLocal, $feature);
+
+            //$area = $this->fileRepository->calcArea($geomIntersect);
+            if ($geomIntersect) {
+                $area = $this->fileRepository->calcArea($geomIntersect);
+
+                $geomIntersectTransform = $this->fileRepository->transformFeatureFromSC63to4326($geomIntersect);
+                //dump($geomIntersectTransform);
+
+                $jsonIntersectTransform = $this->fileRepository->getJsonFromWkt($geomIntersectTransform);
+
+
                 $arrayCurrent['name'] = $local['name'];
                 $arrayCurrent['area'] = $area;
                 $arrayCurrent['code'] = $local['code'];
+                $arrayCurrent['geom'] = $jsonIntersectTransform;
+                $arrayCurrent['id'] = $id;
                 $this->featureNormative['local'][] = $arrayCurrent;
+                $id++;
             }
         }
         if (!array_key_exists('local', $this->featureNormative)) {

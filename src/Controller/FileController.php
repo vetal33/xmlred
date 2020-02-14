@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\File;
 use App\Form\FileFormType;
 use App\Repository\FileRepository;
+use App\Service\ApiClient\EServicesClient;
 use App\Service\JsonUploader;
 use App\Service\NormativeXmlSaver;
 use App\Service\NormativeXmlParser;
@@ -84,18 +85,12 @@ class FileController extends AbstractController
                 if ($this->isGranted('ROLE_USER')) {
                     $result = $normativeXmlSaver->toShape($parseXml);
                 }
-
                 $data = $normativeXmlSaver->toGeoJson($parseXml);
 
                 $data['origXml'] = $xmlObj;
                 $data['origXmlName'] = $uploader->getOriginalName();
                 $data['newXmlName'] = $uploader->getNewName();
                 $data['errors'] = [];
-                /* $file->setXmlFileName($newFilename);
-                 $file->setAddDate(new \DateTime());
-                 $file->setXmlOriginalName($uploader->getOriginalName());
-                 $entityManager->persist($file);
-                 $entityManager->flush();*/
 
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             } catch (NotFoundHttpException $exception) {
@@ -114,7 +109,7 @@ class FileController extends AbstractController
     }
 
     /**
-     * @IsGranted("ROLE_USER")
+     *
      * @Route("/load",name = "downloadShp", methods={"GET","POST"}, options={"expose"=true})
      * @param XmlUploader $uploader
      * @param Request $request
@@ -124,32 +119,35 @@ class FileController extends AbstractController
 
     public function downloadShp(XmlUploader $uploader, Request $request, NormativeXmlSaver $normativeXmlSaver): Response
     {
-        $name = $request->query->get('name');
-        $fileName = $normativeXmlSaver->addToZip($name);
+        if ($this->isGranted('ROLE_USER')) {
+            $name = $request->query->get('name');
+            $fileName = $normativeXmlSaver->addToZip($name);
 
-        if (!$fileName) {
-            die;
+            if (!$fileName) {
+                die;
+            }
+
+            $stream = new Stream($fileName);
+            $response = new BinaryFileResponse($stream);
+            clearstatcache(true, $fileName);
+
+            /*        $response = new StreamedResponse(function () use ($uploader) {
+                        $outputStream = fopen('php://output', 'wb');
+                        $fileStream = $uploader->download();
+                        dump($fileStream);
+                        stream_copy_to_stream($fileStream, $outputStream);
+                    });
+                    $response->headers->set('Content-Type', 'application/zip');
+
+                    $disposition = HeaderUtils::makeDisposition(
+                        HeaderUtils::DISPOSITION_ATTACHMENT,
+                        'test.zip'
+                    );
+                    $response->headers->set('Content-Disposition', $disposition);*/
+
+            return $response;
         }
-
-        $stream = new Stream($fileName);
-        $response = new BinaryFileResponse($stream);
-        clearstatcache(true, $fileName);
-
-        /*        $response = new StreamedResponse(function () use ($uploader) {
-                    $outputStream = fopen('php://output', 'wb');
-                    $fileStream = $uploader->download();
-                    dump($fileStream);
-                    stream_copy_to_stream($fileStream, $outputStream);
-                });
-                $response->headers->set('Content-Type', 'application/zip');
-
-                $disposition = HeaderUtils::makeDisposition(
-                    HeaderUtils::DISPOSITION_ATTACHMENT,
-                    'test.zip'
-                );
-                $response->headers->set('Content-Disposition', $disposition);*/
-
-        return $response;
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -200,42 +198,41 @@ class FileController extends AbstractController
         FileRepository $fileRepository
     )
     {
-        if ($request->isXmlHttpRequest()) {
-            try {
+        if ($this->isGranted('ROLE_USER')) {
+            if ($request->isXmlHttpRequest()) {
+                try {
+                    /**@var UploadedFile $uploadedFile */
+                    $uploadedFile = $request->files->get('jsonFile');
+                    $errors = $validateHelper->validateFile($uploadedFile);
 
-                /**@var UploadedFile $uploadedFile */
-                $uploadedFile = $request->files->get('jsonFile');
-                $errors = $validateHelper->validateFile($uploadedFile);
+                    if (0 != count($errors)) {
+                        $data['errors'][] = $errors[0]->getMessage();
+                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                    }
 
-                if (0 != count($errors)) {
-                    $data['errors'][] = $errors[0]->getMessage();
+                    $fileStr = file_get_contents($uploadedFile);
+                    $errors = $validateHelper->validateJsonString($fileStr);
+
+                    if (0 != count($errors)) {
+                        $data['errors'][] = $errors[0]->getMessage();
+                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                    }
+
+                    $jsonUploader->upload($uploadedFile);
+                    $wkt = $fileRepository->getGeomFromJsonAsWkt($fileStr);
+                    $wktTransform = $fileRepository->transformFeatureFromSC63to4326($wkt);
+                    $data['wkt'] = $wkt;
+                    $jsonTransform = $fileRepository->getJsonFromWkt($wktTransform);
+                    $data['json'] = $jsonTransform;
+
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
+
+                } catch (\Exception $exception) {
+                    return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
-
-                $fileStr = file_get_contents($uploadedFile);
-                $errors = $validateHelper->validateJsonString($fileStr);
-
-                if (0 != count($errors)) {
-                    $data['errors'][] = $errors[0]->getMessage();
-                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                }
-
-                $jsonUploader->upload($uploadedFile);
-                $wkt = $fileRepository->getGeomFromJsonAsWkt($fileStr);
-                dump($wkt);
-                $wktTransform = $fileRepository->transformFeatureFromSC63to4326($wkt);
-                dump($wktTransform);
-                $data['wkt'] = $wkt;
-                $jsonTransform = $fileRepository->getJsonFromWkt($wktTransform);
-                $data['json'] = $jsonTransform;
-
-                return new JsonResponse(json_encode($data), Response::HTTP_OK);
-
-            } catch (\Exception $exception) {
-                return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
         }
-        return $this->json(['message' => 'Заборонений доступ!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -245,6 +242,7 @@ class FileController extends AbstractController
      * @param NormativeXmlParser $normativeXmlParser
      * @param NormativeXmlSaver $normativeXmlSaver
      * @param FileRepository $fileRepository
+     * @param EServicesClient $servicesClient
      * @return JsonResponse
      */
 
@@ -253,17 +251,17 @@ class FileController extends AbstractController
         XmlUploader $uploader,
         NormativeXmlParser $normativeXmlParser,
         NormativeXmlSaver $normativeXmlSaver,
-        FileRepository $fileRepository)
+        FileRepository $fileRepository,
+        EServicesClient $servicesClient
+    )
     {
         if ($this->isGranted('ROLE_USER')) {
             try {
                 $data = [];
                 $fileName = $request->request->get('fileName');
                 $feature = $request->request->get('feature');
-                dump($feature);
 
                 $result = $fileRepository->isValid($feature);
-                dump($result);
                 if (!$result) {
                     $error = 'Вибачте!, геометрія ділянки не валідна!';
                     return new JsonResponse($error, Response::HTTP_NOT_FOUND);
@@ -277,8 +275,6 @@ class FileController extends AbstractController
                 }
 
                 $parseXml = $normativeXmlParser->parse($file);
-                dump($parseXml);
-
                 if (!$parseXml) {
                     $data['errors'] = $normativeXmlParser->getErrors();
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
@@ -293,14 +289,21 @@ class FileController extends AbstractController
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
                 $resultIntersect['area'] = $fileRepository->calcArea($feature);
+                $transformFeature = $fileRepository->transformFromSK63To3857($feature);
+
+                if ($servicesClient->isConnect()) {
+                    $centroid = $fileRepository->getCentroid($transformFeature);
+                    $centroidArray = $fileRepository->wktPointToArray($centroid);
+                    if ($pubData = $servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
+                        $resultIntersect['pub'] = $pubData;
+                    }
+                }
 
                 return new JsonResponse(json_encode($resultIntersect), Response::HTTP_OK);
             } catch (\Exception $exception) {
-
                 return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
         }
         return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
-
     }
 }

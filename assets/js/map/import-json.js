@@ -1,12 +1,8 @@
 $(document).ready(function () {
+    const overlayControl = $('#buttons-card .overlay');
 
     $('#file-form-jsonFile').on('change', function (event) {
-        let inputFile = event.currentTarget;
-        /*        $(inputFile).parent()
-                    .find('.custom-file-label')
-                    .html(inputFile.files[0].name);*/
         let fileJson = $("#file-form-jsonFile")[0].files[0];
-
         let formData = new FormData();
         formData.append("jsonFile", fileJson);
         sendFile(formData);
@@ -21,73 +17,61 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             beforeSend: function () {
-                /*                overlayShp[0].hidden = false;
-                                overlayControl[0].hidden = false;*/
+                overlayControl[0].hidden = false;
             },
             success: function (data) {
-
-                /*                overlayShp[0].hidden = true;
-                                overlayControl[0].hidden = true;*/
-                /*                btnValidateXml.removeClass('disabled');
-                                btnValidateXml.find('i').addClass('text-success');
-                                btnDownloadShp.removeClass('disabled');
-                                btnDownloadShp.find('i').addClass('text-success');*/
+                overlayControl[0].hidden = true;
+                clearTableCalculate();
 
                 let dataJson = JSON.parse(data);
-                console.log(dataJson);
-                $('#geom-from-json').val(dataJson.wkt);
+                let bounds = addFeatureToMap(dataJson.json);
 
-                addFeature(dataJson.json);
-
-                /*                if (dataJson.errors.length > 0) {
-                                    $(btnDownloadShp).addClass('disabled');
-                                    $('#shp-card').attr('data-name', "");
-                                    createBlockErrors(dataJson.errors);
-                                } else {
-                                    setStartPosition();
-                                    $(btnDownloadShp).attr('href', '/load?name=' + dataJson.newXmlName);
-
-                                    addLayers(dataJson);
-                                    visualizeXML(dataJson);
-                                }*/
+                setData(dataJson, bounds);
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                /*                overlayShp[0].hidden = true;
-                                overlayControl[0].hidden = true;*/
-                console.log(jqXHR);
-
+                overlayControl[0].hidden = true;
                 servicesThrowErrors(jqXHR);
             },
         })
     }
 
-    function addFeature(data) {
+    function clearTableCalculate() {
+        $('#calculate').remove();
+        $('#feature-card-area').html('');
+        $('#feature-card-cud-num').html('');
+    }
+
+    function setData(data, bounds) {
+        $('#geom-from-json').val(data.wkt);
+        $('#geom-from-json').attr("data-bounds", bounds);
+        if($('#shp-card').attr('data-name')!== '') {
+            $('#feature-from-json').removeClass('disabled');
+        }
+        $('#feature-card').removeClass('d-none');
+    }
+
+    /**
+     * Додаємо імпортовану ділянку до карти
+     *
+     * @param data
+     * @returns {string}
+     */
+
+    function addFeatureToMap(data) {
         let objData = JSON.parse(data);
         let feature = [{
             "type": "Feature",
-            "properties": {"party": "Republican"},
+            "properties": {"name": "Parcel"},
             "geometry": {
                 "type": objData.type,
                 "coordinates": objData.coordinates,
             }
         }];
-
         let polygon = L.geoJSON(feature, {
             style: addFeatureFromJsonStyle
         }).addTo(mymap);
-
         mymap.fitBounds(polygon.getBounds());
-        createFeatureCard();
+
+        return JSON.stringify(polygon.getBounds());
     }
-
-    /**
-     * Створює таблицю ділянки імпотра
-     *
-     *
-     */
-
-    function createFeatureCard() {
-        $('#feature-card').removeClass('d-none');
-    }
-
 });

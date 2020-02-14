@@ -7,6 +7,5 @@ module.exports = function (errorObj) {
     } else {
         toastr.error('Виникла помилка, вибачте за незручності!');
     }
-
     return true;
 };

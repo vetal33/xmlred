@@ -9,6 +9,7 @@ $(document).ready(function () {
     window.localLayersGroup = L.layerGroup();
     window.landsLayersGroup = L.layerGroup();
     window.regionsLayersGroup = L.layerGroup();
+    window.intersectLocalLayersGroup = L.layerGroup();
 
 
     overlayShp[0].hidden = true;
@@ -20,7 +21,6 @@ $(document).ready(function () {
             .find('.custom-file-label')
             .html(inputFile.files[0].name);
         let fileXML = $("#file_form_xmlFile")[0].files[0];
-
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
@@ -48,7 +48,6 @@ $(document).ready(function () {
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
-                console.log(dataJson);
 
                 if (dataJson.errors.length > 0) {
                     $(btnDownloadShp).addClass('disabled');
@@ -122,13 +121,16 @@ $(document).ready(function () {
         landsLayersGroup.remove();
         zonyLayersGroup.remove();
         localLayersGroup.remove();
+        regionsLayersGroup.remove();
 
         $('#local').prop('checked', true);
         $('#zony').prop('checked', true);
         $('#lands').prop('checked', true);
+        $('#regions').prop('checked', true);
 
         $('#xml-card').removeClass('card-outline card-danger');
         $('#xml-card').removeClass('card-outline card-success');
+        $('#feature-card').addClass('d-none');
     }
 
     function addLayers(dataJson) {
@@ -145,8 +147,5 @@ $(document).ready(function () {
         if (dataJson.lands) {
             addLandsToMap(dataJson.lands);
         }
-/*        mymap.eachLayer(function (layer) {
-            console.log(layer);
-        });*/
     }
 });
