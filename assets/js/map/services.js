@@ -9,22 +9,21 @@ $(document).ready(function () {
     window.localLayersGroup = L.layerGroup();
     window.landsLayersGroup = L.layerGroup();
     window.regionsLayersGroup = L.layerGroup();
+    window.intersectLocalLayersGroup = L.layerGroup();
 
 
     overlayShp[0].hidden = true;
     overlayControl[0].hidden = true;
 
-    $('.custom-file-input').on('change', function (event) {
+    $('#file_form_xmlFile').on('change', function (event) {
         let inputFile = event.currentTarget;
         $(inputFile).parent()
             .find('.custom-file-label')
             .html(inputFile.files[0].name);
         let fileXML = $("#file_form_xmlFile")[0].files[0];
-
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
-
     });
 
     function sendFile(data) {
@@ -65,8 +64,7 @@ $(document).ready(function () {
             error: function (jqXHR, textStatus, errorThrown) {
                 overlayShp[0].hidden = true;
                 overlayControl[0].hidden = true;
-                toastr.options = {"closeButton": true, };
-                toastr.error('Вибачте виникла помилка!');
+                servicesThrowErrors(jqXHR);
             },
         })
     }
@@ -123,13 +121,16 @@ $(document).ready(function () {
         landsLayersGroup.remove();
         zonyLayersGroup.remove();
         localLayersGroup.remove();
+        regionsLayersGroup.remove();
 
         $('#local').prop('checked', true);
         $('#zony').prop('checked', true);
         $('#lands').prop('checked', true);
+        $('#regions').prop('checked', true);
 
         $('#xml-card').removeClass('card-outline card-danger');
         $('#xml-card').removeClass('card-outline card-success');
+        $('#feature-card').addClass('d-none');
     }
 
     function addLayers(dataJson) {
@@ -146,8 +147,5 @@ $(document).ready(function () {
         if (dataJson.lands) {
             addLandsToMap(dataJson.lands);
         }
-/*        mymap.eachLayer(function (layer) {
-            console.log(layer);
-        });*/
     }
 });

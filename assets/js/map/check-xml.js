@@ -35,22 +35,10 @@ $(document).ready(function () {
             },
             error: function (jqXHR) {
                 overlay[0].hidden = true;
-                createErrorBox(jqXHR);
-
+                servicesThrowErrors(jqXHR);
             },
         })
     }
-
-    function createErrorBox(errorObj) {
-        if (errorObj.status === 404) {
-            toastr.error(errorObj.responseJSON, 'Вибачте виникла помилка!',{timeOut: 15000});
-        }else if (errorObj.status === 403) {
-            toastr.info(errorObj.responseJSON, 'Увага!',{timeOut: 20000});
-        } else {
-            toastr.error('Виникла помилка, вибачте за незручності!');
-        }
-    }
-
 
     /**
      * Створює таблицю з помилками
@@ -78,7 +66,6 @@ $(document).ready(function () {
                                 '<i class="fas fa-2x fa-sync-alt fa-spin"></i>' +
                             '</div>' +
                         '</div>');
-
         $('#xml-card').before(errorsCard);
         $.each(errorsArray, function (index, value) {
             let row = '<tr><td>' + value.line + '</td><td class="text-justify">' + value.message + '</td></tr>';

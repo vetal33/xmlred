@@ -26,7 +26,8 @@
                         </a>
                         <div class="ml-auto">
                             {% include 'file/_form_json.html.twig' %}
-                            <a href="{{ path('downloadShp') }}" class="btn btn-app btn-control disabled" id="btn-download-shp">
+                            <a href="{{ path('downloadShp') }}" class="btn btn-app btn-control disabled"
+                               id="btn-download-shp">
                                 <i class="fas fa-download"></i> Скачати *.shp
                             </a>
                         </div>
@@ -115,6 +116,38 @@
                     <div class="overlay v-hidden">
                         <i class="fas fa-2x fa-sync-alt fa-spin"></i>
                     </div>
+                </div>
+                <div class="card card-outline card-success d-none" id="feature-card">
+                    <div class="card-header border-0"><h3 class="card-title text-success">Імпортована ділянка</h3>
+                        <div class="card-tools">
+                            <input type="hidden" id="geom-from-json" value="" data-bounds="">
+                            <span data-toggle="tooltip" class="badge badge-danger"></span>
+                            <a href="#" id="zoom-to-parcel" class="btn btn-tool btn-sm">
+                                <i class="fas fa-search"></i>
+                            </a>
+                            <a href="{{ path('calculateNormative') }}" id="feature-from-json" class="btn btn-tool btn-sm disabled">
+                                <i class="fas fa-calculator"></i>
+                            </a>
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm">
+                            <tbody id="feature-table">
+                            <tr>
+                                <td>Площа ділянки</td>
+                                <td id="feature-card-area"></td>
+                            </tr>
+                            <tr>
+                                <td>Кадастровий номер</td>
+                                <td id="feature-card-cud-num"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="overlay v-hidden" hidden=""><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
                 </div>
                 <div class="card" id="xml-card">
                     <div class="card-header">

@@ -38,3 +38,12 @@ services:
             $user: '%env(MAILER_USER)%'
             $password: '%env(MAILER_PASSWORD)%'
 
+    App\Service\ApiClient\EServicesClient:
+        arguments:
+            $baseUri: '%env(ES_API_TOKEN)%'
+        calls:
+            - method: setAccessToken
+              arguments:
+                  $clientId: '%env(ES_API_CLIENT_ID)%'
+                  $clientSecret: '%env(ES_API_CLIENT_SECRET)%'
+
