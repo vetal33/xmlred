@@ -319,6 +319,16 @@ class NormativeXmlSaver
         $pathName = $this->shapePath . '/export/' . $dir;
         if (!file_exists($pathName)) {
             mkdir($pathName);
+        } else {
+            $this->clearDir($pathName);
+        }
+    }
+
+    private function clearDir(string $destinationFolder): void
+    {
+        $dir = array_diff(scandir($destinationFolder), ['.', '..']);
+        foreach ($dir as $file) {
+            unlink($destinationFolder . '/' . $file);
         }
     }
 
