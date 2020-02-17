@@ -5,15 +5,20 @@ $(document).ready(function () {
     const btnDownloadShp = $('#btn-download-shp');
     const btnValidateXml = $('#btn-validate-xml');
 
+    /**  Створюєм глобальний об'єкт Map   */
+    window.mymap = L.map('map').setView([48.5, 31], 6);
+
+    /**  Створюєм глобальні групи шарів   */
     window.zonyLayersGroup = L.layerGroup();
     window.localLayersGroup = L.layerGroup();
     window.landsLayersGroup = L.layerGroup();
     window.regionsLayersGroup = L.layerGroup();
     window.intersectLocalLayersGroup = L.layerGroup();
-
+    window.parcelGroup = L.layerGroup();
 
     overlayShp[0].hidden = true;
     overlayControl[0].hidden = true;
+    addBaseLayars();
 
     $('#file_form_xmlFile').on('change', function (event) {
         let inputFile = event.currentTarget;
@@ -39,15 +44,16 @@ $(document).ready(function () {
                 overlayControl[0].hidden = false;
             },
             success: function (data) {
-
                 overlayShp[0].hidden = true;
                 overlayControl[0].hidden = true;
+
                 btnValidateXml.removeClass('disabled');
                 btnValidateXml.find('i').addClass('text-success');
                 btnDownloadShp.removeClass('disabled');
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
+                console.log(dataJson);
 
                 if (dataJson.errors.length > 0) {
                     $(btnDownloadShp).addClass('disabled');
@@ -59,6 +65,7 @@ $(document).ready(function () {
 
                     addLayers(dataJson);
                     visualizeXML(dataJson);
+                    addGeneralData(dataJson.boundary);
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -67,6 +74,35 @@ $(document).ready(function () {
                 servicesThrowErrors(jqXHR);
             },
         })
+    }
+
+    function addGeneralData(data) {
+        let region, district, city;
+        $('.general-info').removeClass('d-none');
+
+        if (data.ValuationYear !== 'undefined') {
+            $('#general-year').html('<i class="far fa-calendar-alt mr-1"></i>' + data.ValuationYear + ' р.');
+        }
+        if (data.Cnm !== 'Cnm') {
+            $('#general-base-price').html('<i class="far fa-money-bill-alt mr-1"></i>' + data.Cnm + ' грн./м<sup>2</sup>');
+        }
+        if (data.Population !== 'undefined') {
+            $('#general-population').html('<i class="fas fa-users mr-1"></i>' + data.Population + ' чол.');
+        }
+        if (data.Size !== 'undefined') {
+            $('#general-area').html('<i class="fas fa-vector-square mr-1"></i>' + data.Size + ' ' + data.MeasurementUnit);
+        }
+        if (data.Region !== 'undefined') {
+           region = data.Region;
+        }
+        if (data.District !== 'undefined') {
+            district = data.District;
+        }
+        if (data.MunicipalUnitName !== 'undefined') {
+            city = data.MunicipalUnitName;
+        }
+
+        $('#general-address').html('<i class="fas fa-map-marked-alt mr-1"></i>' + region + ' ' + district + ' ' + city);
     }
 
     function visualizeXML(data) {
@@ -118,11 +154,6 @@ $(document).ready(function () {
     function setStartPosition() {
         $('#errors-card').remove();
 
-        landsLayersGroup.remove();
-        zonyLayersGroup.remove();
-        localLayersGroup.remove();
-        regionsLayersGroup.remove();
-
         $('#local').prop('checked', true);
         $('#zony').prop('checked', true);
         $('#lands').prop('checked', true);
@@ -131,10 +162,15 @@ $(document).ready(function () {
         $('#xml-card').removeClass('card-outline card-danger');
         $('#xml-card').removeClass('card-outline card-success');
         $('#feature-card').addClass('d-none');
+        $('#xml-card #wrapper').html('');
+        $('.legends').remove();
+
+        removeLayers();
     }
 
     function addLayers(dataJson) {
-        addMejaToMap(dataJson.boundary, boundaryStyle);
+        addBaseLayars();
+        addMejaToMap(dataJson.boundary.coordinates, boundaryStyle);
         if (dataJson.zones) {
             addZonyToMap(dataJson.zones);
         }
@@ -147,5 +183,21 @@ $(document).ready(function () {
         if (dataJson.lands) {
             addLandsToMap(dataJson.lands);
         }
+    }
+
+    function removeLayers() {
+
+        mymap.eachLayer(function (layer) {
+            mymap.removeLayer(layer);
+        });
+
+        mymap.removeControl(layersControl);
+
+        zonyLayersGroup.clearLayers();
+        regionsLayersGroup.clearLayers();
+        localLayersGroup.clearLayers();
+        landsLayersGroup.clearLayers();
+        intersectLocalLayersGroup.clearLayers();
+        parcelGroup.clearLayers();
     }
 });

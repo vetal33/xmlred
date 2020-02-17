@@ -69,7 +69,13 @@ $(document).ready(function () {
         }];
         let polygon = L.geoJSON(feature, {
             style: addFeatureFromJsonStyle
-        }).addTo(mymap);
+        });
+
+        parcelGroup.addLayer(polygon);
+
+        /** Додаємо групу до карти    */
+        parcelGroup.addTo(mymap);
+
         mymap.fitBounds(polygon.getBounds());
 
         return JSON.stringify(polygon.getBounds());

@@ -53,16 +53,13 @@ class FileController extends AbstractController
     {
         $data = [];
         $file = new File;
-
         $form = $this->createForm(FileFormType::class, $file);
 
         if ($request->isXmlHttpRequest()) {
-
             try {
                 /**@var UploadedFile $uploadedFile */
                 $uploadedFile = $request->files->get('xmlFile');
                 $errors = $validateHelper->validateNormativeXml($uploadedFile);
-
                 if (0 != count($errors)) {
                     $data['errors'][] = $errors[0]->getMessage();
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);

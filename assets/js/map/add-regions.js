@@ -23,8 +23,6 @@ module.exports = function (data) {
 
     setNumberScale(data);
 
-    clearLayersZony();
-
     geojson = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
@@ -38,16 +36,12 @@ module.exports = function (data) {
         layer.bindPopup("район - " + layer.feature.properties.name + "<br /> Iі - " + layer.feature.properties.ki);
     });
 
-    /** Додаємо групу до панелі управління    */
-    layersControl.addOverlay(regionsLayersGroup, 'Оціночні райони');
-
     $('#marker-regions').html('<i class="fas fa-check text-success"></i>');
     $('#regions').prop('disabled', false);
 
     function setNumberScale(data) {
 
         /**  Створюємо масив з значеннями Кi    */
-
         let regionsArray = data.map(function (item) {
             return +item.ki;
         });
@@ -70,18 +64,6 @@ module.exports = function (data) {
         }
         grades = numberScale.slice();
         grades.unshift(0);
-    }
-
-    /**
-     * Remove regionsLayers from map
-     */
-    function clearLayersZony() {
-        mymap.eachLayer(function (layer) {
-            if (layer.nameLayer && layer.nameLayer === "regionsGeoJSON") {
-                mymap.removeLayer(layer)
-                layersControl.removeLayer(geojson)
-            }
-        });
     }
 
     /**

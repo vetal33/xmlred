@@ -1,6 +1,6 @@
 import '../../css/map/map.css';
 
-import '../map/map'
+window.addBaseLayars = require('../map/add-base-layers');
 window.servicesThrowErrors = require('../map/service_errors');
 window.addZonyToMap = require('../map/add-zony');
 window.addLocalToMap = require('../map/add-local');

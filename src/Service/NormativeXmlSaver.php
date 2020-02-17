@@ -82,15 +82,6 @@ class NormativeXmlSaver
                     } else {
                         $polygon = $this->arrayToPolygon($valMulti['coordinates']['external']);
                     }
-
-                    // dump($polygon);
-
-                    /*           if($ifConvert) {
-                                   $wkt = $this->convertToWGS($polygon, $numberZone);
-                               } else {
-                                   $wkt= $polygon->getWKT();
-                               }*/
-
                     $wkt = ($ifConvert) ? $this->convertToWGS($polygon, $numberZone) : $polygon->getWKT();
 
                     $data[$key][$item]['coordinates'] = $this->getGeoJson($wkt);
@@ -113,10 +104,14 @@ class NormativeXmlSaver
                 }
             } else {
                 $polygon = $this->arrayToPolygon($value['external']);
-
                 //$wkt = $this->convertToWGS($polygon, $numberZone);
                 $wkt = ($ifConvert) ? $this->convertToWGS($polygon, $numberZone) : $polygon->getWKT();
-                $data[$key] = $this->getGeoJson($wkt);
+                $data[$key]['coordinates'] = $this->getGeoJson($wkt);
+                foreach ($value as $k => $v) {
+                    if ($k !== 'external') {
+                        $data[$key][$k] = $v;
+                    }
+                }
             }
         }
         return $data;
@@ -339,8 +334,9 @@ class NormativeXmlSaver
         //$wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
         $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
 
-        /*        $wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
-                $wkt = $this->fileRepository->transformFeatureFromSC63to4326($wkt, 106304);*/
+        /*                $wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
+                        $wkt = $this->fileRepository->transformFeatureFromSC63to4326($wkt, 106304);*/
+
 
         return $wkt;
     }
@@ -417,7 +413,7 @@ class NormativeXmlSaver
         if (!array_key_exists('boundary', $layers)) {
             return false;
         }
-        $geomBoundary = $this->fileRepository->getGeomFromJsonAsWkt($layers['boundary']);
+        $geomBoundary = $this->fileRepository->getGeomFromJsonAsWkt($layers['boundary']['coordinates']);
 
         if (!$this->intersectBoundary($geomBoundary, $feature)) {
             $this->errors[] = 'Ділянка знаходиться за межами населеного пункту!';
@@ -460,15 +456,11 @@ class NormativeXmlSaver
             $geomLocal = $this->fileRepository->getGeomFromJsonAsWkt($local['coordinates']);
             $geomIntersect = $this->fileRepository->isIntersectAsArea($geomLocal, $feature);
 
-            //$area = $this->fileRepository->calcArea($geomIntersect);
             if ($geomIntersect) {
                 $area = $this->fileRepository->calcArea($geomIntersect);
 
                 $geomIntersectTransform = $this->fileRepository->transformFeatureFromSC63to4326($geomIntersect);
-                //dump($geomIntersectTransform);
-
                 $jsonIntersectTransform = $this->fileRepository->getJsonFromWkt($geomIntersectTransform);
-
 
                 $arrayCurrent['name'] = $local['name'];
                 $arrayCurrent['area'] = $area;
@@ -483,6 +475,4 @@ class NormativeXmlSaver
             $this->featureNormative['local'] = [];
         }
     }
-
-
 }
