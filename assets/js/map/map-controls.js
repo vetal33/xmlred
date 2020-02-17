@@ -102,9 +102,12 @@ $(document).ready(function () {
         if (boundsStr.trim() !== '') {
             let bounds = JSON.parse(boundsStr);
             let arrayBounds = [];
-            arrayBounds.push([bounds._southWest.lat, bounds._southWest.lng],[bounds._northEast.lat, bounds._northEast.lng]);
+            arrayBounds.push([bounds._southWest.lat, bounds._southWest.lng], [bounds._northEast.lat, bounds._northEast.lng]);
 
             mymap.fitBounds(arrayBounds);
+            parcelGroup.eachLayer(function (layer) {
+                layer.bringToFront();
+            });
         }
     });
 
@@ -120,20 +123,20 @@ $(document).ready(function () {
         setStyleOut($(this).attr("data-id"));
     });
 
-    function setStyleIn(id){
+    function setStyleIn(id) {
         intersectLocalLayersGroup.eachLayer(function (layer) {
             if (Number(layer.feature.properties.id) === Number(id)) {
                 layer.setStyle(intersectLocalsSelectedStyle);
+                layer.bringToFront();
             }
         });
     }
 
-    function setStyleOut(id){
+    function setStyleOut(id) {
         intersectLocalLayersGroup.eachLayer(function (layer) {
             if (Number(layer.feature.properties.id) === Number(id)) {
                 layer.setStyle(intersectLocalsStyle);
             }
         });
     }
-
 });

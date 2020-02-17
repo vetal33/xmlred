@@ -1,4 +1,3 @@
-
 let legend;
 let infoBox;
 let geojson;
@@ -25,24 +24,21 @@ module.exports = function (data) {
     });
 
     setNumberScale(data);
-
-    clearLayersZony();
-
     geojson = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
     });
 
     /** Додаємо групу до карти    */
-    zonyLayersGroup.addTo(mymap);
-
-    /** Додаємо групу до панелі управління    */
-    layersControl.addOverlay(zonyLayersGroup, 'Економіко-пл. зони');
+    //zonyLayersGroup.addTo(mymap);
+    mymap.addLayer(zonyLayersGroup);
 
     $('#marker-zony').html('<i class="fas fa-check text-success"></i>');
     $('#zony').prop('disabled', false);
 
     function setNumberScale(data) {
+        grades = [];
+        numberScale = [];
 
         /**  Створюємо масив з значеннями Км2    */
 
@@ -58,28 +54,20 @@ module.exports = function (data) {
 
         /**  Сортуємо масив    */
         zonyArray.sort(compareNumeric);
-        let numbShift = (zonyArray[zonyArray.length - 1] - zonyArray[0]) / 5;
+
+        let lengthArray = (zonyArray.length < 5) ? zonyArray.length : 5;
+        let numbShift = (zonyArray[zonyArray.length - 1] - zonyArray[0]) / lengthArray;
 
         numberScale[0] = +parseFloat(zonyArray[0] + numbShift).toFixed(2);
         let num;
-        for (let i = 0; i < 3; i++) {
+        let countElement = (lengthArray - 2 < 1) ? 0 : lengthArray - 2;
+
+        for (let i = 0; i < countElement; i++) {
             num = parseFloat(numberScale[i] + numbShift).toFixed(2);
             numberScale.push(+num);
         }
         grades = numberScale.slice();
         grades.unshift(0);
-    }
-
-    /**
-     * Remove zonyLayers from map
-     */
-    function clearLayersZony() {
-        mymap.eachLayer(function (layer) {
-            if (layer.nameLayer && layer.nameLayer === "zonyGeoJSON") {
-                mymap.removeLayer(layer)
-                layersControl.removeLayer(geojson)
-            }
-        });
     }
 
     /**
@@ -125,7 +113,6 @@ module.exports = function (data) {
         });
     }
 
-
     function highlightFeature(e) {
         let layer = e.target;
 
@@ -159,7 +146,7 @@ module.exports = function (data) {
     /**
      * Створюємо легенду "Значення коєфіцієнтів Км2"
      */
-    if(infoBox instanceof L.Control) {
+    if (infoBox instanceof L.Control) {
         mymap.removeControl(infoBox);
     }
     infoBox = L.control();
@@ -174,14 +161,14 @@ module.exports = function (data) {
     infoBox.update = function (props) {
         this._div.innerHTML = '<h6>Коефіцієнт км2</h6>' + (props ?
             'Зона - <b>' + props.name + '</b><br />' + 'Км2 - ' + props.km2
-            : 'Наведіть для отрима ння інформації');
+            : 'Наведіть для отримання інформації');
     };
 
 
     /**
      * Створюємо легенду "Умовні позначення"
      */
-    if(legend instanceof L.Control) {
+    if (legend instanceof L.Control) {
         mymap.removeControl(legend);
     }
     legend = L.control({position: 'bottomright'});

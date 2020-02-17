@@ -23,8 +23,8 @@ class FileRepository extends ServiceEntityRepository
     {
         $stmt = $this->getEntityManager()
             ->getConnection()
-            ->prepare('select ST_AsText(st_transform(ST_SetSRID(ST_GeomFromText(:polygon, :zone), 28406), 106304))');
-        // ->prepare('select ST_AsText(st_transform(ST_GeomFromText(:polygon, :zone), 106304))');
+            //->prepare('select ST_AsText(st_transform(ST_SetSRID(ST_GeomFromText(:polygon, :zone), 28406), 106304))');
+            ->prepare('select ST_AsText(st_transform(ST_GeomFromText(:polygon, :zone), 106304))');
         $stmt->bindParam(':polygon', $feature);
         $stmt->bindParam(':zone', $zone);
         $stmt->execute();
@@ -106,7 +106,7 @@ class FileRepository extends ServiceEntityRepository
         if ($typeFeature === 'MULTIPOLYGON') {
             $result = explode('(((', $wkt);
             $coord = explode(' ', $result[1]);
-        } elseif ($typeFeature === 'POLYGON'){
+        } elseif ($typeFeature === 'POLYGON') {
             $result = explode('((', $wkt);
             $coord = explode(' ', $result[1]);
         }

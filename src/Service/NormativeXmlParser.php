@@ -56,6 +56,57 @@ class NormativeXmlParser implements ParserXml
         return $dataXml;
     }
 
+    public function getGeneralInformation($data)
+    {
+        $generalInfo = [];
+
+        foreach ($data as $key => $value) {
+            if ($key === 'AreaNP') {
+                if (array_key_exists('Size', $value)) {
+                    $generalInfo['Size'] = $value['Size'];
+                }
+                if (array_key_exists('MeasurementUnit', $value)) {
+                    $generalInfo['MeasurementUnit'] = $value['MeasurementUnit'];
+                }
+            }
+            if ($key === 'ValuationYear') {
+                $generalInfo['ValuationYear'] = $value;
+            }
+            if ($key === 'DescriptionOfTerritory') {
+                if (array_key_exists('Region', $value)) {
+                    $generalInfo['Region'] = $value['Region'];
+                }
+                if (array_key_exists('District', $value)) {
+                    $generalInfo['District'] = $value['District'];
+                }
+                if (array_key_exists('Rada', $value)) {
+                    $generalInfo['Rada'] = $value['Rada'];
+                }
+                if (array_key_exists('MunicipalUnitName', $value)) {
+                    $generalInfo['MunicipalUnitName'] = $value['MunicipalUnitName'];
+                }
+                if (array_key_exists('KOATUU', $value)) {
+                    $generalInfo['KOATUU'] = $value['KOATUU'];
+                }
+                if (array_key_exists('Population', $value)) {
+                    $generalInfo['Population'] = $value['Population'];
+                }
+            }
+            if ($key === 'Km1') {
+                if (array_key_exists('Km1Z', $value)) {
+                    $generalInfo['Km1Z'] = $value['Km1Z'];
+                }
+            }
+            if ($key === 'PriceM') {
+                if (array_key_exists('Cnm', $value)) {
+                    $generalInfo['Cnm'] = $value['Cnm'];
+                }
+            }
+        }
+
+        return $generalInfo;
+    }
+
     public function parseDataXml(array $dataXml)
     {
 
@@ -68,7 +119,9 @@ class NormativeXmlParser implements ParserXml
                     $currentPoints[$value][$item]['coordinates'] = $this->getGeometry($node);
                 }
             } else {
-                $currentPoints[$value] = $this->getGeometry($currentPoints[$value]);
+                $coords = $this->getGeometry($currentPoints[$value]);
+                $currentPoints[$value] = $this->getGeneralInformation($currentPoints[$value]);
+                $currentPoints[$value]['external'] = $coords['external'];
             }
         }
 
