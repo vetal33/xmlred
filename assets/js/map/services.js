@@ -53,7 +53,6 @@ $(document).ready(function () {
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
-                console.log(dataJson);
 
                 if (dataJson.errors.length > 0) {
                     $(btnDownloadShp).addClass('disabled');
@@ -116,8 +115,6 @@ $(document).ready(function () {
             return node.childNodes.length < 2 || node.label === 'phoneNumbers';
         });
     }
-
-
     let normativeGroup;
 
     function addMejaToMap(data, style) {
