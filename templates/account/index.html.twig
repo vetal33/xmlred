@@ -2,6 +2,11 @@
 
 {% block title %}Hello AccountController!{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('cabinet') }}
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">
@@ -15,24 +20,9 @@
                                         <img class="img-circle elevation-2 bg-light" src="{{ app.user.avatarUrl(100) }}"
                                              alt="User Avatar">
                                     </div>
-
                                     <h3 class="profile-username text-center">{{ app.user.email }}</h3>
-
-                                    <p class="text-muted text-center">Software Engineer</p>
-
-                                    <ul class="list-group list-group-unbordered mb-3">
-                                        <li class="list-group-item">
-                                            <b>Followers</b> <a class="float-right">1,322</a>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <b>Following</b> <a class="float-right">543</a>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <b>Friends</b> <a class="float-right">13,287</a>
-                                        </li>
-                                    </ul>
-
-                                    <a href="#" class="btn btn-primary btn-block"><b>Follow</b></a>
+                                    <p class="text-muted text-center">Engineer</p>
+                                    <a href="#" class="btn btn-block btn-outline-primary btn-xs"><b>Follow</b></a>
                                 </div>
                             </div>
                         </div>
@@ -44,32 +34,9 @@
                                         Callouts
                                     </h3>
                                 </div>
-                                <!-- /.card-header -->
                                 <div class="card-body">
-                                    <div class="callout callout-danger">
-                                        <h5>I am a danger callout!</h5>
-
-                                        <p>There is a problem that we need to fix. A wonderful serenity has taken possession of my entire
-                                            soul,
-                                            like these sweet mornings of spring which I enjoy with my whole heart.</p>
-                                    </div>
-                                    <div class="callout callout-info">
-                                        <h5>I am an info callout!</h5>
-
-                                        <p>Follow the steps to continue to payment.</p>
-                                    </div>
-                                    <div class="callout callout-warning">
-                                        <h5>I am a warning callout!</h5>
-
-                                        <p>This is a yellow callout.</p>
-                                    </div>
-                                    <div class="callout callout-success">
-                                        <h5>I am a success callout!</h5>
-
-                                        <p>This is a green callout.</p>
-                                    </div>
+                                    <canvas id="chart-area" class="chartjs-render-monitor"></canvas>
                                 </div>
-                                <!-- /.card-body -->
                             </div>
                         </div>
                     </div>
