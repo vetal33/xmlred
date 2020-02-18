@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Service\Interfaces\ParserXml;
 use phpDocumentor\Reflection\DocBlock\Tags\Return_;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class NormativeXmlParser implements ParserXml
 {
@@ -24,9 +25,10 @@ class NormativeXmlParser implements ParserXml
 
     private $settingFields = [
         'boundary' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation'],
-        'zony' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'EconPlanZones', 'EconPlanZone'],
+        'zones' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'EconPlanZones', 'EconPlanZone'],
         'localFactor' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'LocalFactors', 'LocalFactor'],
         'lands' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'AgroGroups', 'AgroGroup'],
+        'regions' => ['InfoPart', 'TerritorialZoneInfo', 'Objects', 'Lands', 'LandsValuation', 'LandsValuationType', 'MunicipalUnitNormativValuation', 'EstimatedAreas', 'EstimatedArea'],
     ];
 
 
@@ -54,8 +56,60 @@ class NormativeXmlParser implements ParserXml
         return $dataXml;
     }
 
+    public function getGeneralInformation($data)
+    {
+        $generalInfo = [];
+
+        foreach ($data as $key => $value) {
+            if ($key === 'AreaNP') {
+                if (array_key_exists('Size', $value)) {
+                    $generalInfo['Size'] = $value['Size'];
+                }
+                if (array_key_exists('MeasurementUnit', $value)) {
+                    $generalInfo['MeasurementUnit'] = $value['MeasurementUnit'];
+                }
+            }
+            if ($key === 'ValuationYear') {
+                $generalInfo['ValuationYear'] = $value;
+            }
+            if ($key === 'DescriptionOfTerritory') {
+                if (array_key_exists('Region', $value)) {
+                    $generalInfo['Region'] = $value['Region'];
+                }
+                if (array_key_exists('District', $value)) {
+                    $generalInfo['District'] = $value['District'];
+                }
+                if (array_key_exists('Rada', $value)) {
+                    $generalInfo['Rada'] = $value['Rada'];
+                }
+                if (array_key_exists('MunicipalUnitName', $value)) {
+                    $generalInfo['MunicipalUnitName'] = $value['MunicipalUnitName'];
+                }
+                if (array_key_exists('KOATUU', $value)) {
+                    $generalInfo['KOATUU'] = $value['KOATUU'];
+                }
+                if (array_key_exists('Population', $value)) {
+                    $generalInfo['Population'] = $value['Population'];
+                }
+            }
+            if ($key === 'Km1') {
+                if (array_key_exists('Km1Z', $value)) {
+                    $generalInfo['Km1Z'] = $value['Km1Z'];
+                }
+            }
+            if ($key === 'PriceM') {
+                if (array_key_exists('Cnm', $value)) {
+                    $generalInfo['Cnm'] = $value['Cnm'];
+                }
+            }
+        }
+
+        return $generalInfo;
+    }
+
     public function parseDataXml(array $dataXml)
     {
+
         $currentPoints = [];
         foreach ($this->settingFields as $value => $key) {
             $currentPoints[$value] = $this->findNode($dataXml, $key);
@@ -65,7 +119,9 @@ class NormativeXmlParser implements ParserXml
                     $currentPoints[$value][$item]['coordinates'] = $this->getGeometry($node);
                 }
             } else {
-                $currentPoints[$value] = $this->getGeometry($currentPoints[$value]);
+                $coords = $this->getGeometry($currentPoints[$value]);
+                $currentPoints[$value] = $this->getGeneralInformation($currentPoints[$value]);
+                $currentPoints[$value]['external'] = $coords['external'];
             }
         }
 
@@ -82,16 +138,16 @@ class NormativeXmlParser implements ParserXml
     private function modifyArray(array $data, string $value): array
     {
         $modifyArray = [];
-        if ($value === "zony" && is_string(array_key_last($data))) {
-            $modifyArray[0]= $data;
+        if ($value === "zones" && is_string(array_key_last($data))) {
+            $modifyArray[0] = $data;
             return $modifyArray;
         }
         if ($value === "localFactor" && is_string(array_key_last($data))) {
-            $modifyArray[0]= $data;
+            $modifyArray[0] = $data;
             return $modifyArray;
         }
         if ($value === "lands" && is_string(array_key_last($data))) {
-            $modifyArray[0]= $data;
+            $modifyArray[0] = $data;
             return $modifyArray;
         }
         return $data;
@@ -103,6 +159,9 @@ class NormativeXmlParser implements ParserXml
         $coordinates = [];
 
         if (array_key_exists('Externals', $data)) {
+            if (!$data['Externals']) {
+                throw new NotFoundHttpException('Контур "' . $data['NameFactor'] . '" - не містить геометрії');
+            }
             $valueUlid = $this->getUlid($data['Externals']);
             if ($valueUlid !== '' && array_key_exists((int)$valueUlid, $this->polylines)) {
                 $coordinates['external'] = $this->getCurrentPoints($this->polylines[(int)$valueUlid]);
@@ -112,7 +171,6 @@ class NormativeXmlParser implements ParserXml
                 if (!$valueUlidInternal) {
                     $coordinates['internal'] = [];
                 }
-
                 foreach ($valueUlidInternal as $value) {
                     if (array_key_exists((int)$value, $this->polylines)) {
                         $coordinates['internal'][] = $this->getCurrentPoints($this->polylines[(int)$value]);
@@ -184,7 +242,6 @@ class NormativeXmlParser implements ParserXml
             return false;
         }
     }
-
 
     /**
      * @param array $data

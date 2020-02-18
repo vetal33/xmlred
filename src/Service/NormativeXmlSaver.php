@@ -40,17 +40,20 @@ class NormativeXmlSaver
      */
     private $uniquePostfix;
 
+    /** @var array */
+    private $featureNormative = [];
+
     /**
      * NormativeXmlSaver constructor.
      * @param string $shapePath
      * @param FileRepository $fileRepository
-     * @param Uploader $uploader
+     * @param XmlUploader $uploader
      * @param TokenStorageInterface $tokenStorage
      */
 
     public function __construct(string $shapePath,
                                 FileRepository $fileRepository,
-                                Uploader $uploader,
+                                XmlUploader $uploader,
                                 TokenStorageInterface $tokenStorage)
     {
         $this->shapePath = $shapePath;
@@ -63,9 +66,10 @@ class NormativeXmlSaver
      * Створюєм GeoJson фай для подальшого відображення на карті
      *
      * @param array $coord
+     * @param bool $ifConvert
      * @return array
      */
-    public function toGeoJson(array $coord): array
+    public function toGeoJson(array $coord, bool $ifConvert = true): array
     {
         $numberZone = $this->getNumberZoneFromCoord(reset($coord));
 
@@ -78,8 +82,8 @@ class NormativeXmlSaver
                     } else {
                         $polygon = $this->arrayToPolygon($valMulti['coordinates']['external']);
                     }
+                    $wkt = ($ifConvert) ? $this->convertToWGS($polygon, $numberZone) : $polygon->getWKT();
 
-                    $wkt = $this->convertToWGS($polygon, $numberZone);
                     $data[$key][$item]['coordinates'] = $this->getGeoJson($wkt);
 
                     if (array_key_exists('ZoneNumber', $valMulti)) {
@@ -93,12 +97,21 @@ class NormativeXmlSaver
                     if (array_key_exists('CodeAgroGroup', $valMulti)) {
                         $data[$key][$item]['code'] = $valMulti['CodeAgroGroup'];
                     }
+                    if (array_key_exists('RegionNumber', $valMulti)) {
+                        $data[$key][$item]['name'] = $valMulti['RegionNumber'];
+                        $data[$key][$item]['ki'] = $valMulti['RegionIndex'];
+                    }
                 }
             } else {
                 $polygon = $this->arrayToPolygon($value['external']);
-
-                $wkt = $this->convertToWGS($polygon, $numberZone);
-                $data[$key] = $this->getGeoJson($wkt);
+                //$wkt = $this->convertToWGS($polygon, $numberZone);
+                $wkt = ($ifConvert) ? $this->convertToWGS($polygon, $numberZone) : $polygon->getWKT();
+                $data[$key]['coordinates'] = $this->getGeoJson($wkt);
+                foreach ($value as $k => $v) {
+                    if ($k !== 'external') {
+                        $data[$key][$k] = $v;
+                    }
+                }
             }
         }
         return $data;
@@ -182,9 +195,13 @@ class NormativeXmlSaver
         if ($layerName === "lands") {
             $polygon->setData('name', $data['CodeAgroGroup']);
         }
-        if ($layerName === "zony") {
+        if ($layerName === "zones") {
             $polygon->setData('name', $data['ZoneNumber']);
             $polygon->setData('km2', $data['Km2']);
+        }
+        if ($layerName === "regions") {
+            $polygon->setData('name', $data['RegionNumber']);
+            $polygon->setData('ki', $data['RegionIndex']);
         }
 
         return $polygon;
@@ -282,9 +299,13 @@ class NormativeXmlSaver
         if ($nameLayer === "localFactor") {
             $shapefileWriter->addCharField('name');
         }
-        if ($nameLayer === "zony") {
+        if ($nameLayer === "zones") {
             $shapefileWriter->addCharField('name', 10);
             $shapefileWriter->addFloatField('km2', 4, 2);
+        }
+        if ($nameLayer === "regions") {
+            $shapefileWriter->addCharField('name', 10);
+            $shapefileWriter->addFloatField('ki', 4, 2);
         }
 
         return $shapefileWriter;
@@ -298,6 +319,16 @@ class NormativeXmlSaver
         $pathName = $this->shapePath . '/export/' . $dir;
         if (!file_exists($pathName)) {
             mkdir($pathName);
+        } else {
+            $this->clearDir($pathName);
+        }
+    }
+
+    private function clearDir(string $destinationFolder): void
+    {
+        $dir = array_diff(scandir($destinationFolder), ['.', '..']);
+        foreach ($dir as $file) {
+            unlink($destinationFolder . '/' . $file);
         }
     }
 
@@ -310,7 +341,12 @@ class NormativeXmlSaver
      */
     private function convertToWGS(Polygon $polygon, int $zone): string
     {
+        //$wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
         $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
+
+        /*                $wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
+                        $wkt = $this->fileRepository->transformFeatureFromSC63to4326($wkt, 106304);*/
+
 
         return $wkt;
     }
@@ -348,10 +384,9 @@ class NormativeXmlSaver
     /**
      * Створює файл zip в тимчасовій папці і додає туди всі файли з папки клієнта
      *
-     * @param string $nameFile
      * @return bool|string
      */
-    public function addToZip(string $nameFile)
+    public function addToZip()
     {
         chdir(sys_get_temp_dir()); //Змінюємо робочу папку, на Temp, тимчасово, для створення файлу
 
@@ -380,5 +415,73 @@ class NormativeXmlSaver
         $zipFile->close();
 
         return $zipPath;
+    }
+
+    public function intersect(array $layers, string $feature)
+    {
+        if (!array_key_exists('boundary', $layers)) {
+            return false;
+        }
+        $geomBoundary = $this->fileRepository->getGeomFromJsonAsWkt($layers['boundary']['coordinates']);
+
+        if (!$this->intersectBoundary($geomBoundary, $feature)) {
+            $this->errors[] = 'Ділянка знаходиться за межами населеного пункту!';
+            return false;
+        }
+
+        $this->intersectZones($layers['zones'], $feature);
+        $this->intersectLocal($layers['localFactor'], $feature);
+
+        return $this->featureNormative;
+    }
+
+    private function intersectBoundary(string $boundary, string $feature)
+    {
+        return $this->fileRepository->isIntersect($boundary, $feature) ?: false;
+    }
+
+    private function intersectZones(array $zones, string $feature)
+    {
+        $areaMax = 0;
+        foreach ($zones as $zone) {
+            $geomZone = $this->fileRepository->getGeomFromJsonAsWkt($zone['coordinates']);
+            $geomIntersect = $this->fileRepository->isIntersectAsArea($geomZone, $feature);
+            if ($geomIntersect) {
+                $area = $this->fileRepository->calcArea($geomIntersect);
+                if ($area > $areaMax) {
+                    $areaMax = $area;
+                    $this->featureNormative['zone']['name'] = $zone['name'];
+                    $this->featureNormative['zone']['km2'] = $zone['km2'];
+                }
+            }
+        }
+    }
+
+    private function intersectLocal(array $locals, string $feature)
+    {
+        $arrayCurrent = [];
+        $id = 1;
+        foreach ($locals as $local) {
+            $geomLocal = $this->fileRepository->getGeomFromJsonAsWkt($local['coordinates']);
+            $geomIntersect = $this->fileRepository->isIntersectAsArea($geomLocal, $feature);
+
+            if ($geomIntersect) {
+                $area = $this->fileRepository->calcArea($geomIntersect);
+
+                $geomIntersectTransform = $this->fileRepository->transformFeatureFromSC63to4326($geomIntersect);
+                $jsonIntersectTransform = $this->fileRepository->getJsonFromWkt($geomIntersectTransform);
+
+                $arrayCurrent['name'] = $local['name'];
+                $arrayCurrent['area'] = $area;
+                $arrayCurrent['code'] = $local['code'];
+                $arrayCurrent['geom'] = $jsonIntersectTransform;
+                $arrayCurrent['id'] = $id;
+                $this->featureNormative['local'][] = $arrayCurrent;
+                $id++;
+            }
+        }
+        if (!array_key_exists('local', $this->featureNormative)) {
+            $this->featureNormative['local'] = [];
+        }
     }
 }

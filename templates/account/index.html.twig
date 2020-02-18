@@ -2,44 +2,45 @@
 
 {% block title %}Hello AccountController!{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('cabinet') }}
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">
-            <div class="col-md-4">
-                <div class="card card-widget widget-user-2">
-                    <div class="widget-user-header bg-info">
-                        <div class="widget-user-image">
-                            <img class="img-circle elevation-2 bg-light" src="{{ app.user.avatarUrl(100) }}"
-                                 alt="User Avatar">
+            <div class="card card-solid col-12">
+                <div class="card-body">
+                    <div class="row ">
+                        <div class="col-md-4">
+                            <div class="card card-primary card-outline">
+                                <div class="card-body box-profile">
+                                    <div class="text-center">
+                                        <img class="img-circle elevation-2 bg-light" src="{{ app.user.avatarUrl(100) }}"
+                                             alt="User Avatar">
+                                    </div>
+                                    <h3 class="profile-username text-center">{{ app.user.email }}</h3>
+                                    <p class="text-muted text-center">Engineer</p>
+                                    <a href="#" class="btn btn-block btn-outline-primary btn-xs"><b>Follow</b></a>
+                                </div>
+                            </div>
                         </div>
-                        <h3 class="widget-user-username">{{ app.user.email }}</h3>
-                    </div>
-                    <div class="card-footer p-0">
-                        <ul class="nav flex-column">
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    Projects <span class="float-right badge bg-primary">31</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    Tasks <span class="float-right badge bg-info">5</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    Completed Projects <span class="float-right badge bg-success">12</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    Followers <span class="float-right badge bg-danger">842</span>
-                                </a>
-                            </li>
-                        </ul>
+                        <div class="col-md-8">
+                            <div class="card card-default">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-bullhorn"></i>
+                                        Callouts
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="chart-area" class="chartjs-render-monitor"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <!-- /.widget-user -->
             </div>
         </div>
     </div>

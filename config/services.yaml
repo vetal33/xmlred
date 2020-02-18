@@ -15,6 +15,7 @@ services:
         bind:
             $uploadPath: '%kernel.project_dir%/public/uploads'
             $shapePath: '%kernel.project_dir%/public/shp'
+            $xsdPath: '%kernel.project_dir%/public/uploads/xsd/2_5463337664826573801.xsd'
             $publicUploadsFilesystem: '@oneup_flysystem.public_uploads_filesystem_filesystem'
 
     # makes classes in src/ available to be used as services
@@ -31,4 +32,18 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\MailerSender:
+        arguments:
+            $user: '%env(MAILER_USER)%'
+            $password: '%env(MAILER_PASSWORD)%'
+
+    App\Service\ApiClient\EServicesClient:
+        arguments:
+            $baseUri: '%env(ES_API_TOKEN)%'
+        calls:
+            - method: setAccessToken
+              arguments:
+                  $clientId: '%env(ES_API_CLIENT_ID)%'
+                  $clientSecret: '%env(ES_API_CLIENT_SECRET)%'
 

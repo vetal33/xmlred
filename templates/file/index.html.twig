@@ -17,49 +17,29 @@
     <a id="button" class="btn btn-block btn-outline-warning"><i class="fas fa-chevron-up mt-2"></i></a>
     <div class="row mt-3">
         <div class="col-4" id="text-content">
-            <div class="col-12">
-                {% include 'file/_form_xml.html.twig' %}
-            </div>
-            <div class="col-12">
-                {#  <div class="card" id = "shp-card">
-                      <div class="card-header">
-                          <h3 class="card-title">Fixed Header Table</h3>
-                      </div>
-                      <div class="card-body table-responsive p-0">
-                          <table class="table table-head-fixed">
-                              <thead>
-                              <tr>
-                                  <th>ID</th>
-                                  <th>Опис</th>
-                                  <th>Завантажено</th>
-                              </tr>
-                              </thead>
-                              <tbody>
-                              <tr>
-                                  <td>1</td>
-                                  <td>межа населеного пункта</td>
-                                  <td><i class="fas fa-check"></i></td>
-                              </tr>
-                              <tr>
-                                  <td>2</td>
-                                  <td>економіко-планувальні зони</td>
-                                  <td><i class="fas fa-check"></i></td>
-                              </tr>
-                              </tbody>
-                          </table>
-                      </div>
-                      <div class="overlay v-hidden">
-                          <i class="fas fa-2x fa-sync-alt fa-spin"></i>
-                      </div>
-                  </div>#}
+            <div class="col-12 mt-2">
+                <div class="card" id="buttons-card" data-name="">
+                    <div class="card-body pt-0 pb-0 pr-2 pl-0 mt-2 d-flex">
+                        {% include 'file/_form_xml.html.twig' %}
+                        <a class="btn btn-app btn-control disabled" id="btn-validate-xml">
+                            <i class="far fa-check-square"></i> Перевірити
+                        </a>
+                        <div class="ml-auto">
+                            {% include 'file/_form_json.html.twig' %}
+                            <a href="{{ path('downloadShp') }}" class="btn btn-app btn-control disabled"
+                               id="btn-download-shp" data-name-file="">
+                                <i class="fas fa-download"></i> Скачати *.shp
+                            </a>
+                        </div>
+                    </div>
+                    <div class="overlay v-hidden">
+                        <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+                    </div>
+                </div>
                 <div class="card" id="shp-card" data-name="">
                     <div class="card-header border-0">
-                        <h3 class="card-title">Шари файлу</h3>
+                        <h3 class="card-title">Панель керування</h3>
                         <div class="card-tools">
-                            <a href="{{ path('downloadShp') }}" class="btn btn-default mr-5 disabled"
-                               id="btn-download-shp">
-                                <i class="fas fa-download"></i> *.shp
-                            </a>
                             <button type="button" class="btn btn-tool" data-card-widget="collapse">
                                 <i class="fas fa-minus"></i>
                             </button>
@@ -69,7 +49,7 @@
                         <table class="table table-striped table-valign-middle">
                             <thead>
                             <tr>
-                                <th>Назва шару</th>
+                                <th>Шар</th>
                                 <th class="text-center">Результат</th>
                                 <th class="text-center">Управління</th>
                             </tr>
@@ -80,7 +60,8 @@
                                 <td id="marker-boundary" class="text-center">-</td>
                                 <td class="text-center">
                                     <div class="custom-control custom-checkbox">
-                                        <input class="custom-control-input check-map" id="airfields" type="checkbox" checked="" disabled>
+                                        <input class="custom-control-input check-map" id="airfields" type="checkbox"
+                                               checked="" disabled>
                                         <label for="customCheckbox2" class="custom-control-label"></label>
                                     </div>
                                 </td>
@@ -90,8 +71,20 @@
                                 <td id="marker-zony" class="text-center">-</td>
                                 <td class="text-center">
                                     <div class="custom-control custom-checkbox">
-                                        <input class="custom-control-input check-map" id="zony" type="checkbox" checked="" disabled>
+                                        <input class="custom-control-input check-map" id="zony" type="checkbox"
+                                               checked="" disabled>
                                         <label for="zony" class="custom-control-label"></label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Оціночні райони</td>
+                                <td id="marker-regions" class="text-center">-</td>
+                                <td class="text-center">
+                                    <div class="custom-control custom-checkbox">
+                                        <input class="custom-control-input check-map" id="regions" type="checkbox"
+                                               checked="" disabled>
+                                        <label for="regions" class="custom-control-label"></label>
                                     </div>
                                 </td>
                             </tr>
@@ -100,7 +93,8 @@
                                 <td id="marker-local" class="text-center">-</td>
                                 <td class="text-center">
                                     <div class="custom-control custom-checkbox">
-                                        <input class="custom-control-input check-map" id="local" type="checkbox" checked="" disabled>
+                                        <input class="custom-control-input check-map" id="local" type="checkbox"
+                                               checked="" disabled>
                                         <label for="local" class="custom-control-label"></label>
                                     </div>
                                 </td>
@@ -110,7 +104,8 @@
                                 <td id="marker-lands" class="text-center">-</td>
                                 <td class="text-center">
                                     <div class="custom-control custom-checkbox check-map">
-                                        <input class="custom-control-input check-map" id="lands" type="checkbox" checked="" disabled>
+                                        <input class="custom-control-input check-map" id="lands" type="checkbox"
+                                               checked="" disabled>
                                         <label for="lands" class="custom-control-label"></label>
                                     </div>
                                 </td>
@@ -122,11 +117,43 @@
                         <i class="fas fa-2x fa-sync-alt fa-spin"></i>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card card-outline card-success d-none" id="feature-card">
+                    <div class="card-header border-0"><h3 class="card-title text-success">Імпортована ділянка</h3>
+                        <div class="card-tools">
+                            <input type="hidden" id="geom-from-json" value="" data-bounds="">
+                            <span data-toggle="tooltip" class="badge badge-danger"></span>
+                            <a href="#" id="zoom-to-parcel" class="btn btn-tool btn-sm">
+                                <i class="fas fa-search"></i>
+                            </a>
+                            <a href="{{ path('calculateNormative') }}" id="feature-from-json" class="btn btn-tool btn-sm disabled">
+                                <i class="fas fa-calculator"></i>
+                            </a>
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm">
+                            <tbody id="feature-table">
+                            <tr>
+                                <td>Площа ділянки</td>
+                                <td id="feature-card-area"></td>
+                            </tr>
+                            <tr>
+                                <td>Кадастровий номер</td>
+                                <td id="feature-card-cud-num"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="overlay v-hidden" hidden=""><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
+                </div>
+                <div class="card" id="xml-card">
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="far fa-file-code"></i>
-                            <span id="original_name_file">Unstyled List</span>
+                            <span id="original_name_file">XML</span>
                         </h3>
                         <div class="card-tools">
                             <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
@@ -144,6 +171,4 @@
             <div id="map"></div>
         </div>
     </div>
-
-
 {% endblock %}

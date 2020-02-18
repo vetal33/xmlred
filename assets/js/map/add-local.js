@@ -1,7 +1,6 @@
 module.exports = function (data) {
 
     let geojson;
-    window.localLayersGroup = L.layerGroup();
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);
@@ -20,7 +19,7 @@ module.exports = function (data) {
         return item_new;
     });
 
-    clearLayersLocal();
+    //clearLayersLocal();
 
     geojson = L.geoJson(new_data, {
         style: style,
@@ -36,7 +35,7 @@ module.exports = function (data) {
     });
 
     /** Додаємо групу до панелі управління    */
-    layersControl.addOverlay(localLayersGroup, 'Локальні фактори');
+/*    layersControl.addOverlay(localLayersGroup, 'Локальні фактори');*/
 
     $('#marker-local').html('<i class="fas fa-check text-success"></i>');
     $('#local').prop('disabled', false);

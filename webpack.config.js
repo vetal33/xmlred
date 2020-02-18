@@ -25,6 +25,7 @@ Encore
      */
     .addEntry('app', './assets/js/app.js')
     .addEntry('map', './assets/js/map/global-map.js')
+    .addEntry('cabinet', './assets/js/cabinet/global-cabinet.js')
     //.addEntry('page1', './assets/js/page1.js')
     //.addEntry('page2', './assets/js/page2.js')
 
@@ -53,6 +54,11 @@ Encore
     .configureBabel(() => {}, {
         useBuiltIns: 'usage',
         corejs: 3,
+    })
+
+    .copyFiles({
+        from:'./assets/images',
+        to:'images/[path][name].[ext]'
     })
 
     // enables Sass/SCSS support

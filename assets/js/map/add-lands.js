@@ -1,7 +1,6 @@
 module.exports = function (data) {
 
     let geojson;
-    window.landsLayersGroup = L.layerGroup();
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);
@@ -20,8 +19,6 @@ module.exports = function (data) {
         return item_new;
     });
 
-    clearLayersZony();
-
     geojson = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
@@ -35,23 +32,8 @@ module.exports = function (data) {
         layer.bindPopup("шифр - " + layer.feature.properties.popupContent);
     });
 
-    /** Додаємо групу до панелі управління    */
-    layersControl.addOverlay(landsLayersGroup, 'Грунти');
-
     $('#marker-lands').html('<i class="fas fa-check text-success"></i>');
     $('#lands').prop('disabled', false);
-
-    /**
-     * Remove landsLayers from map
-     */
-    function clearLayersZony() {
-        mymap.eachLayer(function (layer) {
-            if (layer.nameLayer && layer.nameLayer === "landsGeoJSON") {
-                mymap.removeLayer(layer)
-                layersControl.removeLayer(geojson)
-            }
-        });
-    }
 
     /**
      * Налаштування кольорів, для відображення зон на карті
