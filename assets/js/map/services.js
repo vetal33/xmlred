@@ -85,6 +85,7 @@ $(document).ready(function () {
         }
         if (data.Cnm !== 'Cnm') {
             $('#general-base-price').html('<i class="far fa-money-bill-alt mr-1"></i>' + data.Cnm + ' грн./м<sup>2</sup>');
+            $('#general-base-price').attr('data-base-price', data.Cnm);
         }
         if (data.Population !== 'undefined') {
             $('#general-population').html('<i class="fas fa-users mr-1"></i>' + data.Population + ' чол.');
