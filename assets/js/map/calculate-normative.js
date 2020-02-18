@@ -63,8 +63,7 @@ $(document).ready(function () {
             $('#feature-card-cud-num').html('не визначено');
         }
 
-
-        let basePrice = 115.25;
+        let basePrice = ($('#general-base-price').attr('data-base-price') !== '') ? Number($('#general-base-price').attr('data-base-price')) : 150.00;
         let basePriceStr = basePrice + '&nbsp;' + 'грн.';
         let normativeTable = $('<div id="calculate" class="p-2"><h6 class="text-truncate ml-3 mt-4">Розрахунок</h6>' +
             '<table class="table table-hover table-sm pl-2 pr-2 bc-gray">' +
