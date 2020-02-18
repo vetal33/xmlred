@@ -10,6 +10,19 @@ module.exports = function () {
 
     mapbox.addTo(mymap);
 
+    let Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+    });
+
+    Esri_WorldStreetMap.addTo(mymap);
+
+    let osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+
+    osm.addTo(mymap);
+
+
     let bing_key = 'Ap2Aa1SZydkxBTmchpgIYaIXw-OgT9TxU-UY-bOhsDUJO2WTicJyytnoUjjsWOnr';
     let bing = L.tileLayer.bing(bing_key).addTo(mymap);
 
@@ -30,7 +43,8 @@ module.exports = function () {
      */
     let baseLayersMap = {
         "bing": bing,
-        "mapBox": mapbox,
+        "esri": Esri_WorldStreetMap,
+        "osm": osm,
     };
 
     /**
