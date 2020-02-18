@@ -117,34 +117,16 @@ class FileController extends AbstractController
     public function downloadShp(XmlUploader $uploader, Request $request, NormativeXmlSaver $normativeXmlSaver): Response
     {
         if ($this->isGranted('ROLE_USER')) {
-            $name = $request->query->get('name');
-            $fileName = $normativeXmlSaver->addToZip($name);
-
-            if (!$fileName) {
-                die;
-            }
+            $fileName = $normativeXmlSaver->addToZip();
 
             $stream = new Stream($fileName);
             $response = new BinaryFileResponse($stream);
+
             clearstatcache(true, $fileName);
-
-            /*        $response = new StreamedResponse(function () use ($uploader) {
-                        $outputStream = fopen('php://output', 'wb');
-                        $fileStream = $uploader->download();
-                        dump($fileStream);
-                        stream_copy_to_stream($fileStream, $outputStream);
-                    });
-                    $response->headers->set('Content-Type', 'application/zip');
-
-                    $disposition = HeaderUtils::makeDisposition(
-                        HeaderUtils::DISPOSITION_ATTACHMENT,
-                        'test.zip'
-                    );
-                    $response->headers->set('Content-Disposition', $disposition);*/
 
             return $response;
         }
-        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
+        return $this->redirectToRoute('app_login');
     }
 
     /**

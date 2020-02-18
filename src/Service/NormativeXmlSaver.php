@@ -384,10 +384,9 @@ class NormativeXmlSaver
     /**
      * Створює файл zip в тимчасовій папці і додає туди всі файли з папки клієнта
      *
-     * @param string $nameFile
      * @return bool|string
      */
-    public function addToZip(string $nameFile)
+    public function addToZip()
     {
         chdir(sys_get_temp_dir()); //Змінюємо робочу папку, на Temp, тимчасово, для створення файлу
 
