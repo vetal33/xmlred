@@ -1,5 +1,6 @@
 $(document).ready(function () {
     const overlayShp = $('#shp-card .overlay');
+    const overlayInfo = $('#info-card .overlay');
     const overlayControl = $('#buttons-card .overlay');
     const textContent = $('#text-content');
     const btnDownloadShp = $('#btn-download-shp');
@@ -17,8 +18,14 @@ $(document).ready(function () {
     window.parcelGroup = L.layerGroup();
 
     overlayShp[0].hidden = true;
+    overlayInfo[0].hidden = true;
     overlayControl[0].hidden = true;
     addBaseLayars();
+
+    function calcWidth() {
+        let screenWidth = window.matchMedia('all and (max-width: 1199px)');
+        return screenWidth.matches;
+    }
 
     $('#file_form_xmlFile').on('change', function (event) {
         let inputFile = event.currentTarget;
@@ -42,10 +49,12 @@ $(document).ready(function () {
             beforeSend: function () {
                 overlayShp[0].hidden = false;
                 overlayControl[0].hidden = false;
+                overlayInfo[0].hidden = false;
             },
             success: function (data) {
                 overlayShp[0].hidden = true;
                 overlayControl[0].hidden = true;
+                overlayInfo[0].hidden = true;
 
                 btnValidateXml.removeClass('disabled');
                 btnValidateXml.find('i').addClass('text-success');
@@ -70,6 +79,7 @@ $(document).ready(function () {
             error: function (jqXHR, textStatus, errorThrown) {
                 overlayShp[0].hidden = true;
                 overlayControl[0].hidden = true;
+                overlayInfo[0].hidden = true;
                 servicesThrowErrors(jqXHR);
             },
         })
@@ -77,23 +87,34 @@ $(document).ready(function () {
 
     function addGeneralData(data) {
         let region, district, city;
-        $('.general-info').removeClass('d-none');
+
+        if (calcWidth() === true) {
+            $('#info-card').removeClass('d-none');
+            $('.general-info').addClass('d-none');
+        } else {
+            $('#info-card').addClass('d-none');
+            $('.general-info').removeClass('d-none');
+        }
 
         if (data.ValuationYear !== 'undefined') {
             $('#general-year').html('<i class="far fa-calendar-alt mr-1"></i>' + data.ValuationYear + ' р.');
+            $('#card-general-year').html(data.ValuationYear + ' р.');
         }
         if (data.Cnm !== 'Cnm') {
             $('#general-base-price').html('<i class="far fa-money-bill-alt mr-1"></i>' + data.Cnm + ' грн./м<sup>2</sup>');
             $('#general-base-price').attr('data-base-price', data.Cnm);
+            $('#card-general-base-price').html(data.Cnm + ' грн./м<sup>2</sup>');
         }
         if (data.Population !== 'undefined') {
             $('#general-population').html('<i class="fas fa-users mr-1"></i>' + data.Population + ' чол.');
+            $('#card-general-population').html(data.Population + ' чол.');
         }
         if (data.Size !== 'undefined') {
             $('#general-area').html('<i class="fas fa-vector-square mr-1"></i>' + data.Size + ' ' + data.MeasurementUnit);
+            $('#card-general-area').html(data.Size + ' ' + data.MeasurementUnit);
         }
         if (data.Region !== 'undefined') {
-           region = data.Region;
+            region = data.Region;
         }
         if (data.District !== 'undefined') {
             district = data.District;
@@ -103,6 +124,7 @@ $(document).ready(function () {
         }
 
         $('#general-address').html('<i class="fas fa-map-marked-alt mr-1"></i>' + region + ' ' + district + ' ' + city);
+        $('#card-general-address').html(region + ' ' + district + ' ' + city);
     }
 
     function visualizeXML(data) {
@@ -115,6 +137,7 @@ $(document).ready(function () {
             return node.childNodes.length < 2 || node.label === 'phoneNumbers';
         });
     }
+
     let normativeGroup;
 
     function addMejaToMap(data, style) {

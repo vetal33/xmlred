@@ -24,9 +24,14 @@ $(document).ready(function () {
                 clearTableCalculate();
 
                 let dataJson = JSON.parse(data);
-                let bounds = addFeatureToMap(dataJson.json);
 
-                setData(dataJson, bounds);
+                if (dataJson.errors.length > 0) {
+                    toastr.options = {"closeButton": true,};
+                    toastr.error(dataJson.errors[0]);
+                } else {
+                    let bounds = addFeatureToMap(dataJson.json);
+                    setData(dataJson, bounds);
+                }
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 overlayControl[0].hidden = true;
@@ -44,7 +49,7 @@ $(document).ready(function () {
     function setData(data, bounds) {
         $('#geom-from-json').val(data.wkt);
         $('#geom-from-json').attr("data-bounds", bounds);
-        if($('#shp-card').attr('data-name')!== '') {
+        if ($('#shp-card').attr('data-name') !== '') {
             $('#feature-from-json').removeClass('disabled');
         }
         $('#feature-card').removeClass('d-none');
