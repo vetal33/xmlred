@@ -203,6 +203,7 @@ class FileController extends AbstractController
                     $data['wkt'] = $wkt;
                     $jsonTransform = $fileRepository->getJsonFromWkt($wktTransform);
                     $data['json'] = $jsonTransform;
+                    $data['errors'] =[];
 
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
 
