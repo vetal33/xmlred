@@ -7,6 +7,7 @@ window.addLocalToMap = require('../map/add-local');
 window.addLandsToMap = require('../map/add-lands');
 window.addRegionsToMap = require('../map/add-regions');
 
+import 'bootstrap';
 import '../map/style'
 import '../map/services';
 import 'leaflet';
@@ -15,3 +16,9 @@ import '../map/map-controls';
 import '../map/check-xml';
 import '../map/import-json';
 import '../map/calculate-normative';
+
+
+$('[data-toggle="tooltip"]').tooltip({
+    placement: 'bottom',
+    trigger: 'hover',
+});
