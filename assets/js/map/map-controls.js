@@ -11,7 +11,8 @@ $(document).ready(function () {
             let container = L.DomUtil.create('a', 'btn btn-default');
             container.innerHTML += '<i class="fas fa-crosshairs"></i>';
             container.type = "button";
-            container.title = "Full extent";
+            container.title = "Загальний вигляд";
+            container.setAttribute("data-toggle", "tooltip");
             container.onclick = function () {
                 mymap.eachLayer(function (layer) {
                     if (layer.nameLayer && layer.nameLayer === "mejaGeoJSON") {
@@ -34,7 +35,8 @@ $(document).ready(function () {
             let container = L.DomUtil.create('a', 'btn btn-default');
             container.innerHTML += '<i class="fas fa-eraser"></i>';
             container.type = "button";
-            container.title = "Clear selected";
+            container.setAttribute("data-toggle", "tooltip");
+            container.title = "Очистити виділене";
             container.onclick = function () {
                 clearSelected();
             };
@@ -53,6 +55,7 @@ $(document).ready(function () {
         let layerClicked = $(this).attr("id");
         switch (layerClicked) {
             case "zony":
+                toggleLegend();
                 toggleLayer(zonyLayersGroup);
                 break;
             case "local":
@@ -90,6 +93,13 @@ $(document).ready(function () {
         } else {
             mymap.addLayer(layersGroupName);
         }
+    }
+
+    /**
+     * Вимикає легенду для шару "Економіко-планувальні зони"
+     */
+    function toggleLegend() {
+        $('.info').toggleClass('d-none');
     }
 
     /**
@@ -139,4 +149,38 @@ $(document).ready(function () {
             }
         });
     }
+
+    $('[data-toggle="tooltip"]').tooltip({
+        placement: 'bottom',
+        trigger: 'hover',
+    });
+
+    let lat, lng;
+
+    /**
+     * Створюємо паньль виведення координат на карті
+     */
+    let coordinates = L.Control.extend({
+        options: {
+            position: 'bottomleft',
+        },
+        onAdd: function (map) {
+            let container = L.DomUtil.create('div', 'pr-1 pl-1');
+            container.setAttribute("id", "coordinates-map");
+
+            return container;
+        }
+    });
+
+    mymap.addControl(new coordinates());
+
+    mymap.addEventListener('mousemove', function(ev) {
+        lat = ((Math.round(ev.latlng.lat *1000000))/1000000).toFixed(6);
+        lng = ((Math.round(ev.latlng.lng *1000000))/1000000).toFixed(6);
+        $('#coordinates-map').html('<i class="fas fa-location-arrow text-gray"></i>' + ' ' + lat + ' ' + lng);
+    });
+
+    mymap.addEventListener('mouseout', function(ev) {
+        $('#coordinates-map').html('');
+    });
 });
