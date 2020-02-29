@@ -1,6 +1,5 @@
 let legend;
 let infoBox;
-let geojson;
 let numberScale = [];
 let grades = [];
 
@@ -24,14 +23,13 @@ module.exports = function (data) {
     });
 
     setNumberScale(data);
-    geojson = L.geoJson(new_data, {
+    window.zoneLayer = L.geoJson(new_data, {
         style: style,
         onEachFeature: onEachFeature,
     });
 
     /** Додаємо групу до карти    */
-    //zonyLayersGroup.addTo(mymap);
-    mymap.addLayer(zonyLayersGroup);
+    zonyLayersGroup.addTo(mymap);
 
     $('#marker-zony').html('<i class="fas fa-check text-success"></i>');
     $('#zony').prop('disabled', false);
@@ -107,41 +105,22 @@ module.exports = function (data) {
         zonyLayersGroup.addLayer(layer);
         layer.nameLayer = "zonyGeoJSON";
         layer.on({
-            mouseover: highlightFeature,
-            mouseout: resetHighlight,
-            click: zoomToFeature
+            click: highlightFeature
         });
     }
 
     function highlightFeature(e) {
         let layer = e.target;
-
-        layer.setStyle({
-            weight: 3,
-            color: '#666',
-            dashArray: '',
-            fillOpacity: 0.7
-        });
+        zoneLayer.resetStyle();
+        layer.setStyle(selectZoneStyle);
 
         if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
             layer.bringToFront();
         }
         infoBox.update(layer.feature.properties);
+        parcelFromBaseLayer.bringToFront();
     }
 
-    function resetHighlight(e) {
-        geojson.resetStyle(e.target);
-        infoBox.update();
-    }
-
-    /**
-     * Зумує на екстент межі населеного пункту
-     * @param e
-     */
-
-    function zoomToFeature(e) {
-        mymap.fitBounds(e.target.getBounds());
-    }
 
     /**
      * Створюємо легенду "Значення коєфіцієнтів Км2"
@@ -152,7 +131,7 @@ module.exports = function (data) {
     infoBox = L.control();
 
     infoBox.onAdd = function (map) {
-        this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+        this._div = L.DomUtil.create('div', 'info panel'); // create a div with a class "info"
         this.update();
         return this._div;
     };
@@ -161,7 +140,7 @@ module.exports = function (data) {
     infoBox.update = function (props) {
         this._div.innerHTML = '<h6>Коефіцієнт км2</h6>' + (props ?
             'Зона - <b>' + props.name + '</b><br />' + 'Км2 - ' + props.km2
-            : 'Наведіть для отримання інформації');
+            : 'Натисніть для отримання інформації');
     };
 
 

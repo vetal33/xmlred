@@ -122,6 +122,7 @@ class SecurityController extends AbstractController
                     $form->get('plainPassword')->getData()
                 )
             );
+            $user->setEnabled(true);
 
             $em = $this->getDoctrine()->getManager();
             $em->flush();

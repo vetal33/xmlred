@@ -87,7 +87,7 @@ module.exports = function (data) {
 
     function selectFeature(e) {
         let layer = e.target;
-        resetHighlight();
+        removeLayersGlob('Selected');
 
         let coords = layer.feature.geometry.coordinates;
         let selected = getCoords(coords);
@@ -110,14 +110,6 @@ module.exports = function (data) {
                     "type": "LineString",
                     "coordinates": item,
                 }
-            }
-        });
-    }
-
-    function resetHighlight() {
-        mymap.eachLayer(function (layer) {
-            if (typeof layer.nameLayer !== "undefined" && layer.nameLayer === "Selected") {
-                mymap.removeLayer(layer);
             }
         });
     }

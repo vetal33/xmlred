@@ -4,28 +4,78 @@ $(document).ready(function () {
     const overlayControl = $('#buttons-card .overlay');
     const textContent = $('#text-content');
     const btnDownloadShp = $('#btn-download-shp');
+    const btnDownloadShpMenu = $('#download-shp-normative');
+
     const btnValidateXml = $('#btn-validate-xml');
+    const VAL_TRUE = 1;
+    const VAL_FALSE = 0;
 
     /**  Створюєм глобальний об'єкт Map   */
     window.mymap = L.map('map').setView([48.5, 31], 6);
 
     /**  Створюєм глобальні групи шарів   */
+    window.mejaLayersGroup = L.layerGroup();
     window.zonyLayersGroup = L.layerGroup();
     window.localLayersGroup = L.layerGroup();
     window.landsLayersGroup = L.layerGroup();
     window.regionsLayersGroup = L.layerGroup();
     window.intersectLocalLayersGroup = L.layerGroup();
+    window.parcelFromBaseGroup = L.layerGroup();
     window.parcelGroup = L.layerGroup();
+    window.parcelLayer = L.geoJSON();
+    window.parcelFromBaseLayer = L.geoJSON();
+    window.pointLayer = L.geoJSON();
+    window.markerLayer = L.marker();
 
-    overlayShp[0].hidden = true;
-    overlayInfo[0].hidden = true;
-    overlayControl[0].hidden = true;
+    let normativeGroupArray = [mejaLayersGroup, zonyLayersGroup, localLayersGroup, landsLayersGroup, regionsLayersGroup];
+
+    addOverlay(VAL_TRUE);
     addBaseLayars();
+
+    $.ajax({
+        url: Routing.generate('loadParcels'),
+        method: 'POST',
+        dataType: 'json',
+        beforeSend: function () {
+            addOverlay(VAL_FALSE);
+        },
+        success: function (data) {
+            addOverlay(VAL_TRUE);
+            if (data) {
+                let dataJson = JSON.parse(data);
+                if (dataJson.length) {
+                    addParcelsToMap(dataJson);
+                }
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            addOverlay(VAL_TRUE);
+            servicesThrowErrors(jqXHR);
+        },
+    });
+
+    function addOverlay(valBool) {
+        overlayShp[0].hidden = Boolean(valBool);
+        overlayControl[0].hidden = Boolean(valBool);
+        overlayInfo[0].hidden = Boolean(valBool);
+    }
 
     function calcWidth() {
         let screenWidth = window.matchMedia('all and (max-width: 1199px)');
         return screenWidth.matches;
     }
+
+    $('#open-xml-normative').on('click', function (e) {
+        e.preventDefault();
+        $('#btn-check-xml').click();
+    });
+
+    $('#open-xml-normative-test').on('click', function (e) {
+        e.preventDefault();
+        let formData = new FormData();
+        formData.append('xmlFile', 'test');
+        sendFile(formData);
+    });
 
     $('#file_form_xmlFile').on('change', function (event) {
         let inputFile = event.currentTarget;
@@ -36,6 +86,12 @@ $(document).ready(function () {
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
+        $("#file_form_xmlFile")[0].closest('.d-inline-block').reset();
+    });
+
+    $(btnDownloadShpMenu).on('click', function (e) {
+        e.preventDefault();
+        $(btnDownloadShp).click();
     });
 
     function sendFile(data) {
@@ -47,18 +103,14 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             beforeSend: function () {
-                overlayShp[0].hidden = false;
-                overlayControl[0].hidden = false;
-                overlayInfo[0].hidden = false;
+                addOverlay(VAL_FALSE);
             },
             success: function (data) {
-                overlayShp[0].hidden = true;
-                overlayControl[0].hidden = true;
-                overlayInfo[0].hidden = true;
-
+                addOverlay(VAL_TRUE);
                 btnValidateXml.removeClass('disabled');
                 btnValidateXml.find('i').addClass('text-success');
                 btnDownloadShp.removeClass('disabled');
+                btnDownloadShpMenu.removeClass('disabled');
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
@@ -74,12 +126,11 @@ $(document).ready(function () {
                     addLayers(dataJson);
                     visualizeXML(dataJson);
                     addGeneralData(dataJson.boundary);
+                    parcelFromBaseLayer.bringToFront();
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                overlayShp[0].hidden = true;
-                overlayControl[0].hidden = true;
-                overlayInfo[0].hidden = true;
+                addOverlay(VAL_TRUE);
                 servicesThrowErrors(jqXHR);
             },
         })
@@ -138,18 +189,17 @@ $(document).ready(function () {
         });
     }
 
-    let normativeGroup;
-
-    function addMejaToMap(data, style) {
+    function addMejaToMap(data) {
         let geoJsonObj = JSON.parse(data);
         if (typeof (geoJsonObj) == "object") {
             let polygonMeja = L.geoJSON(geoJsonObj, {
-                style: style,
-            }).addTo(mymap);
+                style: boundaryStyle,
+            });
 
             polygonMeja.nameLayer = "mejaGeoJSON";
+            polygonMeja.addTo(mejaLayersGroup);
+            mejaLayersGroup.addTo(mymap);
             mymap.fitBounds(polygonMeja.getBounds());
-            normativeGroup = L.layerGroup([polygonMeja]);
 
             $('#marker-boundary').html('<i class="fas fa-check text-success"></i>')
         }
@@ -186,12 +236,13 @@ $(document).ready(function () {
         $('#xml-card #wrapper').html('');
         $('.legends').remove();
 
-        removeLayers();
+        removeNormativeLayers();
     }
 
     function addLayers(dataJson) {
-        addBaseLayars();
-        addMejaToMap(dataJson.boundary.coordinates, boundaryStyle);
+
+        mymap.addLayer(parcelGroup);
+        addMejaToMap(dataJson.boundary.coordinates);
         if (dataJson.zones) {
             addZonyToMap(dataJson.zones);
         }
@@ -206,19 +257,16 @@ $(document).ready(function () {
         }
     }
 
-    function removeLayers() {
+    /**
+     * Видаляє базові шари Нормавної оцінки
+     */
 
-        mymap.eachLayer(function (layer) {
-            mymap.removeLayer(layer);
+    function removeNormativeLayers() {
+        $.each(normativeGroupArray, function (index, group) {
+            if (mymap.hasLayer(group)) {
+                mymap.removeLayer(group);
+            }
+            group.clearLayers()
         });
-
-        mymap.removeControl(layersControl);
-
-        zonyLayersGroup.clearLayers();
-        regionsLayersGroup.clearLayers();
-        localLayersGroup.clearLayers();
-        landsLayersGroup.clearLayers();
-        intersectLocalLayersGroup.clearLayers();
-        parcelGroup.clearLayers();
     }
 });
