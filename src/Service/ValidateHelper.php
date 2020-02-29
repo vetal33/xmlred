@@ -42,15 +42,31 @@ class ValidateHelper
     }
 
     /**
-     * @param UploadedFile $file
-     * @return ConstraintViolationListInterface
-     */
+ * @param UploadedFile $file
+ * @return ConstraintViolationListInterface
+ */
     public function validateFile(UploadedFile $file): ConstraintViolationListInterface
     {
         $errors = $this->validator->validate($file, [
             new FileConstraint([
                 'maxSize' => '1024k',
                 'maxSizeMessage' => 'Файл не повинен перевищувати 1Mb',
+            ]),
+        ]);
+
+        return $errors;
+    }
+
+    /**
+     * @param string $cadNum
+     * @return ConstraintViolationListInterface
+     */
+    public function validateCadNum(string $cadNum): ConstraintViolationListInterface
+    {
+        $errors = $this->validator->validate($cadNum, [
+            new Assert\Regex([
+                'pattern' => "/^[0-9]{10}:[0-9]{2}:[0-9]{3}:[0-9]{4}$/",
+                'message' => 'Помилка! Кадастровий номер не відповідє шаблону!',
             ]),
         ]);
 

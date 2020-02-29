@@ -32,15 +32,20 @@ class NormativeXmlParser implements ParserXml
     ];
 
 
-    public function parse(\SimpleXMLElement $simpleXMLElement)
+    /**
+     * @param \SimpleXMLElement $simpleXMLElement
+     * @return array|null
+     */
+    public function parse(\SimpleXMLElement $simpleXMLElement): ?array
     {
         $array = json_decode(json_encode($simpleXMLElement), true);
 
         if ($this->getPolyline($array) && $this->getPoints($array)) {
             $result = $this->parseDataXml($array);
+
             return $result;
         }
-        return false;
+        return null;
     }
 
     public function findNode(array $dataXml, array $keys): array
@@ -160,7 +165,8 @@ class NormativeXmlParser implements ParserXml
 
         if (array_key_exists('Externals', $data)) {
             if (!$data['Externals']) {
-                throw new NotFoundHttpException('Контур "' . $data['NameFactor'] . '" - не містить геометрії');
+                $factor = array_key_exists('NameFactor', $data) ? $data['NameFactor'] : reset($data);
+                throw new NotFoundHttpException('Контур "' . $factor . '" - не містить геометрії');
             }
             $valueUlid = $this->getUlid($data['Externals']);
             if ($valueUlid !== '' && array_key_exists((int)$valueUlid, $this->polylines)) {

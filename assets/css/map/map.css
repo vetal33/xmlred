@@ -12,6 +12,10 @@
     height: calc(100vh - 101px);
 }
 
+.min-width-150 {
+    min-width: 175px;
+}
+
 .info {
     padding: 6px 8px;
     background: white;
@@ -57,8 +61,24 @@
 }
 
 #coordinates-map {
+    font-size: 0.8rem;
     margin-bottom: 35px;
     color: darkslategrey;
     border-radius: 2px;
     background-color: rgba(255, 255, 255, 0.85);
+}
+#buttons-card a.dropdown-item{
+    font-size: 0.9rem !important;
+}
+.local, .legend, .panel {
+    font-size: 0.9rem;
+    border-radius: 3px;
+    color: darkslategrey;
+    background-color: rgba(255, 255, 255,0.85);
+}
+.sticky-top {
+    top: 57px;
+}
+.leaflet-bottom {
+    width: 100%;
 }

@@ -33,8 +33,9 @@ module.exports = function () {
         format: 'image/png',
         transparent: true,
         version: '1.1.1',
-        attribution: "Weather data © 2012 IEM Nexrad"
-    });
+        maxNativeZoom: 16,
+        maxZoom: 18,
+     });
 
 
     /**

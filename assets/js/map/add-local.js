@@ -1,6 +1,8 @@
-module.exports = function (data) {
+let infoBoxLocal;
 
+module.exports = function (data) {
     let geojson;
+    let localsFeatureArray = []
 
     let new_data = data.map(function (item) {
         let coord = JSON.parse(item.coordinates);
@@ -15,11 +17,10 @@ module.exports = function (data) {
                 "coordinates": coord.coordinates,
             },
         };
+        localsFeatureArray.push(item_new);
 
         return item_new;
     });
-
-    //clearLayersLocal();
 
     geojson = L.geoJson(new_data, {
         style: style,
@@ -29,28 +30,8 @@ module.exports = function (data) {
     /** Додаємо групу до карти    */
     localLayersGroup.addTo(mymap);
 
-    /** Додаємо написи шарів групи    */
-    localLayersGroup.eachLayer(function (layer) {
-        layer.bindPopup("шифр - " + layer.feature.properties.name);
-    });
-
-    /** Додаємо групу до панелі управління    */
-/*    layersControl.addOverlay(localLayersGroup, 'Локальні фактори');*/
-
     $('#marker-local').html('<i class="fas fa-check text-success"></i>');
     $('#local').prop('disabled', false);
-
-    /**
-     * Remove localLayers from map
-     */
-    function clearLayersLocal() {
-        mymap.eachLayer(function (layer) {
-            if (layer.nameLayer && layer.nameLayer === "localGeoJSON") {
-                mymap.removeLayer(layer)
-                layersControl.removeLayer(geojson)
-            }
-        });
-    }
 
     /**
      * Повертає об'єкт Style з кольором в залежності від значення локального фактору
@@ -238,7 +219,60 @@ module.exports = function (data) {
     function onEachFeature(feature, layer) {
         layer.nameLayer = "localGeoJSON";
         localLayersGroup.addLayer(layer);
+        layer.on({
+            click: highlightFeature
+        });
     }
+
+    if (infoBoxLocal instanceof L.Control) {
+        mymap.removeControl(infoBoxLocal);
+    }
+
+    infoBoxLocal = L.control({position: 'bottomright'});
+
+    infoBoxLocal.onAdd = function (map) {
+        let div = L.DomUtil.create('div', 'info local col-4 d-none'); // create a div with a class "info"
+        div.innerHTML += '<p class="text-uppercase mb-1 text-bold">Локальні фактори</p><div id="map-info-local"></div>';
+
+        return div;
+    };
+
+    infoBoxLocal.update = function (features) {
+        let infoLocal = $('#map-info-local');
+        infoLocal.html('');
+
+        $.each(features, function (index, feature) {
+            infoLocal.append('<div class="mb-2"><span class="text-bold">' + Number(index + 1) + ' </span>' + feature.properties.name + '</div>');
+        });
+    };
+
+    function highlightFeature(e) {
+        let points = turf.points([[e.latlng.lng, e.latlng.lat]]);
+        let latlng = L.latLng(e.latlng.lat, e.latlng.lng);
+        let myIcon = L.icon({
+            iconUrl: 'build/images/pin_.png',
+            iconSize: [40, 40],
+            iconAnchor: [20, 34],
+        });
+
+        markerLayer.setIcon(myIcon);
+        markerLayer.setLatLng(latlng);
+        markerLayer.addTo(mymap);
+
+        let intersectingFeatures = [];
+        $.each(localsFeatureArray, function (index, feature) {
+            let ptsWithin = turf.pointsWithinPolygon(points, feature);
+
+            if (ptsWithin.features.length > 0) {
+                intersectingFeatures.push(feature);
+            }
+        });
+
+        infoBoxLocal.update(intersectingFeatures);
+    }
+
+    infoBoxLocal.onAdd();
+    infoBoxLocal.addTo(mymap);
 
     return true;
 };

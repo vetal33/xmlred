@@ -19,6 +19,51 @@
         <div class="col-lg-12 col-xl-4" id="text-content">
             <div class="col-12 mt-2 ">
                 <div class="card" id="buttons-card" data-name="">
+                    <div class="card-header">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-tool dropdown-toggle" data-toggle="dropdown"
+                                    aria-expanded="false">
+                                <i class="far fa-folder-open"></i> Файл
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu" x-placement="bottom-end">
+                                <li><a href="#" class="dropdown-item" id="open-xml-normative">
+                                        <i class="far fa-folder-open"></i>
+                                        Відкрити "Нормативна оцінка населеного пункту" (*.xml)
+                                    </a>
+                                </li>
+                                <li><a href="#" class="dropdown-item disabled" id="download-shp-normative">
+                                        <i class="fas fa-download"></i>
+                                        Зберегти в shp-файл" (*.shp)
+                                    </a>
+                                </li>
+                                <li class="dropdown-divider"><span></span></li>
+                                <li><a href="#" class="dropdown-item dropdown-hover" id="open-xml-normative-test"><i
+                                                class="far fa-arrow-alt-circle-down"></i>
+                                        Завантажити тестові дані оцінки населеного пункту
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-tool dropdown-toggle" data-toggle="dropdown"
+                                    aria-expanded="false">
+                                <i class="fas fa-file-import"></i> Імпорт
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu" x-placement="bottom-end">
+                                <li><a href="#" class="dropdown-item" id="import-json">
+                                        <i class="fas fa-file-import"></i>
+                                        Земельна ділянка (*.json)
+                                    </a>
+                                </li>
+                                <li class="dropdown-divider"><span></span></li>
+                                <li><a href="#" class="dropdown-item dropdown-hover disabled" id="import-xml">
+                                        <i class="fas fa-file-import"></i>
+                                        Земельна ділянка (*.xml)
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                     <div class="card-body pt-0 pb-0 pr-2 pl-0 mt-2 d-flex justify-content-between flex-wrap">
                         <div class="mr-auto">
                             {% include 'file/_form_xml.html.twig' %}
@@ -29,7 +74,7 @@
 
                         <div class="ml-auto">
                             {% include 'file/_form_json.html.twig' %}
-                            <a href="{{ path('downloadShp') }}" class="btn btn-app btn-control disabled"
+                            <a href="#" class="btn btn-app btn-control disabled"
                                id="btn-download-shp" data-name-file="">
                                 <i class="fas fa-download"></i> Скачати *.shp
                             </a>
@@ -117,6 +162,18 @@
                                             </div>
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td>Земельні ділянки</td>
+                                        <td id="marker-parcels" class="text-center">-</td>
+                                        <td class="text-center">
+                                            <div class="custom-control custom-checkbox check-map">
+                                                <input class="custom-control-input check-map" id="parcels"
+                                                       type="checkbox"
+                                                       checked="" disabled>
+                                                <label for="parcels" class="custom-control-label"></label>
+                                            </div>
+                                        </td>
+                                    </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -167,21 +224,36 @@
                                 </table>
                             </div>
                             <div class="overlay v-hidden">
-                                <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+                                <h3><i class="fas fa-spinner fa-spin"></i></h3>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="card card-outline card-success d-none" id="feature-card">
-                    <div class="card-header border-0"><h3 class="card-title text-success">Імпортована ділянка</h3>
+                    <div class="card-header border-0"><h3 class="card-title text-success"><i
+                                    class="fas fa-info-circle"></i> Ділянка</h3>
                         <div class="card-tools">
                             <input type="hidden" id="geom-from-json" value="" data-bounds="">
                             <span data-toggle="tooltip" class="badge badge-danger"></span>
-                            <a href="#" id="zoom-to-parcel" class="btn btn-tool btn-sm" data-toggle="tooltip" title="Зумувати на ділянку">
+                            <a href="#" id="save-parcel" class="btn btn-tool btn-sm" data-toggle="tooltip"
+                               title="Зберегти">
+                                <i class="far fa-save"></i>
+                            </a>
+                          {#  <div class="btn-group">
+                                <button type="button" class="btn btn-tool dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right" role="menu" x-placement="bottom-end">
+                                    <a href="#" class="dropdown-item">Зберегти (*.shp)</a>
+                                    <a href="#" class="dropdown-item">Зберегти (*.json)</a>
+                                </div>
+                            </div>#}
+                            <a href="#" id="zoom-to-parcel" class="btn btn-tool btn-sm" data-toggle="tooltip"
+                               title="Зумувати на ділянку">
                                 <i class="fas fa-search"></i>
                             </a>
-                            <a href="{{ path('calculateNormative') }}" id="feature-from-json"
-                               class="btn btn-tool btn-sm disabled" data-toggle="tooltip" title="Розрахувати вартість">
+                            <a href="{{ path('calculateNormative') }}" id="calculate-parcel"
+                               class="btn btn-tool btn-sm disabled" data-toggle="tooltip" title="Розрахувати оцінку">
                                 <i class="fas fa-calculator"></i>
                             </a>
                             <button type="button" class="btn btn-tool" data-card-widget="collapse">
@@ -193,12 +265,16 @@
                         <table class="table table-sm">
                             <tbody id="feature-table">
                             <tr>
-                                <td>Площа ділянки</td>
+                                <td class="min-width-150">Площа ділянки</td>
                                 <td id="feature-card-area"></td>
                             </tr>
                             <tr>
                                 <td>Кадастровий номер</td>
                                 <td id="feature-card-cud-num"></td>
+                            </tr>
+                            <tr>
+                                <td>Цільове призначення</td>
+                                <td id="feature-purpose"></td>
                             </tr>
                             </tbody>
                         </table>
@@ -225,8 +301,10 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-12 col-xl-8">
-            <div id="map"></div>
+        <div class="col-lg-12 col-xl-8 pr-0 pl-0">
+            <div id="map-wrapper" class="sticky-top">
+                <div id="map"></div>
+            </div>
         </div>
     </div>
 {% endblock %}
