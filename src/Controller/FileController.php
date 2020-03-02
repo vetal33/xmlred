@@ -7,12 +7,14 @@ use App\Form\FileFormType;
 use App\Repository\FileRepository;
 use App\Repository\ParcelRepository;
 use App\Service\ApiClient\EServicesClient;
+use App\Service\Interfaces\Uploader;
 use App\Service\JsonUploader;
 use App\Service\NormativeXmlSaver;
 use App\Service\NormativeXmlParser;
 use App\Service\NormativeXmlValidator;
 use App\Service\ParcelHandler;
 use App\Service\ValidateHelper;
+use App\Service\XmlFileUploader;
 use App\Service\XmlUploader;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Exception;
@@ -33,6 +35,17 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  */
 class FileController extends AbstractController
 {
+
+    /**
+     * @var ValidateHelper
+     */
+    private $validateHelper;
+
+    public function __construct(ValidateHelper $validateHelper)
+    {
+        $this->validateHelper = $validateHelper;
+    }
+
     /**
      * @Route("/", name="homepage", methods={"GET","POST"}, options={"expose"=true})
      * @param Request $request
@@ -40,15 +53,14 @@ class FileController extends AbstractController
      * @param XmlUploader $uploader
      * @param NormativeXmlParser $normativeXmlParser
      * @param NormativeXmlSaver $normativeXmlSaver
-     * @param ValidateHelper $validateHelper
      * @return Response
      */
     public function index(Request $request,
                           EntityManagerInterface $entityManager,
                           XmlUploader $uploader,
                           NormativeXmlParser $normativeXmlParser,
-                          NormativeXmlSaver $normativeXmlSaver,
-                          ValidateHelper $validateHelper): Response
+                          NormativeXmlSaver $normativeXmlSaver
+                          ): Response
     {
         $data = [];
         $file = new File;
@@ -56,8 +68,7 @@ class FileController extends AbstractController
 
         if ($request->isXmlHttpRequest()) {
             try {
-                if ($request->request->get('xmlFile'))
-                {
+                if ($request->request->get('xmlFile')) {
                     $xmlObj = $uploader->getSimpleXML('test_normative.xml');
 
                     if (!$xmlObj) {
@@ -70,7 +81,7 @@ class FileController extends AbstractController
                     /**@var UploadedFile $uploadedFile */
                     $uploadedFile = $request->files->get('xmlFile');
 
-                    $errors = $validateHelper->validateNormativeXml($uploadedFile);
+                    $errors = $this->validateHelper->validateNormativeXml($uploadedFile);
                     if (0 != count($errors)) {
                         $data['errors'][] = $errors[0]->getMessage();
                         return new JsonResponse(json_encode($data), Response::HTTP_OK);
@@ -159,7 +170,7 @@ class FileController extends AbstractController
         if ($this->isGranted('ROLE_USER')) {
             if ($request->request->get('name') === '/load?name=test_normative.xml') {
 
-                return new JsonResponse( 'Тестові дані неможливо скачати!', Response::HTTP_NOT_FOUND);
+                return new JsonResponse('Тестові дані неможливо скачати!', Response::HTTP_NOT_FOUND);
             }
 
             $fileName = $normativeXmlSaver->addToZip();
@@ -206,9 +217,8 @@ class FileController extends AbstractController
     }
 
     /**
-     * @Route("/import/json", name="impontJson", methods={"POST"}, options={"expose"=true} )
+     * @Route("/import/json", name="importJson", methods={"POST"}, options={"expose"=true} )
      * @param Request $request
-     * @param ValidateHelper $validateHelper
      * @param JsonUploader $jsonUploader
      * @param FileRepository $fileRepository
      * @param EServicesClient $servicesClient
@@ -216,7 +226,6 @@ class FileController extends AbstractController
      */
     public function importJson(
         Request $request,
-        ValidateHelper $validateHelper,
         JsonUploader $jsonUploader,
         FileRepository $fileRepository,
         EServicesClient $servicesClient
@@ -227,7 +236,7 @@ class FileController extends AbstractController
                 try {
                     /**@var UploadedFile $uploadedFile */
                     $uploadedFile = $request->files->get('jsonFile');
-                    $errors = $validateHelper->validateFile($uploadedFile);
+                    $errors = $this->validateHelper->validateFile($uploadedFile);
 
                     if (0 != count($errors)) {
                         $data['errors'][] = $errors[0]->getMessage();
@@ -235,7 +244,7 @@ class FileController extends AbstractController
                     }
 
                     $fileStr = file_get_contents($uploadedFile);
-                    $errors = $validateHelper->validateJsonString($fileStr);
+                    $errors = $this->validateHelper->validateJsonString($fileStr);
 
                     if (0 != count($errors)) {
                         $data['errors'][] = $errors[0]->getMessage();
@@ -272,6 +281,45 @@ class FileController extends AbstractController
             }
         }
         return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
+    }
+
+    /**
+     * @Route("/import/xmlFile", name="import_xmlFile", methods={"POST"}, options={"expose"=true})
+     * @param Request $request
+     * @param XmlFileUploader $xmlFileUploader
+     * @return JsonResponse
+     */
+    public function importXml(Request $request, XmlFileUploader $xmlFileUploader)
+    {
+        if ($this->isGranted('ROLE_USER')) {
+            if ($request->isXmlHttpRequest()) {
+                try {
+                    /**@var UploadedFile $uploadedFile */
+                    $uploadedFile = $request->files->get('xmlFile');
+                    dump($uploadedFile);
+
+                    $errors = $this->validateHelper->validateXmlFile($uploadedFile);
+                    dump($errors);
+                    if (0 != count($errors)) {
+                        $data['errors'][] = $errors[0]->getMessage();
+                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                    }
+
+                    $xmlFileUploader->upload($uploadedFile);
+
+                    $xmlObj = $xmlFileUploader->getSimpleXML($xmlFileUploader->getNewName());
+                    dump($xmlObj);
+
+
+                } catch (\Exception $exception) {
+                    return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+
+            }
+
+        }
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
+
     }
 
     /**

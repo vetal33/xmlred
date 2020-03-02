@@ -42,6 +42,25 @@ class ValidateHelper
     }
 
     /**
+     * @param UploadedFile $file
+     * @return ConstraintViolationListInterface
+     */
+    public function validateXmlFile(UploadedFile $file): ConstraintViolationListInterface
+    {
+        $errors = $this->validator->validate($file, [
+            new FileConstraint([
+                'maxSize' => '1024k',
+                'mimeTypes' => [
+                    'text/xml',
+                ],
+                'mimeTypesMessage' => 'Будь-ласка завантажте валідний файл (*.xml)',
+                'maxSizeMessage' => 'Файл не повинен перевищувати 1Mb',
+            ]),
+        ]);
+        return $errors;
+    }
+
+    /**
  * @param UploadedFile $file
  * @return ConstraintViolationListInterface
  */

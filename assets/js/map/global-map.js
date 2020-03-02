@@ -20,6 +20,7 @@ import '../map/leaflet-bing-layer';
 import '../map/map-controls';
 import '../map/service/check-xml';
 import '../map/service/import-json';
+import '../map/service/import-xml';
 import '../map/service/calculate-normative';
 import '../map/service/save-parcel';
 import '../map/service/download-shp';

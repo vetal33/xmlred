@@ -18,7 +18,7 @@ $(document).ready(function () {
 
     function sendFile(data) {
         $.ajax({
-            url: Routing.generate('impontJson'),
+            url: Routing.generate('importJson'),
             method: 'POST',
             data: data,
             dataType: 'json',

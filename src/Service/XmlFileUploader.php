@@ -4,35 +4,36 @@
 namespace App\Service;
 
 
+use App\Entity\User;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-class XmlUploader extends Uploader
+class XmlFileUploader extends Uploader
 {
-    const XML_NORMATIVE = 'xml_normative';
+    const XML_FILE = 'xml_file';
+
+    /**
+     * @var User|null
+     */
+    private $user;
 
     private $errors = [];
 
-    /**
-     * Uploader constructor.
-     * @param string $uploadPath
-     */
-
-    public function __construct(string $uploadPath)
+    public function __construct(string $uploadPath, TokenStorageInterface $tokenStorage)
     {
         parent::__construct($uploadPath);
+        $this->user = $tokenStorage->getToken()->getUser();
     }
 
-    /**
-     * @param UploadedFile $uploadedFile
-     */
-    public function upload(UploadedFile $uploadedFile): void
+
+    function upload(UploadedFile $uploadedFile): void
     {
+        $this->setDestination(self::XML_FILE, $this->user->getFolderName());
+        $this->makeDir();
+        $this->removeOldFileFromDir($this->destination);
         $this->setOriginalName($uploadedFile);
-        $destination = $this->uploadPath . '/' . self::XML_NORMATIVE;
-
-        $uploadedFile->move($destination, $this->getNewName());
+        $uploadedFile->move($this->destination, $this->getNewName());
     }
-
 
     /**
      * @param string $filePath
@@ -41,7 +42,8 @@ class XmlUploader extends Uploader
     public function getSimpleXML(string $filePath): ?\SimpleXMLElement
     {
         libxml_use_internal_errors(true);
-        $destination = $this->uploadPath . '/' . self::XML_NORMATIVE . '/' . $filePath;
+        $destination = $this->destination . '/' . $filePath;
+
         $xml = simplexml_load_file($destination);
         if (!$xml) {
             foreach (libxml_get_errors() as $error) {

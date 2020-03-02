@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Service\Interfaces;
+namespace App\Service;
 
 
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -20,6 +20,9 @@ abstract class Uploader
      * @var string
      */
     private $uniquePostfix;
+
+    /** @var string */
+    protected $destination;
 
     abstract function upload(UploadedFile $uploadedFile): void;
 
@@ -62,5 +65,45 @@ abstract class Uploader
         $ext = array_pop($arrayName);
 
         return implode('.', $arrayName) . "-" . $this->uniquePostfix . "." . $ext;
+    }
+
+    protected function removeOldFileFromDir(string $destinationFolder): void
+    {
+        $dir = array_diff(scandir($destinationFolder), ['.', '..']);
+
+        $curDateTime = new \DateTime();
+        $curDateTime->setTimestamp(time());
+
+        foreach ($dir as $file) {
+            $fileUnixTime = filemtime($destinationFolder . '/' . $file);
+            $fileDateTime = new \DateTime();
+            $fileDateTime->setTimestamp($fileUnixTime);
+
+            $difference = $curDateTime->diff($fileDateTime);
+
+            if ((int)($difference->format('%h')) > 12 || (int)($difference->format('%d')) >= 1) {
+                unlink($destinationFolder . '/' . $file);
+            }
+        }
+    }
+
+    protected function makeDir(): void
+    {
+        if (!file_exists($this->destination)) {
+            mkdir($this->destination);
+        }
+    }
+
+    protected function setDestination(string $nameFolder, string $userFolder)
+    {
+        $this->destination = $this->uploadPath . '/' . $nameFolder . '/' . $userFolder;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDestination(): string
+    {
+        return $this->destination;
     }
 }
