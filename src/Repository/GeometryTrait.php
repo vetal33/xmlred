@@ -105,5 +105,24 @@ trait GeometryTrait
         return $coord[0];
     }
 
+    /**
+     * Рахує площу
+     *
+     * @param $geom
+     * @return mixed
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function getExtent($geom)
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_Extent(ST_GeomFromText(\'' . $geom . '\')) as extent');
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['extent'];
+    }
+
+
 
 }

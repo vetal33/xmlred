@@ -7,16 +7,16 @@ use App\Form\FileFormType;
 use App\Repository\FileRepository;
 use App\Repository\ParcelRepository;
 use App\Service\ApiClient\EServicesClient;
-use App\Service\Interfaces\Uploader;
 use App\Service\JsonUploader;
 use App\Service\NormativeXmlSaver;
 use App\Service\NormativeXmlParser;
 use App\Service\NormativeXmlValidator;
 use App\Service\ParcelHandler;
+use App\Service\ParcelXmlParser;
+use App\Service\ParcelXmlSaver;
 use App\Service\ValidateHelper;
 use App\Service\XmlFileUploader;
 use App\Service\XmlUploader;
-use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Exception;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Stream;
@@ -40,27 +40,38 @@ class FileController extends AbstractController
      * @var ValidateHelper
      */
     private $validateHelper;
+    /**
+     * @var FileRepository
+     */
+    private $fileRepository;
+    /**
+     * @var EServicesClient
+     */
+    private $servicesClient;
 
-    public function __construct(ValidateHelper $validateHelper)
+    public function __construct(
+        ValidateHelper $validateHelper,
+        FileRepository $fileRepository,
+        EServicesClient $servicesClient
+    )
     {
         $this->validateHelper = $validateHelper;
+        $this->fileRepository = $fileRepository;
+        $this->servicesClient = $servicesClient;
     }
 
     /**
      * @Route("/", name="homepage", methods={"GET","POST"}, options={"expose"=true})
      * @param Request $request
-     * @param EntityManagerInterface $entityManager
      * @param XmlUploader $uploader
      * @param NormativeXmlParser $normativeXmlParser
      * @param NormativeXmlSaver $normativeXmlSaver
      * @return Response
      */
     public function index(Request $request,
-                          EntityManagerInterface $entityManager,
                           XmlUploader $uploader,
                           NormativeXmlParser $normativeXmlParser,
-                          NormativeXmlSaver $normativeXmlSaver
-                          ): Response
+                          NormativeXmlSaver $normativeXmlSaver): Response
     {
         $data = [];
         $file = new File;
@@ -92,21 +103,18 @@ class FileController extends AbstractController
                     $origXmlName = $uploader->getOriginalName();
                     $newXmlName = $uploader->getNewName();
                 }
-
                 if (!$xmlObj) {
                     $data['errors'] = $uploader->getErrors();
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
-
                 $parseXml = $normativeXmlParser->parse($xmlObj);
-
                 if (!$parseXml) {
                     $data['errors'] = $normativeXmlParser->getErrors();
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
 
                 if ($this->isGranted('ROLE_USER')) {
-                    $result = $normativeXmlSaver->toShape($parseXml);
+                   $normativeXmlSaver->toShape($parseXml);
                 }
                 $data = $normativeXmlSaver->toGeoJson($parseXml);
 
@@ -140,6 +148,7 @@ class FileController extends AbstractController
 
     public function loadParcels(ParcelRepository $parcelRepository, ParcelHandler $parcelHandler)
     {
+
         if ($this->isGranted('ROLE_USER')) {
             try {
                 $parcelsJson = [];
@@ -159,13 +168,12 @@ class FileController extends AbstractController
     /**
      *
      * @Route("/load", name = "downloadShp", methods={"GET","POST"}, options={"expose"=true})
-     * @param XmlUploader $uploader
      * @param Request $request
      * @param NormativeXmlSaver $normativeXmlSaver
      * @return Response
      */
 
-    public function downloadShp(XmlUploader $uploader, Request $request, NormativeXmlSaver $normativeXmlSaver): Response
+    public function downloadShp(Request $request, NormativeXmlSaver $normativeXmlSaver): Response
     {
         if ($this->isGranted('ROLE_USER')) {
             if ($request->request->get('name') === '/load?name=test_normative.xml') {
@@ -220,15 +228,11 @@ class FileController extends AbstractController
      * @Route("/import/json", name="importJson", methods={"POST"}, options={"expose"=true} )
      * @param Request $request
      * @param JsonUploader $jsonUploader
-     * @param FileRepository $fileRepository
-     * @param EServicesClient $servicesClient
      * @return JsonResponse|Response
      */
     public function importJson(
         Request $request,
-        JsonUploader $jsonUploader,
-        FileRepository $fileRepository,
-        EServicesClient $servicesClient
+        JsonUploader $jsonUploader
     )
     {
         if ($this->isGranted('ROLE_USER')) {
@@ -251,25 +255,24 @@ class FileController extends AbstractController
                         return new JsonResponse(json_encode($data), Response::HTTP_OK);
                     }
 
-
                     $jsonUploader->upload($uploadedFile);
-                    $wkt = $fileRepository->getGeomFromJsonAsWkt($fileStr);
+                    $wkt = $this->fileRepository->getGeomFromJsonAsWkt($fileStr);
 
-                    $data['area'] = $fileRepository->calcArea($wkt);
+                    $data['area'] = $this->fileRepository->calcArea($wkt);
                     $data['newFileName'] = $jsonUploader->getNewName();
-                    $transformFeature = $fileRepository->transformFromSK63To3857($wkt);
+                    $transformFeature = $this->fileRepository->transformFromSK63To3857($wkt);
 
-                    if ($servicesClient->isConnect()) {
-                        $centroid = $fileRepository->getCentroid($transformFeature);
-                        $centroidArray = $fileRepository->wktPointToArray($centroid);
-                        if ($pubData = $servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
+                    if ($this->servicesClient->isConnect()) {
+                        $centroid = $this->fileRepository->getCentroid($transformFeature);
+                        $centroidArray = $this->fileRepository->wktPointToArray($centroid);
+                        if ($pubData = $this->servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
                             $data['pub'] = $pubData;
                         }
                     }
 
-                    $wktTransform = $fileRepository->transformFeatureFromSC63to4326($wkt);
+                    $wktTransform = $this->fileRepository->transformFeatureFromSC63to4326($wkt);
                     $data['wkt'] = $wkt;
-                    $jsonTransform = $fileRepository->getJsonFromWkt($wktTransform);
+                    $jsonTransform = $this->fileRepository->getJsonFromWkt($wktTransform);
                     $data['json'] = $jsonTransform;
                     $data['errors'] = [];
 
@@ -287,39 +290,63 @@ class FileController extends AbstractController
      * @Route("/import/xmlFile", name="import_xmlFile", methods={"POST"}, options={"expose"=true})
      * @param Request $request
      * @param XmlFileUploader $xmlFileUploader
+     * @param ParcelXmlParser $parcelXmlParser
+     * @param ParcelXmlSaver $parcelXmlSaver
      * @return JsonResponse
      */
-    public function importXml(Request $request, XmlFileUploader $xmlFileUploader)
+    public function importXml(
+        Request $request,
+        XmlFileUploader $xmlFileUploader,
+        ParcelXmlParser $parcelXmlParser,
+        ParcelXmlSaver $parcelXmlSaver)
     {
         if ($this->isGranted('ROLE_USER')) {
             if ($request->isXmlHttpRequest()) {
                 try {
                     /**@var UploadedFile $uploadedFile */
                     $uploadedFile = $request->files->get('xmlFile');
-                    dump($uploadedFile);
-
                     $errors = $this->validateHelper->validateXmlFile($uploadedFile);
-                    dump($errors);
                     if (0 != count($errors)) {
                         $data['errors'][] = $errors[0]->getMessage();
                         return new JsonResponse(json_encode($data), Response::HTTP_OK);
                     }
 
                     $xmlFileUploader->upload($uploadedFile);
-
                     $xmlObj = $xmlFileUploader->getSimpleXML($xmlFileUploader->getNewName());
-                    dump($xmlObj);
+                    $parseXml = $parcelXmlParser->parse($xmlObj);
 
+                    if (!$parseXml) {
+                        $data['errors'] = $parcelXmlParser->getErrors();
+                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                    }
 
+                    $data = $parcelXmlSaver->toGeoJson($parseXml);
+                    $dataSK63 = $parcelXmlSaver->toGeoJson($parseXml, false);
+                    $wkt = $this->fileRepository->getGeomFromJsonAsWkt($dataSK63['parcelXml']['coordinates']);
+
+                    $data['area'] = $this->fileRepository->calcArea($wkt);
+                    $data['newFileName'] = $xmlFileUploader->getNewName();
+                    $data['wkt'] = $wkt;
+                    $data['json'] = $data['parcelXml']['coordinates'];
+                    $transformFeature = $this->fileRepository->transformFromSK63To3857($wkt);
+
+                    if ($this->servicesClient->isConnect()) {
+                        $centroid = $this->fileRepository->getCentroid($transformFeature);
+                        $centroidArray = $this->fileRepository->wktPointToArray($centroid);
+                        if ($pubData = $this->servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
+                            $data['pub'] = $pubData;
+                        }
+                    }
+
+                    $data['errors'] = [];
+
+                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 } catch (\Exception $exception) {
                     return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
-
             }
-
         }
         return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
-
     }
 
     /**

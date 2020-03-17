@@ -41,6 +41,7 @@ class XmlFileUploader extends Uploader
      */
     public function getSimpleXML(string $filePath): ?\SimpleXMLElement
     {
+        $this->setDestination(self::XML_FILE, $this->user->getFolderName());
         libxml_use_internal_errors(true);
         $destination = $this->destination . '/' . $filePath;
 

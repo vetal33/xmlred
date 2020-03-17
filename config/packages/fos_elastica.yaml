@@ -1,0 +1,20 @@
+# Read the documentation: https://github.com/FriendsOfSymfony/FOSElasticaBundle/blob/master/doc/setup.md
+fos_elastica:
+    clients:
+        default: { url: '%env(ELASTICSEARCH_URL)%' }
+    indexes:
+        app:
+            types:
+                parcel:
+                    properties:
+                        cadNum:
+                            type: keyword
+                        userId:
+                            type: nested
+                            properties:
+                                id: ~
+                    persistence:
+                        driver: orm
+                        model: App\Entity\Parcel
+                        provider: ~
+                        finder: ~

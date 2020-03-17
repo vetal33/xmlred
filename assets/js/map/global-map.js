@@ -8,6 +8,8 @@ window.addZonyToMap = require('../map/add-zony');
 window.addLocalToMap = require('../map/add-local');
 window.addLandsToMap = require('../map/add-lands');
 window.addRegionsToMap = require('../map/add-regions');
+window.addFeatureToMap = require('../map/service/add-feature-to-map');
+window.addParcelsToTable = require('../map/service/add-parsels-to-table');
 
 import 'bootstrap';
 global.turf = require('@turf/turf');
@@ -24,7 +26,6 @@ import '../map/service/import-xml';
 import '../map/service/calculate-normative';
 import '../map/service/save-parcel';
 import '../map/service/download-shp';
-
 
 $('[data-toggle="tooltip"]').tooltip({
     placement: 'bottom',

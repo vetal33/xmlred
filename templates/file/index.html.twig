@@ -56,7 +56,7 @@
                                     </a>
                                 </li>
                                 <li class="dropdown-divider"><span></span></li>
-                                <li><a href="#" class="dropdown-item dropdown-hover disabled" id="import-xml">
+                                <li><a href="#" class="dropdown-item dropdown-hover" id="import-xml">
                                         <i class="fas fa-file-import"></i>
                                         Земельна ділянка (*.xml)
                                     </a>
@@ -231,8 +231,8 @@
                     </div>
                 </div>
                 <div class="card card-outline card-success d-none" id="feature-card">
-                    <div class="card-header border-0"><h3 class="card-title text-success"><i
-                                    class="fas fa-info-circle"></i> Ділянка</h3>
+                    <div class="card-header border-0"><h3 class="card-title">
+                            <small class="badge badge-secondary mr-2" id="parcels-count">0</small> Ділянки </h3>
                         <div class="card-tools">
                             <input type="hidden" id="geom-from-json" value="" data-bounds="">
                             <span data-toggle="tooltip" class="badge badge-danger"></span>
@@ -240,15 +240,15 @@
                                title="Зберегти">
                                 <i class="far fa-save"></i>
                             </a>
-                          {#  <div class="btn-group">
-                                <button type="button" class="btn btn-tool dropdown-toggle" data-toggle="dropdown">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right" role="menu" x-placement="bottom-end">
-                                    <a href="#" class="dropdown-item">Зберегти (*.shp)</a>
-                                    <a href="#" class="dropdown-item">Зберегти (*.json)</a>
-                                </div>
-                            </div>#}
+                            {#  <div class="btn-group">
+                                  <button type="button" class="btn btn-tool dropdown-toggle" data-toggle="dropdown">
+                                      <i class="fas fa-download"></i>
+                                  </button>
+                                  <div class="dropdown-menu dropdown-menu-right" role="menu" x-placement="bottom-end">
+                                      <a href="#" class="dropdown-item">Зберегти (*.shp)</a>
+                                      <a href="#" class="dropdown-item">Зберегти (*.json)</a>
+                                  </div>
+                              </div>#}
                             <a href="#" id="zoom-to-parcel" class="btn btn-tool btn-sm" data-toggle="tooltip"
                                title="Зумувати на ділянку">
                                 <i class="fas fa-search"></i>
@@ -262,29 +262,67 @@
                             </button>
                         </div>
                     </div>
-                    <div class="card-body p-0">
-                        <table class="table table-sm">
-                            <tbody id="feature-table">
-                            <tr>
-                                <td class="min-width-150">Площа ділянки</td>
-                                <td id="feature-card-area"></td>
-                            </tr>
-                            <tr>
-                                <td>Кадастровий номер</td>
-                                <td id="feature-card-cud-num"></td>
-                            </tr>
-                            <tr>
-                                <td>Цільове призначення</td>
-                                <td id="feature-purpose"></td>
-                            </tr>
-                            </tbody>
-                        </table>
+                    <div class="card-body p-1">
+                        <ul class="nav nav-tabs" id="custom-content-below-tab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="custom-content-below-calculate-tab" data-toggle="pill"
+                                   href="#custom-content-calculate" role="tab" aria-controls="custom-content-below-home"
+                                   aria-selected="true">Детально</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="custom-content-parcels-list-tab" data-toggle="pill"
+                                   href="#custom-content-parcels-list" role="tab"
+                                   aria-controls="custom-content-below-profile" aria-selected="false">Список</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="custom-content-below-tabContent">
+                            <div class="tab-pane fade active show" id="custom-content-calculate" role="tabpanel"
+                                 aria-labelledby="custom-content-below-home-tab">
+                                <div class="d-flex mt-3">
+                                    <div class="col-4 ">
+                                        <div>Площа ділянки:</div>
+                                        <div class="mt-1">Кадастровий номер:</div>
+                                        <div class="mt-1">Цільове призначення:</div>
+                                    </div>
+                                    <div class="col-8">
+                                        <div id="feature-card-area"></div>
+                                        <div id="feature-card-cud-num" class="mt-1 text-dark"></div>
+                                        <div id="feature-purpose" class="mt-1 text-dark"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade table-responsive" id="custom-content-parcels-list" role="tabpanel"
+                                 aria-labelledby="custom-content-below-profile-tab">
+                                <div class="mt-2">
+                                    <div class="input-group input-group-sm mb-3 mt-3 w-100">
+                                        <input class="form-control" placeholder="Кадастровий номер" id="parcel-search">
+                                        <span class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary btn-flat"
+                                                        id="clear-search" data-toggle="tooltip" title="Очистити пошук">
+                                                <i class="fas fa-eraser"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                                <table id="parcels-list" class="table table-bordered table-hover table-head-fixed">
+                                    <thead>
+                                    <tr>
+                                        <th>Кадастровий номер</th>
+                                        <th>Площа</th>
+                                        <th style="width: 90px">Label</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                     <div class="overlay v-hidden" hidden="">
                         <h3><i class="fas fa-spinner fa-spin"></i></h3>
                     </div>
                 </div>
-                <div class="card" id="xml-card">
+                <div class="card collapsed-card" id="xml-card">
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="far fa-file-code"></i>
@@ -292,7 +330,7 @@
                         </h3>
                         <div class="card-tools">
                             <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
-                                        class="fas fa-minus"></i>
+                                        class="fas fa-plus"></i>
                             </button>
                         </div>
                     </div>
@@ -305,6 +343,28 @@
         <div class="col-lg-12 col-xl-8 pr-0 pl-0">
             <div id="map-wrapper" class="sticky-top">
                 <div id="map"></div>
+            </div>
+        </div>
+        <div class="modal fade" id="modal-sm" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <i class="icon fas fa-exclamation-triangle text-danger"></i> Попередження!
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Ви дійсно бажаєте видалить ділянку</p>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <input id="parcel-cadNum" type="hidden" data-cadNum="">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Відмінити</button>
+                        <button type="button" class="btn btn-primary" id="parcel-delete">Так</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

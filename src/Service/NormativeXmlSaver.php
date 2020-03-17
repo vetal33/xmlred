@@ -4,24 +4,19 @@
 namespace App\Service;
 
 use App\Repository\FileRepository;
-use Shapefile\Geometry\Linestring;
+use App\Service\Interfaces\XmlSaverInterface;
 use Shapefile\Geometry\Polygon;
 use Shapefile\Shapefile;
 use Shapefile\ShapefileException;
 use Shapefile\ShapefileWriter;
-use Shapefile\Geometry\Point;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-class NormativeXmlSaver
+class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
 {
     /**
      * @var string
      */
     private $shapePath;
-    /**
-     * @var FileRepository
-     */
-    private $fileRepository;
 
     private $errors = [];
 
@@ -52,12 +47,12 @@ class NormativeXmlSaver
      */
 
     public function __construct(string $shapePath,
-                                FileRepository $fileRepository,
                                 XmlUploader $uploader,
-                                TokenStorageInterface $tokenStorage)
+                                TokenStorageInterface $tokenStorage,
+                                FileRepository $fileRepository)
     {
+        parent::__construct($fileRepository);
         $this->shapePath = $shapePath;
-        $this->fileRepository = $fileRepository;
         $this->user = $tokenStorage->getToken()->getUser();
         $this->uniquePostfix = $uploader->getUniquePostfix();
     }
@@ -104,7 +99,6 @@ class NormativeXmlSaver
                 }
             } else {
                 $polygon = $this->arrayToPolygon($value['external']);
-                //$wkt = $this->convertToWGS($polygon, $numberZone);
                 $wkt = ($ifConvert) ? $this->convertToWGS($polygon, $numberZone) : $polygon->getWKT();
                 $data[$key]['coordinates'] = $this->getGeoJson($wkt);
                 foreach ($value as $k => $v) {
@@ -117,22 +111,6 @@ class NormativeXmlSaver
         return $data;
     }
 
-    /**
-     * Отримуємо номер зони системи координат СК-63, для подальшого вокорисатння у перерахунку
-     *
-     * @param array $array
-     * @return bool|int
-     */
-    private function getNumberZoneFromCoord(array $array)
-    {
-        //TODO треба переписать, не подобається
-
-        if (array_key_exists('Y', $array['external'][0])) {
-            $zone = substr($array['external'][0]['Y'], 0, 1);
-            return (integer)('10630' . $zone);
-        }
-        return false;
-    }
 
     /**
      * Функція для створення shp файлів використовуєчи масив із вихідними даними
@@ -207,64 +185,6 @@ class NormativeXmlSaver
         return $polygon;
     }
 
-    /**
-     * @param array $coord
-     * @param array $coordInternal
-     * @return Polygon
-     */
-    private function arrayToPolygon(array $coord, array $coordInternal = []): Polygon
-    {
-        $linestringInternal = [];
-        $linestringOuter = $this->createLinestring($coord);
-
-        if ($coordInternal) {
-            foreach ($coordInternal as $coord) {
-                $linestringInternal[] = $this->createLinestring($coord);
-            }
-        }
-        $polygon = $linestringInternal !== '' ? $this->createPolygon($linestringOuter, $linestringInternal) : $this->createPolygon($linestringOuter);
-
-        return $polygon;
-    }
-
-
-    /**
-     * @param Linestring $linestringOut
-     * @param array $linestringInArray
-     * @return Polygon|bool
-     */
-    private function createPolygon(Linestring $linestringOut, array $linestringInArray = [])
-    {
-        if (!$linestringOut->isClosedRing()) {
-            return false;
-        }
-        $polygon = new Polygon();
-        $polygon->addRing($linestringOut);
-        if ($linestringInArray) {
-            foreach ($linestringInArray as $linestringIn) {
-                if ($linestringIn->isClosedRing()) {
-                    $polygon->addRing($linestringIn);
-                }
-            }
-        }
-
-        return $polygon;
-    }
-
-    /**
-     * @param array $coords
-     * @return Linestring
-     */
-    private function createLinestring(array $coords): Linestring
-    {
-        $linestring = new Linestring();
-        foreach ($coords as $key => $coord) {
-            $point = new Point($coord['Y'], $coord['X']);
-            $linestring->addPoint($point);
-        }
-
-        return $linestring;
-    }
 
     /**
      * @param string $name
@@ -330,39 +250,6 @@ class NormativeXmlSaver
         foreach ($dir as $file) {
             unlink($destinationFolder . '/' . $file);
         }
-    }
-
-    /**
-     * Конвертуєм координати із СК-63 в WGS
-     *
-     * @param Polygon $polygon
-     * @param int $zone
-     * @return string
-     */
-    private function convertToWGS(Polygon $polygon, int $zone): string
-    {
-        //$wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
-        $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
-
-        /*                $wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
-                        $wkt = $this->fileRepository->transformFeatureFromSC63to4326($wkt, 106304);*/
-
-
-        return $wkt;
-    }
-
-    /**
-     * Перетворює WKT в GeoJson використовуючи бібліотеку для роботи з shp(Gaspare Sganga)
-     *
-     * @param string $wkt
-     * @return array|string
-     */
-    private function getGeoJson(string $wkt)
-    {
-        $wktPolygon = new Polygon();
-        $wktPolygon->initFromWKT($wkt);
-
-        return $wktPolygon->getGeoJSON();
     }
 
     private function getArray(string $wkt): array
