@@ -82,3 +82,7 @@
 .leaflet-bottom {
     width: 100%;
 }
+
+#custom-content-parcels-list {
+    max-height: 455px;
+}

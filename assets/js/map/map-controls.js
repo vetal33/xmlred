@@ -7,7 +7,7 @@ $(document).ready(function () {
         options: {
             position: 'topleft',
         },
-        onAdd: function (map) {
+        onAdd: function () {
             let container = L.DomUtil.create('a', 'btn btn-default');
             container.innerHTML += '<i class="fas fa-crosshairs"></i>';
             container.type = "button";
@@ -31,7 +31,7 @@ $(document).ready(function () {
         options: {
             position: 'topleft',
         },
-        onAdd: function (map) {
+        onAdd: function () {
             let container = L.DomUtil.create('a', 'btn btn-default');
             container.innerHTML += '<i class="fas fa-eraser"></i>';
             container.type = "button";
@@ -141,7 +141,6 @@ $(document).ready(function () {
             let bounds = JSON.parse(boundsStr);
             let arrayBounds = [];
             arrayBounds.push([bounds._southWest.lat, bounds._southWest.lng], [bounds._northEast.lat, bounds._northEast.lng]);
-
             mymap.fitBounds(arrayBounds);
             parcelGroup.eachLayer(function (layer) {
                 layer.bringToFront();
@@ -233,9 +232,8 @@ $(document).ready(function () {
         parcelFromBaseLayer.setStyle(parcelFromBaseStyle);
         e.layer.setStyle(addFeatureFromJsonSelectedStyle);
         $('#feature-card').removeClass('d-none');
-        $('#feature-card-area').html(e.layer.feature.properties.area);
-        $('#feature-card-cud-num').html(e.layer.feature.properties.cadnum);
-        $('#feature-purpose').html(e.layer.feature.properties.purpose);
+        setParcelValueInTable(e.layer);
+
         $('#save-parcel').addClass('disabled');
         $('#calculate-parcel').removeClass('disabled');
         $('#geom-from-json').val('');

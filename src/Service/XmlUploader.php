@@ -4,7 +4,6 @@
 namespace App\Service;
 
 
-use App\Service\Interfaces\Uploader;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class XmlUploader extends Uploader
@@ -48,8 +47,10 @@ class XmlUploader extends Uploader
             foreach (libxml_get_errors() as $error) {
                 $this->errors[] = $error->message;
             }
+
             return null;
         }
+
         return $xml;
     }
 

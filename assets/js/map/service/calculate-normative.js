@@ -67,7 +67,7 @@ $(document).ready(function () {
             '<tr><td class="pl-3"><span class="text-bold test-success">' + data.zone.name + '</span> економіко-планувальна зона</td><td class="text-center">' +
             data.zone.km2 + '</td></tr>' +
             '</tbody></table></div>');
-        $('#feature-card .card-body').append(normativeTable);
+        $('#feature-card #custom-content-calculate').append(normativeTable);
 
         $.each(data.local, function (index, value) {
             let percent = Math.round((value.area / data.area) * 100).toFixed() + '%';
@@ -130,5 +130,4 @@ $(document).ready(function () {
         layer.nameLayer = "IntersectGeoJSON";
         intersectLocalLayersGroup.addLayer(layer);
     }
-
 });

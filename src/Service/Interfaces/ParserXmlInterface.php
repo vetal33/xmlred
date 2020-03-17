@@ -4,7 +4,7 @@
 namespace App\Service\Interfaces;
 
 
-interface ParserXml
+interface ParserXmlInterface
 {
     public function parse(\SimpleXMLElement $simpleXMLElement);
 

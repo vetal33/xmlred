@@ -4,19 +4,11 @@
 namespace App\Service;
 
 
-use App\Service\Interfaces\ParserXml;
-use phpDocumentor\Reflection\DocBlock\Tags\Return_;
+use App\Service\Interfaces\ParserXmlInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class NormativeXmlParser implements ParserXml
+class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
 {
-    /**@var array All the lines in xml-file */
-    private $polylines = [];
-
-    /**@var array All the points in xml-file */
-    private $points = [];
-
-    private $errors = [];
 
     /**
      * Setting tree-object that we used
@@ -39,26 +31,13 @@ class NormativeXmlParser implements ParserXml
     public function parse(\SimpleXMLElement $simpleXMLElement): ?array
     {
         $array = json_decode(json_encode($simpleXMLElement), true);
-
         if ($this->getPolyline($array) && $this->getPoints($array)) {
             $result = $this->parseDataXml($array);
 
             return $result;
         }
+
         return null;
-    }
-
-    public function findNode(array $dataXml, array $keys): array
-    {
-        foreach ($keys as $key) {
-            if (is_array($dataXml) && array_key_exists($key, $dataXml)) {
-                $dataXml = $dataXml[$key];
-            } else {
-                return [];
-            }
-        }
-
-        return $dataXml;
     }
 
     public function getGeneralInformation($data)
@@ -158,7 +137,6 @@ class NormativeXmlParser implements ParserXml
         return $data;
     }
 
-
     private function getGeometry(array $data)
     {
         $coordinates = [];
@@ -190,19 +168,6 @@ class NormativeXmlParser implements ParserXml
     }
 
     /**
-     * Перевіряє чи є Node кінцевим, чи скрадовим
-     * @param array $data
-     * @return bool
-     */
-    private function ifArrayOrList(array $data): bool
-    {
-        if (!is_string(array_key_last($data))) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
      *
      * @param $externals
      * @return string
@@ -219,54 +184,6 @@ class NormativeXmlParser implements ParserXml
         return $userdata;
     }
 
-    private function getUlidInternal($internal)
-    {
-        $userdata = [];
-        array_walk_recursive($internal, function ($item, $key) use (&$userdata) {
-            if ($key === 'ULID') {
-                $userdata[] = $item;
-            }
-        }, $userdata);
-
-        return $userdata;
-    }
-
-
-    /**
-     * @param array $data
-     * @return array|bool
-     */
-    private function getPolyline(array $data)
-    {
-        try {
-            foreach ($data['InfoPart']['MetricInfo']['Polyline']['PL'] as $value) {
-                $this->polylines[$value['ULID']] = $value['Points']['P'];
-            }
-            return $this->polylines;
-        } catch (\Exception $exception) {
-            $this->errors[] = $exception->getMessage();
-            return false;
-        }
-    }
-
-    /**
-     * @param array $data
-     * @return array|bool
-     */
-    private function getPoints(array $data)
-    {
-        try {
-            foreach ($data['InfoPart']['MetricInfo']['PointInfo']['Point'] as $value) {
-                $this->points[$value['UIDP']]['X'] = $value['X'];
-                $this->points[$value['UIDP']]['Y'] = $value['Y'];
-            }
-            return $this->points;
-        } catch (\Exception $exception) {
-            $this->errors[] = $exception->getMessage();
-            return false;
-        }
-    }
-
     private function getCurrentPoints(array $data)
     {
         array_pop($data);
@@ -274,24 +191,5 @@ class NormativeXmlParser implements ParserXml
         $dataCoordinate[] = reset($dataCoordinate);
 
         return $dataCoordinate;
-    }
-
-    private function array_intersect_key_withoutSort(array $data)
-    {
-        $dataCoordinate = array_map(function ($value) {
-            if (array_key_exists((int)$value, $this->points)) {
-                return $this->points[$value];
-            }
-        }, $data);
-
-        return $dataCoordinate;
-    }
-
-    /**
-     * @return array
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
     }
 }
