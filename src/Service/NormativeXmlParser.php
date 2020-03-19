@@ -95,19 +95,22 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
     {
 
         $currentPoints = [];
-        foreach ($this->settingFields as $value => $key) {
-            $currentPoints[$value] = $this->findNode($dataXml, $key);
-            $currentPoints[$value] = $this->modifyArray($currentPoints[$value], $value);
-            if ($this->ifArrayOrList($currentPoints[$value])) {
-                foreach ($currentPoints[$value] as $item => $node) {
-                    $currentPoints[$value][$item]['coordinates'] = $this->getGeometry($node);
+        foreach ($this->settingFields as $key => $value) {
+            $currentPoints[$key] = $this->findNode($dataXml, $value);
+            //dump($currentPoints[$key]);
+            $currentPoints[$key] = $this->modifyArray($currentPoints[$key], $key);
+            //dump($currentPoints[$key]);
+            if ($this->ifArrayOrList($currentPoints[$key])) {
+                foreach ($currentPoints[$key] as $item => $node) {
+                    $currentPoints[$key][$item]['coordinates'] = $this->getGeometry($node);
                 }
             } else {
-                $coords = $this->getGeometry($currentPoints[$value]);
-                $currentPoints[$value] = $this->getGeneralInformation($currentPoints[$value]);
-                $currentPoints[$value]['external'] = $coords['external'];
+                $coords = $this->getGeometry($currentPoints[$key]);
+                $currentPoints[$key] = $this->getGeneralInformation($currentPoints[$key]);
+                $currentPoints[$key]['external'] = $coords['external'];
             }
         }
+        //dump($currentPoints);
 
         return $currentPoints;
     }
@@ -139,57 +142,101 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
 
     private function getGeometry(array $data)
     {
+
+        dump($data);
         $coordinates = [];
 
-        if (array_key_exists('Externals', $data)) {
-            if (!$data['Externals']) {
-                $factor = array_key_exists('NameFactor', $data) ? $data['NameFactor'] : reset($data);
-                throw new NotFoundHttpException('Контур "' . $factor . '" - не містить геометрії');
-            }
-            $valueUlid = $this->getUlid($data['Externals']);
-            if ($valueUlid !== '' && array_key_exists((int)$valueUlid, $this->polylines)) {
-                $coordinates['external'] = $this->getCurrentPoints($this->polylines[(int)$valueUlid]);
-            }
-            if (array_key_exists('Internals', $data['Externals'])) {
-                $valueUlidInternal = $this->getUlidInternal($data['Externals']['Internals']);
-                if (!$valueUlidInternal) {
-                    $coordinates['internal'] = [];
-                }
-                foreach ($valueUlidInternal as $value) {
-                    if (array_key_exists((int)$value, $this->polylines)) {
-                        $coordinates['internal'][] = $this->getCurrentPoints($this->polylines[(int)$value]);
-                    }
-                }
-            }
-            return $coordinates;
-        } else {
+        if (!array_key_exists('Externals', $data)) {
             return array();
         }
+
+        if (!$data['Externals']) {
+            $factor = array_key_exists('NameFactor', $data) ? $data['NameFactor'] : reset($data);
+
+            throw new NotFoundHttpException('Контур "' . $factor . '" - не містить геометрії');
+        }
+
+        $valueUlid = $this->getUlid($data['Externals']);
+        dump($valueUlid);
+        if ($valueUlid) {
+            $coordinates['external'] = $this->getCurrentPoints($valueUlid);
+        }
+        if (array_key_exists('Internals', $data['Externals'])) {
+            $valueUlidInternal = $this->getUlidInternal($data['Externals']['Internals']);
+            dump($valueUlidInternal);
+            if (!$valueUlidInternal) {
+                $coordinates['internal'] = [];
+            }
+            if ($valueUlidInternal) {
+                $coordinates['internal'] = $this->getCurrentPoints($valueUlidInternal);
+            }
+/*            foreach ($valueUlidInternal as $value) {
+                dump($value);
+                if (array_key_exists((int)$value['ULID'], $this->polylines)) {
+                    $coordinates['internal'][] = $this->getCurrentPoints($value);
+                }
+            }*/
+        }
+        dump($coordinates);
+        return $coordinates;
     }
 
     /**
      *
      * @param $externals
-     * @return string
+     * @return array
      */
-    private function getUlid($externals)
+    private function getUlid($externals): array
     {
-        $userdata = '';
+        $userdata = [];
+
         array_walk_recursive($externals['Boundary'], function ($item, $key) use (&$userdata) {
             if ($key === 'ULID') {
-                $userdata = $item;
+                $userdata[]['ULID'] = $item;
+                //$i = count($userdata);
+            }
+            if ($key === 'FP') {
+               // $in = $i-1;
+                $userdata[count($userdata)-1]['FP'] = $item;
+            }
+            if ($key === 'TP') {
+                $userdata[count($userdata)-1]['TP'] = $item;
             }
         }, $userdata);
+        //dump($userdata);
 
         return $userdata;
     }
 
     private function getCurrentPoints(array $data)
     {
-        array_pop($data);
-        $dataCoordinate = $this->array_intersect_key_withoutSort($data);
-        $dataCoordinate[] = reset($dataCoordinate);
+        //dump($data);
+        /*        array_pop($data);
+                $dataCoordinate = $this->array_intersect_key_withoutSort($data);
+                $dataCoordinate[] = reset($dataCoordinate);
 
+                return $dataCoordinate;*/
+
+
+        $points = [];
+        foreach ($data as $line) {
+            if (array_key_exists((int)$line['ULID'], $this->polylines)) {
+                if (array_key_exists('FP', $line)) {
+                    $points = array_merge($points, array_reverse($this->polylines[$line['ULID']]));
+                } else {
+                    $points = array_merge($points, $this->polylines[$line['ULID']]);
+                }
+            }
+        }
+
+        if (!$points) return array();
+        //dump($points);
+        $points = array_unique($points);
+         //dump($points);
+        $dataCoordinate = $this->array_intersect_key_withoutSort($points);
+        dump($dataCoordinate);
+        $dataCoordinate[] = reset($dataCoordinate);
+        //dump($dataCoordinate);
         return $dataCoordinate;
     }
 }

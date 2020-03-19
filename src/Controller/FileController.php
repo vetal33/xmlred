@@ -77,66 +77,62 @@ class FileController extends AbstractController
         $file = new File;
         $form = $this->createForm(FileFormType::class, $file);
 
-        if ($request->isXmlHttpRequest()) {
-            try {
-                if ($request->request->get('xmlFile')) {
-                    $xmlObj = $uploader->getSimpleXML('test_normative.xml');
-
-                    if (!$xmlObj) {
-                        $error = sprintf('Вибачте!, тестові дані не знайдено!');
-                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
-                    };
-                    $origXmlName = 'test_normative.xml';
-                    $newXmlName = 'test_normative.xml';
-                } else {
-                    /**@var UploadedFile $uploadedFile */
-                    $uploadedFile = $request->files->get('xmlFile');
-
-                    $errors = $this->validateHelper->validateNormativeXml($uploadedFile);
-                    if (0 != count($errors)) {
-                        $data['errors'][] = $errors[0]->getMessage();
-                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                    }
-
-                    $uploader->upload($uploadedFile);
-                    $xmlObj = $uploader->getSimpleXML($uploader->getNewName());
-                    $origXmlName = $uploader->getOriginalName();
-                    $newXmlName = $uploader->getNewName();
-                }
-                if (!$xmlObj) {
-                    $data['errors'] = $uploader->getErrors();
-                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                }
-                $parseXml = $normativeXmlParser->parse($xmlObj);
-                if (!$parseXml) {
-                    $data['errors'] = $normativeXmlParser->getErrors();
-                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                }
-
-                if ($this->isGranted('ROLE_USER')) {
-                   $normativeXmlSaver->toShape($parseXml);
-                }
-                $data = $normativeXmlSaver->toGeoJson($parseXml);
-
-                $data['origXml'] = $xmlObj;
-                $data['newXmlName'] = $newXmlName;
-                $data['origXmlName'] = $origXmlName;
-                $data['errors'] = [];
-
-                return new JsonResponse(json_encode($data), Response::HTTP_OK);
-            } catch (NotFoundHttpException $exception) {
-
-                return new JsonResponse($exception->getMessage(), Response::HTTP_NOT_FOUND);
-            } catch (Exception $exception) {
-
-                return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
+        if (!$request->isXmlHttpRequest()) {
+            return $this->render('file/index.html.twig', ['fileForm' => $form->createView()]);
         }
+        try {
+            if ($request->request->get('xmlFile')) {
+                $xmlObj = $uploader->getSimpleXML('test_normative.xml');
 
-        return $this->render('file/index.html.twig', [
-            'fileForm' => $form->createView(),
-            'controller_name' => 'FileController',
-        ]);
+                if (!$xmlObj) {
+                    $error = sprintf('Вибачте!, тестові дані не знайдено!');
+                    return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                };
+                $origXmlName = 'test_normative.xml';
+                $newXmlName = 'test_normative.xml';
+            } else {
+                /**@var UploadedFile $uploadedFile */
+                $uploadedFile = $request->files->get('xmlFile');
+
+                $errors = $this->validateHelper->validateNormativeXml($uploadedFile);
+                if (0 != count($errors)) {
+                    $data['errors'][] = $errors[0]->getMessage();
+                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                }
+
+                $uploader->upload($uploadedFile);
+                $xmlObj = $uploader->getSimpleXML($uploader->getNewName());
+                $origXmlName = $uploader->getOriginalName();
+                $newXmlName = $uploader->getNewName();
+            }
+            if (!$xmlObj) {
+                $data['errors'] = $uploader->getErrors();
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+            }
+            $parseXml = $normativeXmlParser->parse($xmlObj);
+            if (!$parseXml) {
+                $data['errors'] = $normativeXmlParser->getErrors();
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+            }
+
+            if ($this->isGranted('ROLE_USER')) {
+                $normativeXmlSaver->toShape($parseXml);
+            }
+            $data = $normativeXmlSaver->toGeoJson($parseXml);
+
+            $data['origXml'] = $xmlObj;
+            $data['newXmlName'] = $newXmlName;
+            $data['origXmlName'] = $origXmlName;
+            $data['errors'] = [];
+
+            return new JsonResponse(json_encode($data), Response::HTTP_OK);
+        } catch (NotFoundHttpException $exception) {
+
+            return new JsonResponse($exception->getMessage(), Response::HTTP_NOT_FOUND);
+        } catch (Exception $exception) {
+
+            return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**

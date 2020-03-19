@@ -86,7 +86,15 @@ class BaseXmlParser
         $userdata = [];
         array_walk_recursive($internal, function ($item, $key) use (&$userdata) {
             if ($key === 'ULID') {
-                $userdata[] = $item;
+                $userdata[]['ULID'] = $item;
+                //$i = count($userdata);
+            }
+            if ($key === 'FP') {
+                // $in = $i-1;
+                $userdata[count($userdata)-1]['FP'] = $item;
+            }
+            if ($key === 'TP') {
+                $userdata[count($userdata)-1]['TP'] = $item;
             }
         }, $userdata);
 

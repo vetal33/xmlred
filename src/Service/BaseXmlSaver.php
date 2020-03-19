@@ -65,6 +65,7 @@ class BaseXmlSaver
      */
     private function createLinestring(array $coords): Linestring
     {
+        dump($coords);
         $linestring = new Linestring();
         foreach ($coords as $key => $coord) {
             $point = new Point($coord['Y'], $coord['X']);
