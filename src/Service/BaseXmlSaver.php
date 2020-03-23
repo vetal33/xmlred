@@ -107,7 +107,9 @@ class BaseXmlSaver
     protected function convertToWGS(Polygon $polygon, int $zone): string
     {
         //$wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
+
         $wkt = $this->fileRepository->transformFeatureFromSC63to4326($polygon->getWKT(), $zone);
+        //$wkt = $this->fileRepository->transformFeatureFromSC63to4326($simplifyGeom, $zone);
 
         /*                $wkt = $this->fileRepository->transformFeatureFromSC42toSC63($polygon->getWKT(), 28406);
                         $wkt = $this->fileRepository->transformFeatureFromSC63to4326($wkt, 106304);*/

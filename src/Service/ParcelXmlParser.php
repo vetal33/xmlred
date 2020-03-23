@@ -76,7 +76,6 @@ class ParcelXmlParser extends BaseXmlParser implements ParserXmlInterface, Parce
         }
     }
 
-
     /**
      * @param $externals
      * @return array
@@ -132,6 +131,4 @@ class ParcelXmlParser extends BaseXmlParser implements ParserXmlInterface, Parce
 
         return $wkt;
     }
-
-
 }

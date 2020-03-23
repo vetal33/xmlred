@@ -54,4 +54,14 @@ $(document).ready(function () {
         $('#save-parcel').removeClass('disabled');
     }
 
+    window.sumPointsInGroup = function (arrayGroup) {
+        let sum = 0;
+        arrayGroup.forEach(function (item) {
+            if (item.points) sum += parseInt(item.points);
+        });
+
+        return sum;
+    }
+
+
 });

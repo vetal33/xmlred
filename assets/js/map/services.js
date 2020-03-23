@@ -62,7 +62,7 @@ $(document).ready(function () {
         searchByVal(searchData);
     });
 
-    
+
     $('#clear-search').on('click', function (e) {
         searchByVal('');
         $('#parcel-search').val('');
@@ -161,8 +161,10 @@ $(document).ready(function () {
                     $(btnDownloadShp).attr('href', '/load?name=' + dataJson.newXmlName);
 
                     addLayers(dataJson);
+                    calcPoints(dataJson);
                     visualizeXML(dataJson);
                     addGeneralData(dataJson.boundary);
+                    $('#xml-card').removeClass('d-none');
                     parcelFromBaseLayer.bringToFront();
                 }
             },
@@ -253,6 +255,7 @@ $(document).ready(function () {
                 return false;
             }
         });
+
         return parcelLayer;
     }
 
@@ -412,6 +415,21 @@ $(document).ready(function () {
         }
         if (dataJson.lands) {
             addLandsToMap(dataJson.lands);
+        }
+    }
+
+    function calcPoints(dataJson) {
+        if (dataJson.zones) {
+            let zonePoints = sumPointsInGroup(dataJson.zones);
+        }
+        if (dataJson.regions) {
+            let regionsPoints = sumPointsInGroup(dataJson.regions);
+        }
+        if (dataJson.localFactor) {
+            let localFactorsPoints = sumPointsInGroup(dataJson.localFactor);
+        }
+        if (dataJson.lands) {
+            let landsPoints = sumPointsInGroup(dataJson.lands);
         }
     }
 

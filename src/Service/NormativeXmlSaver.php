@@ -77,9 +77,12 @@ class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
                     } else {
                         $polygon = $this->arrayToPolygon($valMulti['coordinates']['external']);
                     }
+
                     $wkt = ($ifConvert) ? $this->convertToWGS($polygon, $numberZone) : $polygon->getWKT();
+                    $number = $this->fileRepository->numberOfPoints($wkt);
 
                     $data[$key][$item]['coordinates'] = $this->getGeoJson($wkt);
+                    $data[$key][$item]['points'] = $number;
 
                     if (array_key_exists('ZoneNumber', $valMulti)) {
                         $data[$key][$item]['name'] = $valMulti['ZoneNumber'];
@@ -101,6 +104,8 @@ class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
                 $polygon = $this->arrayToPolygon($value['external']);
                 $wkt = ($ifConvert) ? $this->convertToWGS($polygon, $numberZone) : $polygon->getWKT();
                 $data[$key]['coordinates'] = $this->getGeoJson($wkt);
+                $data[$key]['points'] = $this->fileRepository->numberOfPoints($wkt);
+
                 foreach ($value as $k => $v) {
                     if ($k !== 'external') {
                         $data[$key][$k] = $v;
@@ -108,6 +113,7 @@ class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
                 }
             }
         }
+
         return $data;
     }
 
