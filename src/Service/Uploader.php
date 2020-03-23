@@ -81,7 +81,7 @@ abstract class Uploader
 
             $difference = $curDateTime->diff($fileDateTime);
 
-            if ((int)($difference->format('%h')) > 12 || (int)($difference->format('%d')) >= 1) {
+            if ((int)($difference->format('%h')) > 3 || (int)($difference->format('%d')) >= 1) {
                 unlink($destinationFolder . '/' . $file);
             }
         }

@@ -124,5 +124,32 @@ trait GeometryTrait
     }
 
 
+    public function simplifyGeom(string $geom)
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_AsText(ST_Simplify(ST_GeomFromText(\'' . $geom . '\'), 5, true)) as simple');
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['simple'];
+    }
+
+    /**
+     * @param string $geom
+     * @return int
+     */
+
+    public function numberOfPoints(string $geom): int
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_NPoints(ST_GeomFromText(\'' . $geom . '\')) as number');
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['number'] - 1;
+    }
+
 
 }

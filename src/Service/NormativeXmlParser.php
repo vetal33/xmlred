@@ -97,9 +97,7 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
         $currentPoints = [];
         foreach ($this->settingFields as $key => $value) {
             $currentPoints[$key] = $this->findNode($dataXml, $value);
-            //dump($currentPoints[$key]);
             $currentPoints[$key] = $this->modifyArray($currentPoints[$key], $key);
-            //dump($currentPoints[$key]);
             if ($this->ifArrayOrList($currentPoints[$key])) {
                 foreach ($currentPoints[$key] as $item => $node) {
                     $currentPoints[$key][$item]['coordinates'] = $this->getGeometry($node);
@@ -110,7 +108,6 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
                 $currentPoints[$key]['external'] = $coords['external'];
             }
         }
-        //dump($currentPoints);
 
         return $currentPoints;
     }
@@ -142,8 +139,6 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
 
     private function getGeometry(array $data)
     {
-
-        dump($data);
         $coordinates = [];
 
         if (!array_key_exists('Externals', $data)) {
@@ -157,27 +152,22 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
         }
 
         $valueUlid = $this->getUlid($data['Externals']);
-        dump($valueUlid);
+
         if ($valueUlid) {
             $coordinates['external'] = $this->getCurrentPoints($valueUlid);
         }
         if (array_key_exists('Internals', $data['Externals'])) {
-            $valueUlidInternal = $this->getUlidInternal($data['Externals']['Internals']);
-            dump($valueUlidInternal);
-            if (!$valueUlidInternal) {
-                $coordinates['internal'] = [];
-            }
-            if ($valueUlidInternal) {
-                $coordinates['internal'] = $this->getCurrentPoints($valueUlidInternal);
-            }
-/*            foreach ($valueUlidInternal as $value) {
-                dump($value);
-                if (array_key_exists((int)$value['ULID'], $this->polylines)) {
-                    $coordinates['internal'][] = $this->getCurrentPoints($value);
+
+            $internalCoords = $data['Externals']['Internals']['Boundary'];
+
+            foreach ($internalCoords as $internalCoord) {
+                if (is_array($internalCoord)) {
+                    $valueUlidInternals = $this->getUlidInternal($internalCoord);
+                    $coordinates['internal'][] = $this->getCurrentPoints($valueUlidInternals);
                 }
-            }*/
+            }
         }
-        dump($coordinates);
+
         return $coordinates;
     }
 
@@ -193,31 +183,20 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
         array_walk_recursive($externals['Boundary'], function ($item, $key) use (&$userdata) {
             if ($key === 'ULID') {
                 $userdata[]['ULID'] = $item;
-                //$i = count($userdata);
             }
             if ($key === 'FP') {
-               // $in = $i-1;
-                $userdata[count($userdata)-1]['FP'] = $item;
+                $userdata[count($userdata) - 1]['FP'] = $item;
             }
             if ($key === 'TP') {
-                $userdata[count($userdata)-1]['TP'] = $item;
+                $userdata[count($userdata) - 1]['TP'] = $item;
             }
         }, $userdata);
-        //dump($userdata);
 
         return $userdata;
     }
 
     private function getCurrentPoints(array $data)
     {
-        //dump($data);
-        /*        array_pop($data);
-                $dataCoordinate = $this->array_intersect_key_withoutSort($data);
-                $dataCoordinate[] = reset($dataCoordinate);
-
-                return $dataCoordinate;*/
-
-
         $points = [];
         foreach ($data as $line) {
             if (array_key_exists((int)$line['ULID'], $this->polylines)) {
@@ -230,13 +209,11 @@ class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
         }
 
         if (!$points) return array();
-        //dump($points);
+
         $points = array_unique($points);
-         //dump($points);
         $dataCoordinate = $this->array_intersect_key_withoutSort($points);
-        dump($dataCoordinate);
         $dataCoordinate[] = reset($dataCoordinate);
-        //dump($dataCoordinate);
+
         return $dataCoordinate;
     }
 }

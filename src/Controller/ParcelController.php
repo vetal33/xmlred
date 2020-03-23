@@ -127,7 +127,6 @@ class ParcelController extends AbstractController
      * @param Request $request
      * @param ParcelRepository $parcelRepository
      * @param ParcelHandler $parcelHandler
-     * @param RepositoryManagerInterface $finder
      * @return JsonResponse
      */
 

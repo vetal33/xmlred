@@ -28,13 +28,18 @@ class Parcel
     private $area;
 
     /**
+     * @ORM\Column(name="add_date_at", type="datetime", nullable=true, options={"comment":"Дата додавання ділянки"})
+     */
+    private $addDateAt;
+
+    /**
      * @ORM\Column(name="use", type="string", nullable=true, options={"comment":"Фактичне використання"})
      *
      */
     private $use;
 
     /**
-     * @ORM\OneToOne(targetEntity="Geom", cascade={"persist"})
+     * @ORM\OneToOne(targetEntity="Geom", cascade={"persist", "remove"})
      * @ORM\JoinColumn(referencedColumnName="id")
      */
     private $geom;
@@ -44,6 +49,12 @@ class Parcel
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      */
     private $userId;
+
+
+    public function __construct()
+    {
+        $this->addDateAt = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -129,7 +140,6 @@ class Parcel
         return $this->use;
     }
 
-
     /**
      * @param $use
      * @return Parcel
@@ -139,4 +149,25 @@ class Parcel
         $this->use = $use;
         return $this;
     }
+
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function getAddDateAt(): \DateTimeInterface
+    {
+        return $this->addDateAt;
+    }
+
+
+    /**
+     * @param \DateTimeInterface $addDateAt
+     * @return Parcel
+     */
+    public function setAddDateAt(\DateTimeInterface $addDateAt): self
+    {
+        $this->addDateAt = $addDateAt;
+        return $this;
+    }
+
 }
