@@ -11,7 +11,7 @@ $(document).ready(function () {
         $("#file-form-jsonFile")[0].closest('.d-inline-block').reset();
     });
 
-    $('#import-json').on('click', function (e) {
+    $('#import-json, #btn-import-json-alt').on('click', function (e) {
         e.preventDefault();
         $('#btn-import-json').click();
     });

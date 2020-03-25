@@ -107,9 +107,9 @@ $(document).ready(function () {
             $('.legend').toggleClass('d-none');
             $('.panel').html('<h6>Коефіцієнт км2</h6> Натисніть для отримання інформації');
 
-            if(!($('#zony').prop('checked')) && $('#local').prop('checked')){
+            if (!($('#zony').prop('checked')) && $('#local').prop('checked')) {
                 $('.local').removeClass('d-none');
-            } else if (($('#zony').prop('checked')) && $('#local').prop('checked')){
+            } else if (($('#zony').prop('checked')) && $('#local').prop('checked')) {
                 $('.local').addClass('d-none');
                 mymap.removeLayer(markerLayer);
             }
@@ -152,11 +152,11 @@ $(document).ready(function () {
      * Підсвічує локальні фактори на карті при наведенні в таблиці
      */
 
-    $('body').on('mouseover', '#calculate table tr', function (e) {
+    $('body').on('mouseover', '#calculate table tr', function () {
         setStyleIn($(this).attr("data-id"));
     });
 
-    $('body').on('mouseout', '#calculate table tr', function (e) {
+    $('body').on('mouseout', '#calculate table tr', function () {
         setStyleOut($(this).attr("data-id"));
     });
 
@@ -178,6 +178,22 @@ $(document).ready(function () {
         });
     }
 
+    /**
+     * Підсвічує контур локального фактора на карті при 'click' в таблиці
+     */
+    $('body').on('click', '#calculate table tr', function (e) {
+        let code = $(this).attr("data-code-local");
+        localLayersGroup.eachLayer(function (layer) {
+            if ((layer.feature.properties.code) === code) {
+                layer.setStyle(selectLocalStyle);
+                layer.bringToFront()
+                setTimeout(function () {
+                    localLayer.resetStyle();
+                }, 300);
+            }
+        });
+    });
+
     $('[data-toggle="tooltip"]').tooltip({
         placement: 'bottom',
         trigger: 'hover',
@@ -186,13 +202,13 @@ $(document).ready(function () {
     let lat, lng;
 
     /**
-     * Створюємо паньль виведення координат на карті
+     * Створюємо панель виведення координат на карті
      */
     let coordinates = L.Control.extend({
         options: {
             position: 'bottomleft',
         },
-        onAdd: function (map) {
+        onAdd: function () {
             let container = L.DomUtil.create('div', 'pr-1 pl-1');
             container.setAttribute("id", "coordinates-map");
 

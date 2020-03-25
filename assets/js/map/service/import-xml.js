@@ -10,6 +10,11 @@ $(document).ready(function () {
         $($importXml)[0].closest('.d-inline-block').reset();
     });
 
+    $('#import-xml, #btn-import-xml-alt').on('click', function (e) {
+        e.preventDefault();
+        $('#btn-import-xmlFile').click();
+    });
+
     function sendFile(data) {
         $.ajax({
             url: Routing.generate('import_xmlFile'),

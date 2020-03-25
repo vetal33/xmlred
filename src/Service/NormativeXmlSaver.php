@@ -4,6 +4,7 @@
 namespace App\Service;
 
 use App\Repository\FileRepository;
+use App\Repository\LocalFactorDirRepository;
 use App\Service\Interfaces\XmlSaverInterface;
 use Shapefile\Geometry\Polygon;
 use Shapefile\Shapefile;
@@ -41,17 +42,19 @@ class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
     /**
      * NormativeXmlSaver constructor.
      * @param string $shapePath
-     * @param FileRepository $fileRepository
      * @param XmlUploader $uploader
      * @param TokenStorageInterface $tokenStorage
+     * @param FileRepository $fileRepository
+     * @param LocalFactorDirRepository $localFactorDirRepository
      */
 
     public function __construct(string $shapePath,
                                 XmlUploader $uploader,
                                 TokenStorageInterface $tokenStorage,
-                                FileRepository $fileRepository)
+                                FileRepository $fileRepository,
+                                LocalFactorDirRepository $localFactorDirRepository)
     {
-        parent::__construct($fileRepository);
+        parent::__construct($fileRepository, $localFactorDirRepository);
         $this->shapePath = $shapePath;
         $this->user = $tokenStorage->getToken()->getUser();
         $this->uniquePostfix = $uploader->getUniquePostfix();
@@ -115,6 +118,22 @@ class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
         }
 
         return $data;
+    }
+
+    private function getMinMaxValues(string $code): array
+    {
+        $minMaxArray = [];
+        if (!empty($code)) {
+            $localFactor = $this->localFactorDirRepository->findOneBy(['code' => $code]);
+            if (!$localFactor) {
+                return $minMaxArray;
+            }
+            $minMaxArray['min'] = $localFactor->getMinValue();
+            $minMaxArray['max'] = $localFactor->getMaxValue();
+
+            return $minMaxArray;
+        }
+        return $minMaxArray;
     }
 
 
@@ -356,6 +375,10 @@ class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
         $id = 1;
         foreach ($locals as $local) {
             $geomLocal = $this->fileRepository->getGeomFromJsonAsWkt($local['coordinates']);
+            if (!$this->fileRepository->isValid($geomLocal)) {
+                $this->errors[] = sprintf('Локальний фактор "%s"  - не валідний!', $local['name'] );
+                continue;
+            }
             $geomIntersect = $this->fileRepository->isIntersectAsArea($geomLocal, $feature);
 
             if ($geomIntersect) {
@@ -369,6 +392,11 @@ class NormativeXmlSaver extends BaseXmlSaver implements XmlSaverInterface
                 $arrayCurrent['code'] = $local['code'];
                 $arrayCurrent['geom'] = $jsonIntersectTransform;
                 $arrayCurrent['id'] = $id;
+                $minMaxValues = $this->getMinMaxValues($local['code']);
+                if ($minMaxValues) {
+                    $arrayCurrent['minVal'] = $minMaxValues['min'];
+                    $arrayCurrent['maxVal'] = $minMaxValues['max'];
+                }
                 $this->featureNormative['local'][] = $arrayCurrent;
                 $id++;
             }

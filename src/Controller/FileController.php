@@ -375,7 +375,14 @@ class FileController extends AbstractController
                 $fileName = $request->request->get('fileName');
                 $feature = $request->request->get('feature');
 
-                if (!$feature) {
+
+                if ($feature) {
+                    $result = $fileRepository->isValid($feature);
+                    if (!$result) {
+                        $error = 'Вибачте!, геометрія ділянки не валідна!';
+                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                    }
+                } else {
                     $cadNum = $request->request->get('cadNum');
                     $parcel = $parcelRepository->findOneBy(['cadNum' => $cadNum]);
 
@@ -385,23 +392,16 @@ class FileController extends AbstractController
                     }
 
                     $feature = $parcel->getGeom()->getOriginalGeom();
-
-                } else {
-                    $result = $fileRepository->isValid($feature);
-                    if (!$result) {
-                        $error = 'Вибачте!, геометрія ділянки не валідна!';
-                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
-                    }
                 }
 
-                $file = $uploader->getSimpleXML($fileName);
+                $simpleXmlFile = $uploader->getSimpleXML($fileName);
 
-                if (!$file) {
+                if (!$simpleXmlFile) {
                     $error = sprintf('Вибачте!, файл "%s" не знайдено!', $fileName);
                     return new JsonResponse($error, Response::HTTP_NOT_FOUND);
                 }
 
-                $parseXml = $normativeXmlParser->parse($file);
+                $parseXml = $normativeXmlParser->parse($simpleXmlFile);
 
                 if (!$parseXml) {
                     $data['errors'] = $normativeXmlParser->getErrors();
@@ -411,12 +411,16 @@ class FileController extends AbstractController
                 $data = $normativeXmlSaver->toGeoJson($parseXml, false);
                 $resultIntersect = $normativeXmlSaver->intersect($data, $feature);
 
-
                 if (!$resultIntersect) {
                     $data['errors'] = $normativeXmlSaver->getErrors();
 
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
+
+                if ($normativeXmlSaver->getErrors()){
+                    $resultIntersect['errors'] = $normativeXmlSaver->getErrors();
+                }
+
                 $resultIntersect['area'] = $fileRepository->calcArea($feature);
                 $transformFeature = $fileRepository->transformFromSK63To3857($feature);
 

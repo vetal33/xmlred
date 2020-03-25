@@ -151,5 +151,25 @@ trait GeometryTrait
         return $result[0]['number'] - 1;
     }
 
+    /**
+     * Перевіряє валідність полігону
+     *
+     * @param $geom
+     * @return bool
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function isValid($geom): bool
+    {
+        $srt = 'SELECT ST_IsValid(ST_GeomFromText(\'' . $geom . '\')) = true as is_valid';
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare($srt);
+
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['is_valid'];
+    }
+
 
 }
