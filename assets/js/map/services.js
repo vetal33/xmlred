@@ -102,9 +102,9 @@ $(document).ready(function () {
         return screenWidth.matches;
     }
 
-    $('#open-xml-normative').on('click', function (e) {
+    $('#open-xml-normative, #btn-open-xml-alt').on('click', function (e) {
         e.preventDefault();
-        $('#btn-check-xml').click();
+        $('#btn-open-xml').click();
     });
 
     $('#open-xml-normative-test').on('click', function (e) {
@@ -113,17 +113,18 @@ $(document).ready(function () {
         formData.append('xmlFile', 'test');
         sendFile(formData);
     });
+    let $openXmlFile = $('#open_xmlFile_form');
 
-    $('#file_form_xmlFile').on('change', function (event) {
+    $($openXmlFile).on('change', function (event) {
         let inputFile = event.currentTarget;
         $(inputFile).parent()
             .find('.custom-file-label')
             .html(inputFile.files[0].name);
-        let fileXML = $("#file_form_xmlFile")[0].files[0];
+        let fileXML = $($openXmlFile)[0].files[0];
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
-        $("#file_form_xmlFile")[0].closest('.d-inline-block').reset();
+        $($openXmlFile)[0].closest('.d-inline-block').reset();
     });
 
     $(btnDownloadShpMenu).on('click', function (e) {
@@ -144,16 +145,16 @@ $(document).ready(function () {
             },
             success: function (data) {
                 addOverlay(VAL_TRUE);
-                btnValidateXml.removeClass('disabled');
+                btnValidateXml.prop('disabled', false);
                 btnValidateXml.find('i').addClass('text-success');
-                btnDownloadShp.removeClass('disabled');
+                btnDownloadShp.prop('disabled', false);
                 btnDownloadShpMenu.removeClass('disabled');
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
 
                 if (dataJson.errors.length) {
-                    $(btnDownloadShp).addClass('disabled');
+                    $(btnDownloadShp).prop('disabled', true);
                     $('#shp-card').attr('data-name', "");
                     createBlockErrors(dataJson.errors);
                 } else {
@@ -228,6 +229,7 @@ $(document).ready(function () {
 
     $('body').on('click', '.table-zoom', function (e) {
         e.preventDefault();
+        $('#calculate-parcel').removeClass('disabled');
 
         let boundsStr = $(this).attr('data-bounds');
         let bound = setBounds(boundsStr);
@@ -445,4 +447,8 @@ $(document).ready(function () {
             group.clearLayers()
         });
     }
+
+    $('#local-toggle').on('click', function () {
+        $('#row-locals-list').toggleClass('d-none');
+    });
 });

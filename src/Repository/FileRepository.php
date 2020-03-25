@@ -35,27 +35,6 @@ class FileRepository extends ServiceEntityRepository
     }
 
     /**
-     * Перевіряє валідність полігону
-     *
-     * @param $geom
-     * @return bool
-     * @throws \Doctrine\DBAL\DBALException
-     */
-    public function isValid($geom): bool
-    {
-        $srt = 'SELECT ST_IsValid(ST_GeomFromText(\'' . $geom . '\')) = true as is_valid';
-        $stmt = $this->getEntityManager()
-            ->getConnection()
-            ->prepare($srt);
-
-        $stmt->execute();
-        $result = $stmt->fetchAll();
-
-        return $result[0]['is_valid'];
-
-    }
-
-    /**
      * Перевіряє на перетин полігони
      *
      * @param $geom1

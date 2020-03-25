@@ -39,6 +39,18 @@ $(document).ready(function () {
     };
 
     /**
+     * Стиль для локального фактору під час виділення
+     *
+     * @type {{color: string, weight: number, opacity: number}}
+     */
+
+    window.selectLocalStyle = {
+        "color": '#ffffff',
+        "weight": 2,
+        "opacity": 1,
+    };
+
+    /**
      * Стиль для імпортованої ділянки з json
      *
      * @type {{fillColor: string, color: string, fillOpacity: number, weight: number, opacity: number}}

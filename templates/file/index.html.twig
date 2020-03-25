@@ -65,21 +65,42 @@
                         </div>
                     </div>
                     <div class="card-body pt-0 pb-0 pr-2 pl-0 mt-2 d-flex justify-content-between flex-wrap">
-                        <div class="mr-auto">
-                            {% include 'file/_form_xml.html.twig' %}
-                            <a class="btn btn-app btn-control disabled" id="btn-validate-xml">
-                                <i class="far fa-check-square"></i> Перевірити
-                            </a>
+                        {% include 'file/_form_xml.html.twig' %}
+                        {% include 'file/_form_import_xml.html.twig' %}
+                        {% include 'file/_form_json.html.twig' %}
+                        <div class="mr-auto pl-2 pb-2">
+                            <div class="btn-group">
+                                <button type="button" id="btn-open-xml-alt" class="btn btn-default"
+                                        data-toggle="tooltip"
+                                        data-original-title="Відкрити *.xml нормативної грошової оцінки">
+                                    <img src="{{ asset('build/images/ico/open.png') }}" alt="open">
+                                </button>
+                                <button type="button" id="btn-validate-xml" class="btn btn-default"
+                                        data-toggle="tooltip" data-original-title="Перевірити на валідність" disabled>
+                                    <img src="{{ asset('build/images/ico/check.png') }}" alt="check">
+                                </button>
+                                <button type="button" id="btn-download-shp" class="btn btn-default"
+                                        data-toggle="tooltip"
+                                        data-original-title="Скачати у форматі *.shp" disabled>
+                                    <img src="{{ asset('build/images/ico/download-shp.png') }}" alt="download-shp">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ml-auto">
+                            <div class="btn-group">
+                                <button type="button" id="btn-import-xml-alt" class="btn btn-default"
+                                        data-toggle="tooltip"
+                                        data-original-title="Імпорт *.xml земельна ділянка"><img
+                                            src="{{ asset('build/images/ico/import_xml.png') }}" alt="import_xml">
+                                </button>
+                                <button type="button" id="btn-import-json-alt" class="btn btn-default"
+                                        data-toggle="tooltip"
+                                        data-original-title="Імпорт *.json земельна ділянка"><img
+                                            src="{{ asset('build/images/ico/import_json.png') }}" alt="import_json">
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="ml-auto">
-                            {% include 'file/_form_import_xml.html.twig' %}
-                            {% include 'file/_form_json.html.twig' %}
-                            <a href="#" class="btn btn-app btn-control disabled"
-                               id="btn-download-shp" data-name-file="">
-                                <i class="fas fa-download"></i> Скачати *.shp
-                            </a>
-                        </div>
                     </div>
                     <div class="overlay v-hidden">
                         <h3><i class="fas fa-spinner fa-spin"></i></h3>
@@ -130,13 +151,12 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Оціночні райони</td>
+                                        <td >Оціночні райони</td>
                                         <td id="marker-regions" class="text-center">-</td>
                                         <td class="text-center">
                                             <div class="custom-control custom-checkbox">
                                                 <input class="custom-control-input check-map" id="regions"
-                                                       type="checkbox"
-                                                       checked="" disabled>
+                                                       type="checkbox" checked="" disabled>
                                                 <label for="regions" class="custom-control-label"></label>
                                             </div>
                                         </td>
@@ -298,7 +318,7 @@
                                         <input class="form-control" placeholder="Кадастровий номер" id="parcel-search">
                                         <span class="input-group-append">
                                             <button type="button" class="btn btn-outline-secondary btn-flat"
-                                                        id="clear-search" data-toggle="tooltip" title="Очистити пошук">
+                                                    id="clear-search" data-toggle="tooltip" title="Очистити пошук">
                                                 <i class="fas fa-eraser"></i>
                                             </button>
                                         </span>

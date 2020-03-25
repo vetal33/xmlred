@@ -24,10 +24,10 @@ $(document).ready(function () {
         }
     };
 
-    window.errorsHandler = function (errors) {
+    window.errorsHandler = function (errors, timeout = 5000) {
         if (errors.length) {
             toastr.options = {"closeButton": true,};
-            toastr.error(errors[0]);
+            toastr.error(errors[0], 'Вибачте виникла помилка!', {timeOut: timeout});
         }
     };
 

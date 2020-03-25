@@ -5,6 +5,7 @@ namespace App\Service;
 
 
 use App\Repository\FileRepository;
+use App\Repository\LocalFactorDirRepository;
 use Shapefile\Geometry\Linestring;
 use Shapefile\Geometry\Point;
 use Shapefile\Geometry\Polygon;
@@ -16,10 +17,15 @@ class BaseXmlSaver
      * @var FileRepository
      */
     protected $fileRepository;
+    /**
+     * @var LocalFactorDirRepository
+     */
+    protected $localFactorDirRepository;
 
-    public function __construct(FileRepository $fileRepository)
+    public function __construct(FileRepository $fileRepository, LocalFactorDirRepository $localFactorDirRepository)
     {
         $this->fileRepository = $fileRepository;
+        $this->localFactorDirRepository = $localFactorDirRepository;
     }
 
     /**
