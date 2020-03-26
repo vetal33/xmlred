@@ -105,5 +105,71 @@ trait GeometryTrait
         return $coord[0];
     }
 
+    /**
+     * Рахує площу
+     *
+     * @param $geom
+     * @return mixed
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function getExtent($geom)
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_Extent(ST_GeomFromText(\'' . $geom . '\')) as extent');
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['extent'];
+    }
+
+
+    public function simplifyGeom(string $geom)
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_AsText(ST_Simplify(ST_GeomFromText(\'' . $geom . '\'), 5, true)) as simple');
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['simple'];
+    }
+
+    /**
+     * @param string $geom
+     * @return int
+     */
+
+    public function numberOfPoints(string $geom): int
+    {
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare('select ST_NPoints(ST_GeomFromText(\'' . $geom . '\')) as number');
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['number'] - 1;
+    }
+
+    /**
+     * Перевіряє валідність полігону
+     *
+     * @param $geom
+     * @return bool
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function isValid($geom): bool
+    {
+        $srt = 'SELECT ST_IsValid(ST_GeomFromText(\'' . $geom . '\')) = true as is_valid';
+        $stmt = $this->getEntityManager()
+            ->getConnection()
+            ->prepare($srt);
+
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        return $result[0]['is_valid'];
+    }
+
 
 }

@@ -5,6 +5,7 @@ $(document).ready(function () {
     const textContent = $('#text-content');
     const btnDownloadShp = $('#btn-download-shp');
     const btnDownloadShpMenu = $('#download-shp-normative');
+    const featureCart = $('#feature-card .overlay');
 
     const btnValidateXml = $('#btn-validate-xml');
     const VAL_TRUE = 1;
@@ -45,6 +46,8 @@ $(document).ready(function () {
                 let dataJson = JSON.parse(data);
                 if (dataJson.length) {
                     addParcelsToMap(dataJson);
+                    addParcelsToTable(dataJson);
+                    $('#feature-card').removeClass('d-none');
                 }
             }
         },
@@ -54,10 +57,49 @@ $(document).ready(function () {
         },
     });
 
+    $('#parcel-search').on('keyup', function (e) {
+        let searchData = $(this).val();
+        searchByVal(searchData);
+    });
+
+
+    $('#clear-search').on('click', function (e) {
+        searchByVal('');
+        $('#parcel-search').val('');
+    });
+
+    function searchByVal(searchData) {
+        $.ajax({
+            url: Routing.generate('parcel_search'),
+            method: 'POST',
+            dataType: 'json',
+            data: {'search': searchData},
+            success: function (data) {
+                if (data) {
+                    let dataJson = JSON.parse(data);
+                    if (dataJson.length) {
+                        addParcelsToTable(dataJson);
+                    } else {
+                        let $table = $('#parcels-list');
+                        $($table).find('tbody').empty();
+                    }
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                servicesThrowErrors(jqXHR);
+            },
+        });
+    }
+
     function addOverlay(valBool) {
         overlayShp[0].hidden = Boolean(valBool);
         overlayControl[0].hidden = Boolean(valBool);
         overlayInfo[0].hidden = Boolean(valBool);
+    }
+
+    function calcWidth576() {
+        let screenWidth = window.matchMedia('all and (max-width: 576px)');
+        return screenWidth.matches;
     }
 
     function calcWidth() {
@@ -65,9 +107,17 @@ $(document).ready(function () {
         return screenWidth.matches;
     }
 
-    $('#open-xml-normative').on('click', function (e) {
+    if (calcWidth576()) {
+        $('.main-footer h6 small:eq(1)').removeClass('ml-3');
+        $('.main-footer h6 small:eq(1)').html('<a href="mailto:xmlred.xyz@gmail.com" class="text-nowrap text-gray">' +
+            '<i class="far fa-envelope align-middle"></i> xmlred.xyz@gmail.com</a>');
+    }
+
+
+    $('#open-xml-normative, #btn-open-xml-alt').on('click', function (e) {
         e.preventDefault();
-        $('#btn-check-xml').click();
+        $('#btn-open-xml').click();
+        hideTooltip();
     });
 
     $('#open-xml-normative-test').on('click', function (e) {
@@ -76,22 +126,24 @@ $(document).ready(function () {
         formData.append('xmlFile', 'test');
         sendFile(formData);
     });
+    let $openXmlFile = $('#open_xmlFile_form');
 
-    $('#file_form_xmlFile').on('change', function (event) {
+    $($openXmlFile).on('change', function (event) {
         let inputFile = event.currentTarget;
         $(inputFile).parent()
             .find('.custom-file-label')
             .html(inputFile.files[0].name);
-        let fileXML = $("#file_form_xmlFile")[0].files[0];
+        let fileXML = $($openXmlFile)[0].files[0];
         let formData = new FormData();
         formData.append("xmlFile", fileXML);
         sendFile(formData);
-        $("#file_form_xmlFile")[0].closest('.d-inline-block').reset();
+        $($openXmlFile)[0].closest('.d-inline-block').reset();
     });
 
     $(btnDownloadShpMenu).on('click', function (e) {
         e.preventDefault();
         $(btnDownloadShp).click();
+        hideTooltip();
     });
 
     function sendFile(data) {
@@ -107,16 +159,16 @@ $(document).ready(function () {
             },
             success: function (data) {
                 addOverlay(VAL_TRUE);
-                btnValidateXml.removeClass('disabled');
+                btnValidateXml.prop('disabled', false);
                 btnValidateXml.find('i').addClass('text-success');
-                btnDownloadShp.removeClass('disabled');
+                btnDownloadShp.prop('disabled', false);
                 btnDownloadShpMenu.removeClass('disabled');
                 btnDownloadShp.find('i').addClass('text-success');
 
                 let dataJson = JSON.parse(data);
 
-                if (dataJson.errors.length > 0) {
-                    $(btnDownloadShp).addClass('disabled');
+                if (dataJson.errors.length) {
+                    $(btnDownloadShp).prop('disabled', true);
                     $('#shp-card').attr('data-name', "");
                     createBlockErrors(dataJson.errors);
                 } else {
@@ -124,8 +176,10 @@ $(document).ready(function () {
                     $(btnDownloadShp).attr('href', '/load?name=' + dataJson.newXmlName);
 
                     addLayers(dataJson);
+                    calcPoints(dataJson);
                     visualizeXML(dataJson);
                     addGeneralData(dataJson.boundary);
+                    $('#xml-card').removeClass('d-none');
                     parcelFromBaseLayer.bringToFront();
                 }
             },
@@ -178,15 +232,154 @@ $(document).ready(function () {
         $('#card-general-address').html(region + ' ' + district + ' ' + city);
     }
 
+    $('body').on('click', '.table-delete', function (e) {
+
+        let cadNum = getCadNumFromRow(this);
+
+        $('#parcel-cadNum').attr('data-cadNum', cadNum);
+        $('#modal-sm .modal-body').html('<p>Ви дійсно бажаєте видалити ділянку<span class="text-bold"> ' + cadNum + '?</span></p>');
+    });
+
+
+    $('body').on('click', '.table-zoom', function (e) {
+        e.preventDefault();
+        $('#calculate-parcel').removeClass('disabled');
+
+        let boundsStr = $(this).attr('data-bounds');
+        let bound = setBounds(boundsStr);
+        if (bound.length) mymap.fitBounds(bound);
+
+        let cadNum = getCadNumFromRow(this);
+
+        parcelFromBaseLayer.setStyle(parcelFromBaseStyle);
+        let layer = getParcelLayerByCadNum(cadNum);
+        if (typeof layer !== 'undefined') layer.setStyle(addFeatureFromJsonSelectedStyle);
+
+        setParcelValueInTable(layer);
+    });
+
+    function getCadNumFromRow(element) {
+        let elementCadNum = $(element).closest('tr')[0];
+        return $(elementCadNum).attr('data-cadNum');
+    }
+
+    function getParcelLayerByCadNum(cadNum) {
+        let parcelLayer;
+        parcelFromBaseLayer.eachLayer(function (layer) {
+            if (layer.feature.properties.cadnum === cadNum) {
+                parcelLayer = layer;
+                return false;
+            }
+        });
+
+        return parcelLayer;
+    }
+
+
+    /**
+     * @param {string} $boundsStr
+     * @example BOX(30.2097959809193 50.6221500249898,30.210626152964 50.6231538589455)
+     *
+     * @returns {[]}
+     * @example [30.2097959809193 50.6221500249898,30.210626152964 50.6231538589455]
+     */
+    function setBounds($boundsStr) {
+        let arrayBounds = [];
+        if ($boundsStr.trim() !== '') {
+            $boundsStr = $boundsStr.replace('BOX(', '');
+            $boundsStr = $boundsStr.replace(')', '');
+            let arraySplited = $boundsStr.split(',');
+            arrayBounds.push([arraySplited[0].split(' ')[1], arraySplited[0].split(' ')[0]], [arraySplited[1].split(' ')[1], arraySplited[1].split(' ')[0]]);
+        }
+        return arrayBounds;
+    }
+
+
+    function setStyleIn(id) {
+        intersectLocalLayersGroup.eachLayer(function (layer) {
+            if (Number(layer.feature.properties.id) === Number(id)) {
+                layer.setStyle(intersectLocalsSelectedStyle);
+                layer.bringToFront();
+            }
+        });
+    }
+
+
+    $('body').on('click', '#parcel-delete', function (e) {
+        let cadNum = $('#parcel-cadNum').attr('data-cadNum');
+        $('#modal-sm').modal('hide');
+
+        $.ajax({
+            url: Routing.generate('parcel_delete'),
+            method: 'POST',
+            dataType: 'json',
+            data: {'cadNum': cadNum},
+            beforeSend: function () {
+                featureCart[0].hidden = false;
+            },
+            success: function (data) {
+                featureCart[0].hidden = true;
+                let dataJson = JSON.parse(data);
+
+                if (dataJson.errors.length) {
+                    createPopupError(dataJson.errors);
+                    return true;
+                }
+
+                toastr.options = {"closeButton": true,};
+                toastr.success(dataJson.msg);
+
+                if (mymap.hasLayer(parcelFromBaseGroup)) {
+                    mymap.removeLayer(parcelFromBaseGroup);
+                }
+                parcelFromBaseGroup.clearLayers();
+
+                if (mymap.hasLayer(parcelGroup)) {
+                    mymap.removeLayer(parcelGroup);
+                }
+                parcelGroup.clearLayers();
+                addParcelsToMap(dataJson.parcelsJson);
+                addParcelsToTable(dataJson.parcelsJson);
+                setParcelValueInTable();
+                $('#calculate').remove();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                featureCart[0].hidden = true;
+                servicesThrowErrors(jqXHR);
+            },
+        });
+    });
+
+    function createPopupError(errorArr) {
+        toastr.options = {"closeButton": true,};
+        toastr.error(errorArr[0]);
+    }
+
     function visualizeXML(data) {
         let wrapper = document.getElementById("wrapper");
         let tree = jsonTree.create(data.origXml, wrapper);
-        $('#original_name_file').html(data.origXmlName);
+        if (calcWidth576()) {
+            $('#original_name_file').html(cattingLongName(data.origXmlName));
+        } else {
+            $('#original_name_file').html(data.origXmlName);
+        }
+
         $('#shp-card').attr('data-name', data.newXmlName);
 
         tree.expand(function (node) {
             return node.childNodes.length < 2 || node.label === 'phoneNumbers';
         });
+    }
+
+    function cattingLongName(name, val = 30) {
+        let arr = name.split('.');
+
+        if (arr[0].length > val) {
+            arr[0] = arr[0].slice(0, val) + '..';
+            return arr.join('.');
+        }
+
+        return name;
     }
 
     function addMejaToMap(data) {
@@ -232,7 +425,7 @@ $(document).ready(function () {
 
         $('#xml-card').removeClass('card-outline card-danger');
         $('#xml-card').removeClass('card-outline card-success');
-        $('#feature-card').addClass('d-none');
+
         $('#xml-card #wrapper').html('');
         $('.legends').remove();
 
@@ -257,6 +450,21 @@ $(document).ready(function () {
         }
     }
 
+    function calcPoints(dataJson) {
+        if (dataJson.zones) {
+            let zonePoints = sumPointsInGroup(dataJson.zones);
+        }
+        if (dataJson.regions) {
+            let regionsPoints = sumPointsInGroup(dataJson.regions);
+        }
+        if (dataJson.localFactor) {
+            let localFactorsPoints = sumPointsInGroup(dataJson.localFactor);
+        }
+        if (dataJson.lands) {
+            let landsPoints = sumPointsInGroup(dataJson.lands);
+        }
+    }
+
     /**
      * Видаляє базові шари Нормавної оцінки
      */
@@ -269,4 +477,8 @@ $(document).ready(function () {
             group.clearLayers()
         });
     }
+
+    $('#local-toggle').on('click', function () {
+        $('#row-locals-list').toggleClass('d-none');
+    });
 });

@@ -4,19 +4,11 @@
 namespace App\Service;
 
 
-use App\Service\Interfaces\ParserXml;
-use phpDocumentor\Reflection\DocBlock\Tags\Return_;
+use App\Service\Interfaces\ParserXmlInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class NormativeXmlParser implements ParserXml
+class NormativeXmlParser extends BaseXmlParser implements ParserXmlInterface
 {
-    /**@var array All the lines in xml-file */
-    private $polylines = [];
-
-    /**@var array All the points in xml-file */
-    private $points = [];
-
-    private $errors = [];
 
     /**
      * Setting tree-object that we used
@@ -39,26 +31,13 @@ class NormativeXmlParser implements ParserXml
     public function parse(\SimpleXMLElement $simpleXMLElement): ?array
     {
         $array = json_decode(json_encode($simpleXMLElement), true);
-
         if ($this->getPolyline($array) && $this->getPoints($array)) {
             $result = $this->parseDataXml($array);
 
             return $result;
         }
+
         return null;
-    }
-
-    public function findNode(array $dataXml, array $keys): array
-    {
-        foreach ($keys as $key) {
-            if (is_array($dataXml) && array_key_exists($key, $dataXml)) {
-                $dataXml = $dataXml[$key];
-            } else {
-                return [];
-            }
-        }
-
-        return $dataXml;
     }
 
     public function getGeneralInformation($data)
@@ -116,17 +95,17 @@ class NormativeXmlParser implements ParserXml
     {
 
         $currentPoints = [];
-        foreach ($this->settingFields as $value => $key) {
-            $currentPoints[$value] = $this->findNode($dataXml, $key);
-            $currentPoints[$value] = $this->modifyArray($currentPoints[$value], $value);
-            if ($this->ifArrayOrList($currentPoints[$value])) {
-                foreach ($currentPoints[$value] as $item => $node) {
-                    $currentPoints[$value][$item]['coordinates'] = $this->getGeometry($node);
+        foreach ($this->settingFields as $key => $value) {
+            $currentPoints[$key] = $this->findNode($dataXml, $value);
+            $currentPoints[$key] = $this->modifyArray($currentPoints[$key], $key);
+            if ($this->ifArrayOrList($currentPoints[$key])) {
+                foreach ($currentPoints[$key] as $item => $node) {
+                    $currentPoints[$key][$item]['coordinates'] = $this->getGeometry($node);
                 }
             } else {
-                $coords = $this->getGeometry($currentPoints[$value]);
-                $currentPoints[$value] = $this->getGeneralInformation($currentPoints[$value]);
-                $currentPoints[$value]['external'] = $coords['external'];
+                $coords = $this->getGeometry($currentPoints[$key]);
+                $currentPoints[$key] = $this->getGeneralInformation($currentPoints[$key]);
+                $currentPoints[$key]['external'] = $coords['external'];
             }
         }
 
@@ -158,140 +137,83 @@ class NormativeXmlParser implements ParserXml
         return $data;
     }
 
-
     private function getGeometry(array $data)
     {
         $coordinates = [];
 
-        if (array_key_exists('Externals', $data)) {
-            if (!$data['Externals']) {
-                $factor = array_key_exists('NameFactor', $data) ? $data['NameFactor'] : reset($data);
-                throw new NotFoundHttpException('Контур "' . $factor . '" - не містить геометрії');
-            }
-            $valueUlid = $this->getUlid($data['Externals']);
-            if ($valueUlid !== '' && array_key_exists((int)$valueUlid, $this->polylines)) {
-                $coordinates['external'] = $this->getCurrentPoints($this->polylines[(int)$valueUlid]);
-            }
-            if (array_key_exists('Internals', $data['Externals'])) {
-                $valueUlidInternal = $this->getUlidInternal($data['Externals']['Internals']);
-                if (!$valueUlidInternal) {
-                    $coordinates['internal'] = [];
-                }
-                foreach ($valueUlidInternal as $value) {
-                    if (array_key_exists((int)$value, $this->polylines)) {
-                        $coordinates['internal'][] = $this->getCurrentPoints($this->polylines[(int)$value]);
-                    }
-                }
-            }
-            return $coordinates;
-        } else {
+        if (!array_key_exists('Externals', $data)) {
             return array();
         }
-    }
 
-    /**
-     * Перевіряє чи є Node кінцевим, чи скрадовим
-     * @param array $data
-     * @return bool
-     */
-    private function ifArrayOrList(array $data): bool
-    {
-        if (!is_string(array_key_last($data))) {
-            return true;
+        if (!$data['Externals']) {
+            $factor = array_key_exists('NameFactor', $data) ? $data['NameFactor'] : reset($data);
+
+            throw new NotFoundHttpException('Контур "' . $factor . '" - не містить геометрії');
         }
-        return false;
+
+        $valueUlid = $this->getUlid($data['Externals']);
+
+        if ($valueUlid) {
+            $coordinates['external'] = $this->getCurrentPoints($valueUlid);
+        }
+        if (array_key_exists('Internals', $data['Externals'])) {
+
+            $internalCoords = $data['Externals']['Internals']['Boundary'];
+
+            foreach ($internalCoords as $internalCoord) {
+                if (is_array($internalCoord)) {
+                    $valueUlidInternals = $this->getUlidInternal($internalCoord);
+                    $coordinates['internal'][] = $this->getCurrentPoints($valueUlidInternals);
+                }
+            }
+        }
+
+        return $coordinates;
     }
 
     /**
      *
      * @param $externals
-     * @return string
+     * @return array
      */
-    private function getUlid($externals)
-    {
-        $userdata = '';
-        array_walk_recursive($externals['Boundary'], function ($item, $key) use (&$userdata) {
-            if ($key === 'ULID') {
-                $userdata = $item;
-            }
-        }, $userdata);
-
-        return $userdata;
-    }
-
-    private function getUlidInternal($internal)
+    private function getUlid($externals): array
     {
         $userdata = [];
-        array_walk_recursive($internal, function ($item, $key) use (&$userdata) {
+
+        array_walk_recursive($externals['Boundary'], function ($item, $key) use (&$userdata) {
             if ($key === 'ULID') {
-                $userdata[] = $item;
+                $userdata[]['ULID'] = $item;
+            }
+            if ($key === 'FP') {
+                $userdata[count($userdata) - 1]['FP'] = $item;
+            }
+            if ($key === 'TP') {
+                $userdata[count($userdata) - 1]['TP'] = $item;
             }
         }, $userdata);
 
         return $userdata;
-    }
-
-
-    /**
-     * @param array $data
-     * @return array|bool
-     */
-    private function getPolyline(array $data)
-    {
-        try {
-            foreach ($data['InfoPart']['MetricInfo']['Polyline']['PL'] as $value) {
-                $this->polylines[$value['ULID']] = $value['Points']['P'];
-            }
-            return $this->polylines;
-        } catch (\Exception $exception) {
-            $this->errors[] = $exception->getMessage();
-            return false;
-        }
-    }
-
-    /**
-     * @param array $data
-     * @return array|bool
-     */
-    private function getPoints(array $data)
-    {
-        try {
-            foreach ($data['InfoPart']['MetricInfo']['PointInfo']['Point'] as $value) {
-                $this->points[$value['UIDP']]['X'] = $value['X'];
-                $this->points[$value['UIDP']]['Y'] = $value['Y'];
-            }
-            return $this->points;
-        } catch (\Exception $exception) {
-            $this->errors[] = $exception->getMessage();
-            return false;
-        }
     }
 
     private function getCurrentPoints(array $data)
     {
-        array_pop($data);
-        $dataCoordinate = $this->array_intersect_key_withoutSort($data);
+        $points = [];
+        foreach ($data as $line) {
+            if (array_key_exists((int)$line['ULID'], $this->polylines)) {
+                if (array_key_exists('FP', $line)) {
+                    $points = array_merge($points, array_reverse($this->polylines[$line['ULID']]));
+                } else {
+                    $points = array_merge($points, $this->polylines[$line['ULID']]);
+                }
+            }
+        }
+
+        if (!$points) return array();
+
+        $points = array_unique($points);
+        $dataCoordinate = $this->array_intersect_key_withoutSort($points);
         $dataCoordinate[] = reset($dataCoordinate);
 
         return $dataCoordinate;
-    }
-
-    private function array_intersect_key_withoutSort(array $data)
-    {
-        $dataCoordinate = array_map(function ($value) {
-            if (array_key_exists((int)$value, $this->points)) {
-                return $this->points[$value];
-            }
-        }, $data);
-
-        return $dataCoordinate;
-    }
-
-    /**
-     * @return array
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
     }
 }

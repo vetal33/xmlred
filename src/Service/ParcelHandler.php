@@ -58,9 +58,28 @@ class ParcelHandler
             $parcelsToMap[$i]['wkt'] = $parcel->getGeom()->getOriginalGeom();
             $parcelsToMap[$i]['purpose'] = $parcel->getUse();
 
+
             $coordTransform = $this->parcelRepository->transformFeatureFromSC63to4326($parcel->getGeom()->getOriginalGeom());
+            $parcelsToMap[$i]['extent'] = $this->parcelRepository->getExtent($coordTransform);
             $coordJson = $this->parcelRepository->getJsonFromWkt($coordTransform);
             $parcelsToMap[$i]['json'] = $coordJson;
+            $i++;
+        }
+
+        return $parcelsToMap;
+    }
+
+    public function convertToJsonWithoutGeom(array $parcels): array
+    {
+        $parcelsToMap = [];
+        $i = 0;
+        /** @var  Parcel $parcel */
+        foreach ($parcels as $parcel) {
+            $parcelsToMap[$i]['area'] = number_format(round(($parcel->getArea()) / 10000, 4), 4) . ' га';
+            $parcelsToMap[$i]['cadNum'] = $parcel->getCadNum();
+            $coordTransform = $this->parcelRepository->transformFeatureFromSC63to4326($parcel->getGeom()->getOriginalGeom());
+            $parcelsToMap[$i]['extent'] = $this->parcelRepository->getExtent($coordTransform);
+
             $i++;
         }
 
@@ -144,8 +163,7 @@ class ParcelHandler
         return $result;
     }
 
-    private function
-    regulateLocals(array $locals)
+    private function regulateLocals(array $locals)
     {
         $resultLocals = [];
         $localsCodes = $this->getLocalsCode($locals);

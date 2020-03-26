@@ -4,7 +4,6 @@
 namespace App\Service;
 
 
-use App\Service\Interfaces\Uploader;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class XmlUploader extends Uploader
@@ -31,25 +30,29 @@ class XmlUploader extends Uploader
         $this->setOriginalName($uploadedFile);
         $destination = $this->uploadPath . '/' . self::XML_NORMATIVE;
 
+        $this->removeOldFileFromDir($destination);
         $uploadedFile->move($destination, $this->getNewName());
     }
 
 
     /**
-     * @param string $filePath
+     * @param string $fileName
      * @return null|\SimpleXMLElement
      */
-    public function getSimpleXML(string $filePath): ?\SimpleXMLElement
+    public function getSimpleXML(string $fileName): ?\SimpleXMLElement
     {
         libxml_use_internal_errors(true);
-        $destination = $this->uploadPath . '/' . self::XML_NORMATIVE . '/' . $filePath;
+        $postfix = $fileName === 'test_normative.xml' ? '_test' : '';
+        $destination = $this->uploadPath . '/' . self::XML_NORMATIVE . $postfix . '/' . $fileName;
         $xml = simplexml_load_file($destination);
         if (!$xml) {
             foreach (libxml_get_errors() as $error) {
                 $this->errors[] = $error->message;
             }
+
             return null;
         }
+
         return $xml;
     }
 

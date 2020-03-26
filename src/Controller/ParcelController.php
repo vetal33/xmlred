@@ -5,11 +5,13 @@ namespace App\Controller;
 use App\Entity\Geom;
 use App\Entity\Parcel;
 use App\Entity\User;
-use App\Form\ParcelType;
 use App\Repository\ParcelRepository;
+use App\Service\FactoryMethod\ParcelParserFactory;
 use App\Service\JsonUploader;
 use App\Service\ParcelHandler;
+use App\Service\ParcelXmlParser;
 use App\Service\ValidateHelper;
+use FOS\ElasticaBundle\Manager\RepositoryManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,6 +43,8 @@ class ParcelController extends AbstractController
      * @param JsonUploader $jsonUploader
      * @param ParcelRepository $parcelRepository
      * @param ParcelHandler $parcelHandler
+     * @param ParcelXmlParser $parcelXmlParser
+     * @param ParcelParserFactory $parcelParserFactory
      * @return JsonResponse|Response
      */
     public function save(
@@ -48,7 +52,10 @@ class ParcelController extends AbstractController
         ValidateHelper $validateHelper,
         JsonUploader $jsonUploader,
         ParcelRepository $parcelRepository,
-        ParcelHandler $parcelHandler): Response
+        ParcelHandler $parcelHandler,
+        ParcelXmlParser $parcelXmlParser,
+        ParcelParserFactory $parcelParserFactory
+    ): Response
     {
         if ($this->isGranted('ROLE_USER')) {
             if ($request->isXmlHttpRequest()) {
@@ -64,25 +71,17 @@ class ParcelController extends AbstractController
                         return new JsonResponse(json_encode($data), Response::HTTP_OK);
                     }
 
-                    $fileStr = $jsonUploader->loadFileAsStr($newFileName);
-                    if (!$fileStr) {
-                        $error = sprintf('Файл з ділянкою не знайдено!');
-                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
-                    }
-
-                    $errors = $validateHelper->validateJsonString($fileStr);
-
-                    if (0 != count($errors)) {
-                        $data['errors'][] = $errors[0]->getMessage();
-                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                    }
-
                     if ($parcelRepository->findOneBy(['cadNum' => $cadNum, 'userId' => $this->getUser()])) {
                         $data['errors'][] = sprintf('Ділянка з кадастровим номером %s вже існує', $cadNum);
                         return new JsonResponse(json_encode($data), Response::HTTP_OK);
                     }
 
-                    $wkt = $parcelRepository->getGeomFromJsonAsWkt($fileStr);
+                    $parcelParser = $parcelParserFactory->createParcelParser($newFileName);
+                    $wkt = $parcelParser->getWktFromFileByName($newFileName);
+                    if (!$wkt) {
+                        return new JsonResponse($parcelXmlParser->getErrors()[0], Response::HTTP_NOT_FOUND);
+                    }
+
                     $area = $parcelRepository->calcArea($wkt);
                     $entityManager = $this->getDoctrine()->getManager();
 
@@ -102,13 +101,14 @@ class ParcelController extends AbstractController
 
                     $entityManager->persist($parcel);
                     $entityManager->flush();
+
                     $parcelsJson = [];
                     $parcels = $parcelRepository->findBy(['userId' => $this->getUser()]);
                     if ($parcels) {
                         $parcelsJson = $parcelHandler->convertToJson($parcels);
                     }
 
-                    $parcelHandler->removeFile($newFileName);
+                    //$parcelHandler->removeFile($newFileName);
                     $data['parcelsJson'] = $parcelsJson;
                     $data['errors'] = [];
                     $data['msg'] = sprintf('Ділянка %s успішно збережена!', $cadNum);
@@ -123,69 +123,77 @@ class ParcelController extends AbstractController
     }
 
     /**
-     * @Route("/new", name="parcel_new", methods={"GET","POST"})
+     * @Route("/search", name="parcel_search", methods={"POST"}, options={"expose"=true})
+     * @param Request $request
+     * @param ParcelRepository $parcelRepository
+     * @param ParcelHandler $parcelHandler
+     * @return JsonResponse
      */
-    public function new(Request $request): Response
+
+    public function search(Request $request, ParcelRepository $parcelRepository, ParcelHandler $parcelHandler)
     {
-        $parcel = new Parcel();
-        $form = $this->createForm(ParcelType::class, $parcel);
-        $form->handleRequest($request);
+        if ($this->isGranted('ROLE_USER')) {
+            if ($request->isXmlHttpRequest()) {
+                try {
+                    $resArray = [];
+                    $searchText = $request->request->get('search');
+                    $parcels = $parcelRepository->search($searchText);
+                    if ($parcels) {
+                        $resArray = $parcelHandler->convertToJsonWithoutGeom($parcels);
+                    }
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($parcel);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('parcel_index');
+                    return new JsonResponse(json_encode($resArray), Response::HTTP_OK);
+                } catch (\Exception $exception) {
+                    return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+            }
         }
-
-        return $this->render('parcel/new.html.twig', [
-            'parcel' => $parcel,
-            'form' => $form->createView(),
-        ]);
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
     }
 
     /**
-     * @Route("/{id}", name="parcel_show", methods={"GET"})
+     * @Route("/delete", name="parcel_delete", methods={"POST"}, options={"expose"=true})
+     * @param Request $request
+     * @param ParcelRepository $parcelRepository
+     * @param ParcelHandler $parcelHandler
+     * @return Response
      */
-    public function show(Parcel $parcel): Response
+    public function delete(Request $request, ParcelRepository $parcelRepository, ParcelHandler $parcelHandler): Response
     {
-        return $this->render('parcel/show.html.twig', [
-            'parcel' => $parcel,
-        ]);
-    }
+        if ($this->isGranted('ROLE_USER')) {
+            if ($request->isXmlHttpRequest()) {
+                try {
+                    $cadNum = $request->request->get('cadNum');
 
-    /**
-     * @Route("/{id}/edit", name="parcel_edit", methods={"GET","POST"})
-     */
-    public function edit(Request $request, Parcel $parcel): Response
-    {
-        $form = $this->createForm(ParcelType::class, $parcel);
-        $form->handleRequest($request);
+                    /** @var Parcel $parcel */
+                    $parcel = $parcelRepository->findOneBy(['cadNum' => $cadNum, 'userId' => $this->getUser()]);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+                    if (!$parcel) {
+                        $error = sprintf('Ділянка з кадастровим номером %s не знайдено!', $cadNum);
+                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                    }
 
-            return $this->redirectToRoute('parcel_index');
+                    $entityManager = $this->getDoctrine()->getManager();
+                    $entityManager->remove($parcel);
+                    $entityManager->flush();
+
+                    $parcelsJson = [];
+                    $parcels = $parcelRepository->findBy(['userId' => $this->getUser()]);
+                    if ($parcels) {
+                        $parcelsJson = $parcelHandler->convertToJson($parcels);
+                    }
+
+                    //$parcelHandler->removeFile($newFileName);
+                    $data['parcelsJson'] = $parcelsJson;
+                    $data['errors'] = [];
+                    $data['msg'] = sprintf('Ділянка %s успішно видалена!', $cadNum);
+
+                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                } catch (\Exception $exception) {
+                    return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+            }
         }
-
-        return $this->render('parcel/edit.html.twig', [
-            'parcel' => $parcel,
-            'form' => $form->createView(),
-        ]);
-    }
-
-    /**
-     * @Route("/{id}", name="parcel_delete", methods={"DELETE"})
-     */
-    public function delete(Request $request, Parcel $parcel): Response
-    {
-        if ($this->isCsrfTokenValid('delete' . $parcel->getId(), $request->request->get('_token'))) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->remove($parcel);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('parcel_index');
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
     }
 }

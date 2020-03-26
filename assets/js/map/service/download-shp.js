@@ -2,8 +2,7 @@ $(document).ready(function () {
     const btnDownloadShp = $('#btn-download-shp');
     const overlayControl = $('#buttons-card .overlay');
 
-    $(btnDownloadShp).click(function (e) {
-        e.preventDefault();
+    $(btnDownloadShp).click(function () {
         $.ajax({
             url: Routing.generate('downloadShp'),
             type: 'post',

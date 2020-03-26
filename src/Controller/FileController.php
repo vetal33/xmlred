@@ -12,9 +12,11 @@ use App\Service\NormativeXmlSaver;
 use App\Service\NormativeXmlParser;
 use App\Service\NormativeXmlValidator;
 use App\Service\ParcelHandler;
+use App\Service\ParcelXmlParser;
+use App\Service\ParcelXmlSaver;
 use App\Service\ValidateHelper;
+use App\Service\XmlFileUploader;
 use App\Service\XmlUploader;
-use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Exception;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\Stream;
@@ -33,91 +35,104 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  */
 class FileController extends AbstractController
 {
+
+    /**
+     * @var ValidateHelper
+     */
+    private $validateHelper;
+    /**
+     * @var FileRepository
+     */
+    private $fileRepository;
+    /**
+     * @var EServicesClient
+     */
+    private $servicesClient;
+
+    public function __construct(
+        ValidateHelper $validateHelper,
+        FileRepository $fileRepository,
+        EServicesClient $servicesClient
+    )
+    {
+        $this->validateHelper = $validateHelper;
+        $this->fileRepository = $fileRepository;
+        $this->servicesClient = $servicesClient;
+    }
+
     /**
      * @Route("/", name="homepage", methods={"GET","POST"}, options={"expose"=true})
      * @param Request $request
-     * @param EntityManagerInterface $entityManager
      * @param XmlUploader $uploader
      * @param NormativeXmlParser $normativeXmlParser
      * @param NormativeXmlSaver $normativeXmlSaver
-     * @param ValidateHelper $validateHelper
      * @return Response
      */
     public function index(Request $request,
-                          EntityManagerInterface $entityManager,
                           XmlUploader $uploader,
                           NormativeXmlParser $normativeXmlParser,
-                          NormativeXmlSaver $normativeXmlSaver,
-                          ValidateHelper $validateHelper): Response
+                          NormativeXmlSaver $normativeXmlSaver): Response
     {
         $data = [];
         $file = new File;
         $form = $this->createForm(FileFormType::class, $file);
 
-        if ($request->isXmlHttpRequest()) {
-            try {
-                if ($request->request->get('xmlFile'))
-                {
-                    $xmlObj = $uploader->getSimpleXML('test_normative.xml');
-
-                    if (!$xmlObj) {
-                        $error = sprintf('Вибачте!, тестові дані не знайдено!');
-                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
-                    };
-                    $origXmlName = 'test_normative.xml';
-                    $newXmlName = 'test_normative.xml';
-                } else {
-                    /**@var UploadedFile $uploadedFile */
-                    $uploadedFile = $request->files->get('xmlFile');
-
-                    $errors = $validateHelper->validateNormativeXml($uploadedFile);
-                    if (0 != count($errors)) {
-                        $data['errors'][] = $errors[0]->getMessage();
-                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                    }
-
-                    $uploader->upload($uploadedFile);
-                    $xmlObj = $uploader->getSimpleXML($uploader->getNewName());
-                    $origXmlName = $uploader->getOriginalName();
-                    $newXmlName = $uploader->getNewName();
-                }
+        if (!$request->isXmlHttpRequest()) {
+            return $this->render('file/index.html.twig', ['fileForm' => $form->createView()]);
+        }
+        try {
+            if ($request->request->get('xmlFile')) {
+                $xmlObj = $uploader->getSimpleXML('test_normative.xml');
 
                 if (!$xmlObj) {
-                    $data['errors'] = $uploader->getErrors();
+                    $error = sprintf('Вибачте!, тестові дані не знайдено!');
+                    return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                };
+                $origXmlName = 'test_normative.xml';
+                $newXmlName = 'test_normative.xml';
+            } else {
+                /**@var UploadedFile $uploadedFile */
+                $uploadedFile = $request->files->get('xmlFile');
+
+                $errors = $this->validateHelper->validateNormativeXml($uploadedFile);
+                if (0 != count($errors)) {
+                    $data['errors'][] = $errors[0]->getMessage();
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
 
-                $parseXml = $normativeXmlParser->parse($xmlObj);
-
-                if (!$parseXml) {
-                    $data['errors'] = $normativeXmlParser->getErrors();
-                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
-                }
-
-                if ($this->isGranted('ROLE_USER')) {
-                    $result = $normativeXmlSaver->toShape($parseXml);
-                }
-                $data = $normativeXmlSaver->toGeoJson($parseXml);
-
-                $data['origXml'] = $xmlObj;
-                $data['newXmlName'] = $newXmlName;
-                $data['origXmlName'] = $origXmlName;
-                $data['errors'] = [];
-
-                return new JsonResponse(json_encode($data), Response::HTTP_OK);
-            } catch (NotFoundHttpException $exception) {
-
-                return new JsonResponse($exception->getMessage(), Response::HTTP_NOT_FOUND);
-            } catch (Exception $exception) {
-
-                return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+                $uploader->upload($uploadedFile);
+                $xmlObj = $uploader->getSimpleXML($uploader->getNewName());
+                $origXmlName = $uploader->getOriginalName();
+                $newXmlName = $uploader->getNewName();
             }
-        }
+            if (!$xmlObj) {
+                $data['errors'] = $uploader->getErrors();
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+            }
+            $parseXml = $normativeXmlParser->parse($xmlObj);
+            if (!$parseXml) {
+                $data['errors'] = $normativeXmlParser->getErrors();
+                return new JsonResponse(json_encode($data), Response::HTTP_OK);
+            }
 
-        return $this->render('file/index.html.twig', [
-            'fileForm' => $form->createView(),
-            'controller_name' => 'FileController',
-        ]);
+            if ($this->isGranted('ROLE_USER')) {
+                $normativeXmlSaver->toShape($parseXml);
+            }
+            $data = $normativeXmlSaver->toGeoJson($parseXml);
+
+            $data['origXml'] = $xmlObj;
+            $data['newXmlName'] = $newXmlName;
+            $data['origXmlName'] = $origXmlName;
+            $data['errors'] = [];
+
+            return new JsonResponse(json_encode($data), Response::HTTP_OK);
+        } catch (NotFoundHttpException $exception) {
+
+            return new JsonResponse($exception->getMessage(), Response::HTTP_NOT_FOUND);
+        } catch (Exception $exception) {
+
+            return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -129,6 +144,7 @@ class FileController extends AbstractController
 
     public function loadParcels(ParcelRepository $parcelRepository, ParcelHandler $parcelHandler)
     {
+
         if ($this->isGranted('ROLE_USER')) {
             try {
                 $parcelsJson = [];
@@ -148,18 +164,17 @@ class FileController extends AbstractController
     /**
      *
      * @Route("/load", name = "downloadShp", methods={"GET","POST"}, options={"expose"=true})
-     * @param XmlUploader $uploader
      * @param Request $request
      * @param NormativeXmlSaver $normativeXmlSaver
      * @return Response
      */
 
-    public function downloadShp(XmlUploader $uploader, Request $request, NormativeXmlSaver $normativeXmlSaver): Response
+    public function downloadShp(Request $request, NormativeXmlSaver $normativeXmlSaver): Response
     {
         if ($this->isGranted('ROLE_USER')) {
             if ($request->request->get('name') === '/load?name=test_normative.xml') {
 
-                return new JsonResponse( 'Тестові дані неможливо скачати!', Response::HTTP_NOT_FOUND);
+                return new JsonResponse('Тестові дані неможливо скачати!', Response::HTTP_NOT_FOUND);
             }
 
             $fileName = $normativeXmlSaver->addToZip();
@@ -206,20 +221,14 @@ class FileController extends AbstractController
     }
 
     /**
-     * @Route("/import/json", name="impontJson", methods={"POST"}, options={"expose"=true} )
+     * @Route("/import/json", name="importJson", methods={"POST"}, options={"expose"=true} )
      * @param Request $request
-     * @param ValidateHelper $validateHelper
      * @param JsonUploader $jsonUploader
-     * @param FileRepository $fileRepository
-     * @param EServicesClient $servicesClient
      * @return JsonResponse|Response
      */
     public function importJson(
         Request $request,
-        ValidateHelper $validateHelper,
-        JsonUploader $jsonUploader,
-        FileRepository $fileRepository,
-        EServicesClient $servicesClient
+        JsonUploader $jsonUploader
     )
     {
         if ($this->isGranted('ROLE_USER')) {
@@ -227,7 +236,7 @@ class FileController extends AbstractController
                 try {
                     /**@var UploadedFile $uploadedFile */
                     $uploadedFile = $request->files->get('jsonFile');
-                    $errors = $validateHelper->validateFile($uploadedFile);
+                    $errors = $this->validateHelper->validateFile($uploadedFile);
 
                     if (0 != count($errors)) {
                         $data['errors'][] = $errors[0]->getMessage();
@@ -235,37 +244,99 @@ class FileController extends AbstractController
                     }
 
                     $fileStr = file_get_contents($uploadedFile);
-                    $errors = $validateHelper->validateJsonString($fileStr);
+                    $errors = $this->validateHelper->validateJsonString($fileStr);
 
                     if (0 != count($errors)) {
                         $data['errors'][] = $errors[0]->getMessage();
                         return new JsonResponse(json_encode($data), Response::HTTP_OK);
                     }
 
-
                     $jsonUploader->upload($uploadedFile);
-                    $wkt = $fileRepository->getGeomFromJsonAsWkt($fileStr);
+                    $wkt = $this->fileRepository->getGeomFromJsonAsWkt($fileStr);
 
-                    $data['area'] = $fileRepository->calcArea($wkt);
+                    $data['area'] = $this->fileRepository->calcArea($wkt);
                     $data['newFileName'] = $jsonUploader->getNewName();
-                    $transformFeature = $fileRepository->transformFromSK63To3857($wkt);
+                    $transformFeature = $this->fileRepository->transformFromSK63To3857($wkt);
 
-                    if ($servicesClient->isConnect()) {
-                        $centroid = $fileRepository->getCentroid($transformFeature);
-                        $centroidArray = $fileRepository->wktPointToArray($centroid);
-                        if ($pubData = $servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
+                    if ($this->servicesClient->isConnect()) {
+                        $centroid = $this->fileRepository->getCentroid($transformFeature);
+                        $centroidArray = $this->fileRepository->wktPointToArray($centroid);
+                        if ($pubData = $this->servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
                             $data['pub'] = $pubData;
                         }
                     }
 
-                    $wktTransform = $fileRepository->transformFeatureFromSC63to4326($wkt);
+                    $wktTransform = $this->fileRepository->transformFeatureFromSC63to4326($wkt);
                     $data['wkt'] = $wkt;
-                    $jsonTransform = $fileRepository->getJsonFromWkt($wktTransform);
+                    $jsonTransform = $this->fileRepository->getJsonFromWkt($wktTransform);
                     $data['json'] = $jsonTransform;
                     $data['errors'] = [];
 
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
 
+                } catch (\Exception $exception) {
+                    return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+            }
+        }
+        return new JsonResponse('Для виконання цієї дії потрібно зайти в систему або зареструватись!', Response::HTTP_FORBIDDEN);
+    }
+
+    /**
+     * @Route("/import/xmlFile", name="import_xmlFile", methods={"POST"}, options={"expose"=true})
+     * @param Request $request
+     * @param XmlFileUploader $xmlFileUploader
+     * @param ParcelXmlParser $parcelXmlParser
+     * @param ParcelXmlSaver $parcelXmlSaver
+     * @return JsonResponse
+     */
+    public function importXml(
+        Request $request,
+        XmlFileUploader $xmlFileUploader,
+        ParcelXmlParser $parcelXmlParser,
+        ParcelXmlSaver $parcelXmlSaver)
+    {
+        if ($this->isGranted('ROLE_USER')) {
+            if ($request->isXmlHttpRequest()) {
+                try {
+                    /**@var UploadedFile $uploadedFile */
+                    $uploadedFile = $request->files->get('xmlFile');
+                    $errors = $this->validateHelper->validateXmlFile($uploadedFile);
+                    if (0 != count($errors)) {
+                        $data['errors'][] = $errors[0]->getMessage();
+                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                    }
+
+                    $xmlFileUploader->upload($uploadedFile);
+                    $xmlObj = $xmlFileUploader->getSimpleXML($xmlFileUploader->getNewName());
+                    $parseXml = $parcelXmlParser->parse($xmlObj);
+
+                    if (!$parseXml) {
+                        $data['errors'] = $parcelXmlParser->getErrors();
+                        return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                    }
+
+                    $data = $parcelXmlSaver->toGeoJson($parseXml);
+                    $dataSK63 = $parcelXmlSaver->toGeoJson($parseXml, false);
+                    $wkt = $this->fileRepository->getGeomFromJsonAsWkt($dataSK63['parcelXml']['coordinates']);
+
+                    $data['area'] = $this->fileRepository->calcArea($wkt);
+                    $data['newFileName'] = $xmlFileUploader->getNewName();
+                    $data['wkt'] = $wkt;
+                    $data['json'] = $data['parcelXml']['coordinates'];
+                    $transformFeature = $this->fileRepository->transformFromSK63To3857($wkt);
+
+                    if ($this->servicesClient->isConnect()) {
+                        $centroid = $this->fileRepository->getCentroid($transformFeature);
+                        $centroidArray = $this->fileRepository->wktPointToArray($centroid);
+                        if ($pubData = $this->servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
+                            $data['pub'] = $pubData;
+                        }
+                    }
+
+                    $data['errors'] = [];
+
+                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 } catch (\Exception $exception) {
                     return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
@@ -304,7 +375,14 @@ class FileController extends AbstractController
                 $fileName = $request->request->get('fileName');
                 $feature = $request->request->get('feature');
 
-                if (!$feature) {
+
+                if ($feature) {
+                    $result = $fileRepository->isValid($feature);
+                    if (!$result) {
+                        $error = 'Вибачте!, геометрія ділянки не валідна!';
+                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
+                    }
+                } else {
                     $cadNum = $request->request->get('cadNum');
                     $parcel = $parcelRepository->findOneBy(['cadNum' => $cadNum]);
 
@@ -314,23 +392,16 @@ class FileController extends AbstractController
                     }
 
                     $feature = $parcel->getGeom()->getOriginalGeom();
-
-                } else {
-                    $result = $fileRepository->isValid($feature);
-                    if (!$result) {
-                        $error = 'Вибачте!, геометрія ділянки не валідна!';
-                        return new JsonResponse($error, Response::HTTP_NOT_FOUND);
-                    }
                 }
 
-                $file = $uploader->getSimpleXML($fileName);
+                $simpleXmlFile = $uploader->getSimpleXML($fileName);
 
-                if (!$file) {
+                if (!$simpleXmlFile) {
                     $error = sprintf('Вибачте!, файл "%s" не знайдено!', $fileName);
                     return new JsonResponse($error, Response::HTTP_NOT_FOUND);
                 }
 
-                $parseXml = $normativeXmlParser->parse($file);
+                $parseXml = $normativeXmlParser->parse($simpleXmlFile);
 
                 if (!$parseXml) {
                     $data['errors'] = $normativeXmlParser->getErrors();
@@ -340,12 +411,16 @@ class FileController extends AbstractController
                 $data = $normativeXmlSaver->toGeoJson($parseXml, false);
                 $resultIntersect = $normativeXmlSaver->intersect($data, $feature);
 
-
                 if (!$resultIntersect) {
                     $data['errors'] = $normativeXmlSaver->getErrors();
 
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
+
+                if ($normativeXmlSaver->getErrors()){
+                    $resultIntersect['errors'] = $normativeXmlSaver->getErrors();
+                }
+
                 $resultIntersect['area'] = $fileRepository->calcArea($feature);
                 $transformFeature = $fileRepository->transformFromSK63To3857($feature);
 
