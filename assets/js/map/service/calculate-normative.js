@@ -4,6 +4,7 @@ $(document).ready(function () {
 
     $('body').on('click', '#calculate-parcel', function (e) {
         e.preventDefault();
+        hideTooltip();
         let nameFile = $('#shp-card').attr('data-name');
         let feature = $('#geom-from-json').val();
         let cadNum;
@@ -85,12 +86,13 @@ $(document).ready(function () {
                 value.minVal + ' - ' + value.maxVal + '</small></td></tr>';
             let str = normativeTable.find('#normativeTable').append(row);
         });
+        let multString = getMultLocalAsString(data.calculate.local);
 
         let price = (Math.round(basePrice * parseFloat(data.zone.km2) * area * 10000 * 100) / 100).toFixed(2);
         let priceStr = price + ' грн.';
         let baseZone = '<tr><td class="pl-3">Вартість в <span class="text-bold test-success">' + data.zone.name + '</span>-й економіко-планувальній зоні</td><td class="text-center pr-1" colspan="2">' + data.calculate.priceZone + ' грн.</td></tr>';
         normativeTable.find('#normativeTable').append(baseZone);
-        let localTotal = '<tr><td class="pl-3">Узагальнюючий локальний коефіцієнт</td><td class="text-center pr-1" colspan="2">' + data.calculate.priceLocal + '</td></tr>';
+        let localTotal = '<tr><td class="pl-3">Узагальнюючий локальний коефіцієнт ' + multString + '</td><td class="text-center pr-1" colspan="2">' + data.calculate.priceLocal + '</td></tr>';
         normativeTable.find('#normativeTable').append(localTotal);
         let purposeIndex = '<tr><td class="pl-3">Коефіцієнт, який характеризує функціональне використання землі</td><td class="text-center pr-1" colspan="2"> 1.0 </td></tr>';
         normativeTable.find('#normativeTable').append(purposeIndex);
@@ -98,6 +100,18 @@ $(document).ready(function () {
         normativeTable.find('#normativeTable').append(totalM2);
         let total = '<tr><td class="pl-3">Всього за ділянку (' + data.calculate.priceByMeter + ' * ' + area + ' га)</td><td class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceTotal + ' грн.</strong></td></tr>';
         normativeTable.find('#normativeTable').append(total);
+    }
+
+    function getMultLocalAsString(data) {
+        let str = '(';
+        if (!$.isEmptyObject(data)) {
+            $.each(data, function (index, value) {
+                str += value.index + ' * ';
+            });
+            str = str.slice(0, -3) + ')';
+        }
+
+        return str;
     }
 
     /**

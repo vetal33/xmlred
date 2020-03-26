@@ -63,5 +63,11 @@ $(document).ready(function () {
         return sum;
     }
 
+    window.hideTooltip = function () {
+        setTimeout(function () {
+            $('[data-toggle="tooltip"]').tooltip('hide');
+        }, 2000);
+    };
+
 
 });

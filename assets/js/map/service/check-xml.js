@@ -9,6 +9,7 @@ $(document).ready(function () {
         if (nameFile.trim() !== '') {
             checkFile(nameFile);
         }
+        hideTooltip();
     });
 
     function checkFile(fileName) {

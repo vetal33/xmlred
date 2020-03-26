@@ -1,9 +1,9 @@
 /*------------------------------------ tooltip bootstrap*/
-.tooltip .tooltip-inner{
+.tooltip .tooltip-inner {
     background-color: rgba(0, 0, 0, 0.7);
 }
 
-.tooltip .arrow:after,.tooltip .arrow:before {
+.tooltip .arrow:after, .tooltip .arrow:before {
     border-bottom-color: rgba(0, 0, 0, 0.7);
     border-top-color: rgba(0, 0, 0, 0.7);
 }
@@ -53,7 +53,7 @@
 }
 
 .bc-gray {
-    background-color: #f1f1f1!important;
+    background-color: #f1f1f1 !important;
 }
 
 .general-info {
@@ -67,22 +67,53 @@
     border-radius: 2px;
     background-color: rgba(255, 255, 255, 0.85);
 }
-#buttons-card a.dropdown-item{
+
+#buttons-card a.dropdown-item {
     font-size: 0.9rem !important;
 }
+
 .local, .legend, .panel {
     font-size: 0.9rem;
     border-radius: 3px;
     color: darkslategrey;
-    background-color: rgba(255, 255, 255,0.85);
+    background-color: rgba(255, 255, 255, 0.85);
 }
+
 .sticky-top {
     top: 57px;
 }
+
 .leaflet-bottom {
     width: 100%;
 }
 
 #custom-content-parcels-list {
     max-height: 455px;
+}
+
+@media (max-width: 576px) {
+    .content {
+        padding: 0 !important;
+    }
+
+    div[class^= 'col-'] {
+        padding-right: 4px !important;
+        padding-left: 4px !important;
+    }
+
+    #control-panel, #control-panel > div {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    .table th, .table td {
+        padding: 0.5rem 0.5rem 0.5rem 1rem !important;
+    }
+    #map-wrapper {
+        padding: 0 0.5rem 0 0.5rem !important;
+    }
+    #coordinates-map {
+        margin-bottom: 41px!important;
+        margin-left: 2px!important;
+    }
 }

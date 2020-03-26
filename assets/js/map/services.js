@@ -97,14 +97,27 @@ $(document).ready(function () {
         overlayInfo[0].hidden = Boolean(valBool);
     }
 
+    function calcWidth576() {
+        let screenWidth = window.matchMedia('all and (max-width: 576px)');
+        return screenWidth.matches;
+    }
+
     function calcWidth() {
         let screenWidth = window.matchMedia('all and (max-width: 1199px)');
         return screenWidth.matches;
     }
 
+    if (calcWidth576()) {
+        $('.main-footer h6 small:eq(1)').removeClass('ml-3');
+        $('.main-footer h6 small:eq(1)').html('<a href="mailto:xmlred.xyz@gmail.com" class="text-nowrap text-gray">' +
+            '<i class="far fa-envelope align-middle"></i> xmlred.xyz@gmail.com</a>');
+    }
+
+
     $('#open-xml-normative, #btn-open-xml-alt').on('click', function (e) {
         e.preventDefault();
         $('#btn-open-xml').click();
+        hideTooltip();
     });
 
     $('#open-xml-normative-test').on('click', function (e) {
@@ -130,6 +143,7 @@ $(document).ready(function () {
     $(btnDownloadShpMenu).on('click', function (e) {
         e.preventDefault();
         $(btnDownloadShp).click();
+        hideTooltip();
     });
 
     function sendFile(data) {
@@ -344,12 +358,28 @@ $(document).ready(function () {
     function visualizeXML(data) {
         let wrapper = document.getElementById("wrapper");
         let tree = jsonTree.create(data.origXml, wrapper);
-        $('#original_name_file').html(data.origXmlName);
+        if (calcWidth576()) {
+            $('#original_name_file').html(cattingLongName(data.origXmlName));
+        } else {
+            $('#original_name_file').html(data.origXmlName);
+        }
+
         $('#shp-card').attr('data-name', data.newXmlName);
 
         tree.expand(function (node) {
             return node.childNodes.length < 2 || node.label === 'phoneNumbers';
         });
+    }
+
+    function cattingLongName(name, val = 30) {
+        let arr = name.split('.');
+
+        if (arr[0].length > val) {
+            arr[0] = arr[0].slice(0, val) + '..';
+            return arr.join('.');
+        }
+
+        return name;
     }
 
     function addMejaToMap(data) {

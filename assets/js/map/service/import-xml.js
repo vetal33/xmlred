@@ -13,6 +13,7 @@ $(document).ready(function () {
     $('#import-xml, #btn-import-xml-alt').on('click', function (e) {
         e.preventDefault();
         $('#btn-import-xmlFile').click();
+        hideTooltip();
     });
 
     function sendFile(data) {
