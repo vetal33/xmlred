@@ -14,6 +14,7 @@ $(document).ready(function () {
     $('#import-json, #btn-import-json-alt').on('click', function (e) {
         e.preventDefault();
         $('#btn-import-json').click();
+        hideTooltip();
     });
 
     function sendFile(data) {

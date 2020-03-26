@@ -12,6 +12,7 @@ $(document).ready(function () {
         } else {
             save(layerName);
         }
+        hideTooltip();
     });
 
     function save(layerName) {

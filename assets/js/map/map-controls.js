@@ -136,6 +136,7 @@ $(document).ready(function () {
 
     $('#zoom-to-parcel').on('click', function (e) {
         e.preventDefault();
+        hideTooltip();
         let boundsStr = $('#geom-from-json').attr("data-bounds");
         if (boundsStr.trim() !== '') {
             let bounds = JSON.parse(boundsStr);

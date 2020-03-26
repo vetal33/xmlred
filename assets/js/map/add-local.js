@@ -230,7 +230,7 @@ module.exports = function (data) {
     infoBoxLocal = L.control({position: 'bottomright'});
 
     infoBoxLocal.onAdd = function () {
-        let div = L.DomUtil.create('div', 'info local col-4 d-none'); // create a div with a class "info"
+        let div = L.DomUtil.create('div', 'info local col-7 col-md-4 d-none'); // create a div with a class "info"
         div.innerHTML += '<p class="text-uppercase mb-1 text-bold">Локальні фактори</p><div id="map-info-local"></div>';
 
         return div;
