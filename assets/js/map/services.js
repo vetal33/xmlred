@@ -233,7 +233,6 @@ $(document).ready(function () {
     }
 
     $('body').on('click', '.table-delete', function (e) {
-
         let cadNum = getCadNumFromRow(this);
 
         $('#parcel-cadNum').attr('data-cadNum', cadNum);
@@ -247,7 +246,7 @@ $(document).ready(function () {
 
         let boundsStr = $(this).attr('data-bounds');
         let bound = setBounds(boundsStr);
-        if (bound.length) mymap.fitBounds(bound);
+        if (bound.length) mymap.fitBounds(bound, {maxZoom: 18});
 
         let cadNum = getCadNumFromRow(this);
 

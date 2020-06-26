@@ -230,8 +230,10 @@ module.exports = function (data) {
     infoBoxLocal = L.control({position: 'bottomright'});
 
     infoBoxLocal.onAdd = function () {
-        let div = L.DomUtil.create('div', 'info local col-7 col-md-4 d-none'); // create a div with a class "info"
-        div.innerHTML += '<p class="text-uppercase mb-1 text-bold">Локальні фактори</p><div id="map-info-local"></div>';
+        let div = L.DomUtil.create('div', 'card info local col-7 col-md-4 d-none'); // create a div with a class "info"
+        div.innerHTML += '<div class="card-header border-0 p-2"><div class="card-tools"><button id="btn-remove-local" type="button" class="btn btn-tool" data-card-widget="remove">' +
+            '<i class="fas fa-times"></i></button></div><p class="text-uppercase mb-1">Локальні фактори</p>' +
+            '</div><div id="map-info-local"></div>';
 
         return div;
     };

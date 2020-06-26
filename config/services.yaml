@@ -39,8 +39,7 @@ services:
 
     App\Service\MailerSender:
         arguments:
-            $user: '%env(MAILER_USER)%'
-            $password: '%env(MAILER_PASSWORD)%'
+            $key: '%env(MAILER_KEY)%'
 
     App\Service\ApiClient\EServicesClient:
         arguments:
