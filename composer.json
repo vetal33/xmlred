@@ -30,6 +30,7 @@
         "symfony/orm-pack": "*",
         "symfony/process": "4.4.*",
         "symfony/security-bundle": "4.4.*",
+        "symfony/sendgrid-mailer": "4.4.*",
         "symfony/serializer-pack": "*",
         "symfony/translation": "4.4.*",
         "symfony/twig-bundle": "4.4.*",
@@ -51,6 +52,9 @@
     "config": {
         "preferred-install": {
             "*": "dist"
+        },
+        "platform": {
+            "php": "7.3"
         },
         "sort-packages": true
     },
