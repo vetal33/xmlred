@@ -109,6 +109,7 @@ $(document).ready(function () {
 
             if (!($('#zony').prop('checked')) && $('#local').prop('checked')) {
                 $('.local').removeClass('d-none');
+                $('.local').removeAttr("style");
             } else if (($('#zony').prop('checked')) && $('#local').prop('checked')) {
                 $('.local').addClass('d-none');
                 mymap.removeLayer(markerLayer);
@@ -122,6 +123,7 @@ $(document).ready(function () {
         if (key === 'local' && ($('.panel').hasClass('d-none'))) {
             if ($('#local').prop('checked')) {
                 $('.local').removeClass('d-none');
+                $('.local').removeAttr("style");
             } else {
                 $('.local').addClass('d-none');
                 mymap.removeLayer(markerLayer);
@@ -129,6 +131,11 @@ $(document).ready(function () {
             }
         }
     }
+
+    $('body').on('click', '#btn-remove-local', function () {
+        mymap.removeLayer(markerLayer);
+    });
+
 
     /**
      * Зумує на імпортовану ділянку
