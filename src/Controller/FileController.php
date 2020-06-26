@@ -48,30 +48,38 @@ class FileController extends AbstractController
      * @var EServicesClient
      */
     private $servicesClient;
+    /**
+     * @var NormativeXmlParser
+     */
+    private $normativeXmlParser;
+    /**
+     * @var NormativeXmlSaver
+     */
+    private $normativeXmlSaver;
 
     public function __construct(
         ValidateHelper $validateHelper,
         FileRepository $fileRepository,
-        EServicesClient $servicesClient
+        EServicesClient $servicesClient,
+        NormativeXmlParser $normativeXmlParser,
+        NormativeXmlSaver $normativeXmlSaver
     )
     {
         $this->validateHelper = $validateHelper;
         $this->fileRepository = $fileRepository;
         $this->servicesClient = $servicesClient;
+        $this->normativeXmlParser = $normativeXmlParser;
+        $this->normativeXmlSaver = $normativeXmlSaver;
     }
 
     /**
      * @Route("/", name="homepage", methods={"GET","POST"}, options={"expose"=true})
      * @param Request $request
      * @param XmlUploader $uploader
-     * @param NormativeXmlParser $normativeXmlParser
-     * @param NormativeXmlSaver $normativeXmlSaver
+     *
      * @return Response
      */
-    public function index(Request $request,
-                          XmlUploader $uploader,
-                          NormativeXmlParser $normativeXmlParser,
-                          NormativeXmlSaver $normativeXmlSaver): Response
+    public function index(Request $request, XmlUploader $uploader): Response
     {
         $data = [];
         $file = new File;
@@ -109,16 +117,16 @@ class FileController extends AbstractController
                 $data['errors'] = $uploader->getErrors();
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             }
-            $parseXml = $normativeXmlParser->parse($xmlObj);
+            $parseXml = $this->normativeXmlParser->parse($xmlObj);
             if (!$parseXml) {
-                $data['errors'] = $normativeXmlParser->getErrors();
+                $data['errors'] = $this->normativeXmlParser->getErrors();
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             }
 
             if ($this->isGranted('ROLE_USER')) {
-                $normativeXmlSaver->toShape($parseXml);
+                $this->normativeXmlSaver->toShape($parseXml);
             }
-            $data = $normativeXmlSaver->toGeoJson($parseXml);
+            $data = $this->normativeXmlSaver->toGeoJson($parseXml);
 
             $data['origXml'] = $xmlObj;
             $data['newXmlName'] = $newXmlName;
@@ -144,7 +152,6 @@ class FileController extends AbstractController
 
     public function loadParcels(ParcelRepository $parcelRepository, ParcelHandler $parcelHandler)
     {
-
         if ($this->isGranted('ROLE_USER')) {
             try {
                 $parcelsJson = [];
@@ -169,7 +176,7 @@ class FileController extends AbstractController
      * @return Response
      */
 
-    public function downloadShp(Request $request, NormativeXmlSaver $normativeXmlSaver): Response
+    public function downloadShp(Request $request): Response
     {
         if ($this->isGranted('ROLE_USER')) {
             if ($request->request->get('name') === '/load?name=test_normative.xml') {
@@ -177,7 +184,7 @@ class FileController extends AbstractController
                 return new JsonResponse('Тестові дані неможливо скачати!', Response::HTTP_NOT_FOUND);
             }
 
-            $fileName = $normativeXmlSaver->addToZip();
+            $fileName = $this->normativeXmlSaver->addToZip();
             $stream = new Stream($fileName);
             $response = new BinaryFileResponse($stream);
             clearstatcache(true, $fileName);
@@ -200,17 +207,29 @@ class FileController extends AbstractController
             try {
                 $data = [];
                 $fileName = $request->request->get('fileName');
-                $file = $uploader->getSimpleXML($fileName);
+                $simpleXmlFile = $uploader->getSimpleXML($fileName);
 
-                if (!$file) {
+                if (!$simpleXmlFile) {
                     $error = sprintf('Вибачте!, файл "%s" не знайдено!', $fileName);
                     return new JsonResponse($error, Response::HTTP_NOT_FOUND);
                 }
 
-                $normativeXmlValidator->validate($file);
+                $parseXml = $this->normativeXmlParser->parse($simpleXmlFile);
+
+                if (!$parseXml) {
+                    $data['errors'] = $this->normativeXmlParser->getErrors();
+                    return new JsonResponse(json_encode($data), Response::HTTP_OK);
+                }
+
+                $parseJson = $this->normativeXmlSaver->toGeoJson($parseXml, false);
+
+                $normativeXmlValidator->validateStructure($simpleXmlFile);
                 if (!empty($normativeXmlValidator->getErrors())) {
                     $data['validate_errors'] = $normativeXmlValidator->getErrors();
                 }
+
+                $normativeXmlValidator->validateGeom($parseJson);
+
 
                 return new JsonResponse(json_encode($data), Response::HTTP_OK);
             } catch (\Exception $exception) {
@@ -349,7 +368,6 @@ class FileController extends AbstractController
      * @Route("calculate", name="calculateNormative", methods={"POST"}, options={"expose"=true} )
      * @param Request $request
      * @param XmlUploader $uploader
-     * @param NormativeXmlParser $normativeXmlParser
      * @param NormativeXmlSaver $normativeXmlSaver
      * @param FileRepository $fileRepository
      * @param EServicesClient $servicesClient
@@ -361,7 +379,6 @@ class FileController extends AbstractController
     public function calculateNormative(
         Request $request,
         XmlUploader $uploader,
-        NormativeXmlParser $normativeXmlParser,
         NormativeXmlSaver $normativeXmlSaver,
         FileRepository $fileRepository,
         EServicesClient $servicesClient,
@@ -401,10 +418,10 @@ class FileController extends AbstractController
                     return new JsonResponse($error, Response::HTTP_NOT_FOUND);
                 }
 
-                $parseXml = $normativeXmlParser->parse($simpleXmlFile);
+                $parseXml = $this->normativeXmlParser->parse($simpleXmlFile);
 
                 if (!$parseXml) {
-                    $data['errors'] = $normativeXmlParser->getErrors();
+                    $data['errors'] = $this->normativeXmlParser->getErrors();
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
 
@@ -417,7 +434,7 @@ class FileController extends AbstractController
                     return new JsonResponse(json_encode($data), Response::HTTP_OK);
                 }
 
-                if ($normativeXmlSaver->getErrors()){
+                if ($normativeXmlSaver->getErrors()) {
                     $resultIntersect['errors'] = $normativeXmlSaver->getErrors();
                 }
 
