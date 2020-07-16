@@ -29,7 +29,7 @@ module.exports = function (data) {
     });
 
     /** Додаємо групу до карти    */
-    regionsLayersGroup.addTo(mymap);
+    //regionsLayersGroup.addTo(mymap);
 
     /** Додаємо написи шарів групи    */
     regionsLayersGroup.eachLayer(function (layer) {

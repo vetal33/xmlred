@@ -27,6 +27,7 @@ import '../map/service/import-xml';
 import '../map/service/calculate-normative';
 import '../map/service/save-parcel';
 import '../map/service/download-shp';
+import '../../../node_modules/select2/dist/js/select2';
 
 
 $('[data-toggle="tooltip"]').tooltip({

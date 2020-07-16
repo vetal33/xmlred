@@ -1,3 +1,4 @@
+@import "../../../node_modules/select2/dist/css/select2.css";
 /*------------------------------------ tooltip bootstrap*/
 .tooltip .tooltip-inner {
     background-color: rgba(0, 0, 0, 0.7);

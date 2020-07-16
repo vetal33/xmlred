@@ -34,17 +34,23 @@ class ParcelHandler
     private $localFactorDirRepository;
 
     private $errors = [];
+    /**
+     * @var FindPurpose
+     */
+    private $findPurpose;
 
     public function __construct(
         ParcelRepository $parcelRepository,
         JsonUploader $jsonUploader,
         TokenStorageInterface $tokenStorage,
-        LocalFactorDirRepository $localFactorDirRepository)
+        LocalFactorDirRepository $localFactorDirRepository,
+        FindPurpose $findPurpose)
     {
         $this->parcelRepository = $parcelRepository;
         $this->jsonUploader = $jsonUploader;
         $this->user = $tokenStorage->getToken()->getUser();
         $this->localFactorDirRepository = $localFactorDirRepository;
+        $this->findPurpose = $findPurpose;
     }
 
     public function convertToJson(array $parcels): array
@@ -115,6 +121,14 @@ class ParcelHandler
 
             $calculateArray['priceByMeter'] = round((float)($calculateArray['priceZone']) * (float)$calculateArray['priceLocal'] * (float)$calculateArray['kf'], 2);
             $calculateArray['priceTotal'] = round($calculateArray['priceByMeter'] * round($calculateArray['area']), 2);
+
+
+            $purposeDir = $this->findPurpose->find($intersectArray);
+
+
+            $calculateArray['kf'] = (!is_null($purposeDir)) ? $purposeDir->getKfValue() : 1;
+            $calculateArray['recommendPurpose'] = (!is_null($purposeDir)) ? $purposeDir->getSubsection() : '1.0';
+
 
             return $calculateArray;
         } catch (\Exception $exception) {

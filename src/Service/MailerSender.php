@@ -4,6 +4,7 @@
 namespace App\Service;
 
 use App\Entity\User;
+use Symfony\Component\Mailer\Bridge\Google\Transport\GmailSmtpTransport;
 use Symfony\Component\Mailer\Bridge\Sendgrid\Transport\SendgridSmtpTransport;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mime\Email;
@@ -18,23 +19,28 @@ class MailerSender
      * @var RouterInterface
      */
     private $router;
-
     /**
      * @var string
      */
-    private $key;
+    private $user;
+    /**
+     * @var string
+     */
+    private $password;
 
 
-    public function __construct(RouterInterface $router, string $key)
+    public function __construct(RouterInterface $router, string $user, string $password)
     {
         $this->router = $router;
-        $this->key = $key;
+
+        $this->user = $user;
+        $this->password = $password;
     }
 
 
     public function sendConfirmationMessage(User $user)
     {
-        $mailer = $this->getSendGridMailer();
+        $mailer = $this->getGmailMailer();
 
         $email = (new Email())
             ->from($this::FROM_ADDRESS)
@@ -49,7 +55,7 @@ class MailerSender
 
     public function sendRecoveryMessage(User $user)
     {
-        $mailer = $this->getSendGridMailer();
+        $mailer = $this->getGmailMailer();
         $email = (new Email())
             ->from($this::FROM_ADDRESS)
             ->to($user->getEmail())
@@ -64,7 +70,7 @@ class MailerSender
     public function sendSuccessMessage(User $user)
     {
 
-        $mailer = $this->getSendGridMailer();
+        $mailer = $this->getGmailMailer();
         $email = (new Email())
             ->from($this::FROM_ADDRESS)
             ->to($user->getEmail())
@@ -78,6 +84,12 @@ class MailerSender
     {
         $transport = new SendgridSmtpTransport($this->key);
 
+        return $mailer = new Mailer($transport);
+    }
+
+    private function getGmailMailer()
+    {
+        $transport = new GmailSmtpTransport($this->user, $this->password);
         return $mailer = new Mailer($transport);
     }
 }
