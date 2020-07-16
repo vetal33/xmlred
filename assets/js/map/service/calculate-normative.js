@@ -94,7 +94,9 @@ $(document).ready(function () {
         normativeTable.find('#normativeTable').append(baseZone);
         let localTotal = '<tr><td class="pl-3">Узагальнюючий локальний коефіцієнт ' + multString + '</td><td class="text-center pr-1" colspan="2">' + data.calculate.priceLocal + '</td></tr>';
         normativeTable.find('#normativeTable').append(localTotal);
-        let purposeIndex = '<tr><td class="pl-3">Коефіцієнт, який характеризує функціональне використання землі</td><td class="text-center pr-1" colspan="2"> 1.0 </td></tr>';
+        let purposeIndex = '<tr><td class="pl-3">Коефіцієнт, який характеризує функціональне використання землі</td><td class="text-center pr-1" colspan="2">'+
+            '1.0</td></tr>';
+            // '</td><td>1.0</td></tr>' + '<tr><td><select id="select2-purpose" class="form-control select2"><option selected="selected" data-select2-id="3">Alabama</option><option data-select2-id="18">Alaska</option></select></td></tr>';
         normativeTable.find('#normativeTable').append(purposeIndex);
         let totalM2 = '<tr><td class="pl-3">Всього за 1 м<sup>2</sup> (' + data.calculate.priceZone + ' * ' + data.calculate.priceLocal + ' * ' + '1.0' + ')</td><td class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceByMeter + ' грн.</strong></td></tr>';
         normativeTable.find('#normativeTable').append(totalM2);
@@ -154,4 +156,6 @@ $(document).ready(function () {
         layer.nameLayer = "IntersectGeoJSON";
         intersectLocalLayersGroup.addLayer(layer);
     }
+
+
 });

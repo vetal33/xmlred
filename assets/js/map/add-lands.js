@@ -25,7 +25,7 @@ module.exports = function (data) {
     });
 
     /** Додаємо групу до карти    */
-    landsLayersGroup.addTo(mymap);
+    // landsLayersGroup.addTo(mymap);
 
     /** Додаємо написи шарів групи    */
     landsLayersGroup.eachLayer(function (layer) {
