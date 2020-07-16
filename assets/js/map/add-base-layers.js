@@ -35,6 +35,7 @@ module.exports = function () {
         maxZoom: 18,
      });
 
+    kadastr.addTo(mymap);
 
     /**
      * Створюємо набор базових шарів для відображення(можна вибрать лише один)

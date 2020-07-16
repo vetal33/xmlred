@@ -109,8 +109,8 @@ $(document).ready(function () {
 
     if (calcWidth576()) {
         $('.main-footer h6 small:eq(1)').removeClass('ml-3');
-        $('.main-footer h6 small:eq(1)').html('<a href="mailto:xmlred.xyz@gmail.com" class="text-nowrap text-gray">' +
-            '<i class="far fa-envelope align-middle"></i> xmlred.xyz@gmail.com</a>');
+        $('.main-footer h6 small:eq(1)').html('<a href="mailto:landprice.online@gmail.com" class="text-nowrap text-gray">' +
+            '<i class="far fa-envelope align-middle"></i>landprice.online@gmail.com</a>');
     }
 
 
@@ -120,7 +120,7 @@ $(document).ready(function () {
         hideTooltip();
     });
 
-    $('#open-xml-normative-test').on('click', function (e) {
+    $('#btn-download-normative-test').on('click', function (e) {
         e.preventDefault();
         let formData = new FormData();
         formData.append('xmlFile', 'test');
@@ -419,8 +419,8 @@ $(document).ready(function () {
 
         $('#local').prop('checked', true);
         $('#zony').prop('checked', true);
-        $('#lands').prop('checked', true);
-        $('#regions').prop('checked', true);
+        $('#lands').prop('checked', false);
+        $('#regions').prop('checked', false);
 
         $('#xml-card').removeClass('card-outline card-danger');
         $('#xml-card').removeClass('card-outline card-success');

@@ -6,6 +6,7 @@ use App\Entity\File;
 use App\Form\FileFormType;
 use App\Repository\FileRepository;
 use App\Repository\ParcelRepository;
+use App\Repository\PurposeDirRepository;
 use App\Service\ApiClient\EServicesClient;
 use App\Service\JsonUploader;
 use App\Service\NormativeXmlSaver;
@@ -373,6 +374,7 @@ class FileController extends AbstractController
      * @param EServicesClient $servicesClient
      * @param ParcelRepository $parcelRepository
      * @param ParcelHandler $parcelHandler
+     * @param PurposeDirRepository $purposeDirRepository
      * @return JsonResponse
      */
 
@@ -383,7 +385,8 @@ class FileController extends AbstractController
         FileRepository $fileRepository,
         EServicesClient $servicesClient,
         ParcelRepository $parcelRepository,
-        ParcelHandler $parcelHandler
+        ParcelHandler $parcelHandler,
+        PurposeDirRepository $purposeDirRepository
     )
     {
         if ($this->isGranted('ROLE_USER')) {
@@ -446,6 +449,7 @@ class FileController extends AbstractController
                     $centroidArray = $fileRepository->wktPointToArray($centroid);
                     if ($pubData = $servicesClient->getParcelsInPoint(['point' => 'Point(' . implode(" ", $centroidArray) . ')'])) {
                         $resultIntersect['pub'] = $pubData;
+
                     }
                 }
                 $resultIntersect['cmn'] = $parseXml['boundary']['Cnm'];

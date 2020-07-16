@@ -52,7 +52,7 @@ $(document).ready(function () {
         }
         $('#feature-card').removeClass('d-none');
         $('#save-parcel').removeClass('disabled');
-    }
+    };
 
     window.sumPointsInGroup = function (arrayGroup) {
         let sum = 0;
@@ -61,13 +61,12 @@ $(document).ready(function () {
         });
 
         return sum;
-    }
+    };
 
     window.hideTooltip = function () {
         setTimeout(function () {
             $('[data-toggle="tooltip"]').tooltip('hide');
         }, 2000);
     };
-
 
 });
