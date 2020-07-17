@@ -394,6 +394,7 @@ class FileController extends AbstractController
                 $data = [];
                 $fileName = $request->request->get('fileName');
                 $feature = $request->request->get('feature');
+                $year = (integer)$request->request->get('normativeYear');
 
 
                 if ($feature) {
@@ -454,7 +455,7 @@ class FileController extends AbstractController
                 }
                 $resultIntersect['cmn'] = $parseXml['boundary']['Cnm'];
 
-                $calculate = $parcelHandler->calculateNormative($resultIntersect);
+                $calculate = $parcelHandler->calculateNormative($resultIntersect, $year);
                 if (!$calculate) {
                     $data['errors'] = $parcelHandler->getErrors();
 

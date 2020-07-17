@@ -18,3 +18,18 @@ fos_elastica:
                         model: App\Entity\Parcel
                         provider: ~
                         finder: ~
+        pur:
+            types:
+                purpose:
+                    properties:
+                        subsection:
+                            type: keyword
+                        name:
+                            type: keyword
+                    persistence:
+                        driver: orm
+                        model: App\Entity\PurposeDir
+                        provider: ~
+                        finder: ~
+
+

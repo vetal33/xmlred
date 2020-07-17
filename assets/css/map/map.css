@@ -91,6 +91,13 @@
 #custom-content-parcels-list {
     max-height: 455px;
 }
+/*-------Change standart setting select2*/
+.select2-selection--single {
+    padding-top: 0.13rem!important;
+    padding-bottom: 0.16rem!important;
+    padding-left: 0.16rem!important;
+}
+
 
 @media (max-width: 576px) {
     .content {
@@ -110,11 +117,13 @@
     .table th, .table td {
         padding: 0.5rem 0.5rem 0.5rem 1rem !important;
     }
+
     #map-wrapper {
         padding: 0 0.5rem 0 0.5rem !important;
     }
+
     #coordinates-map {
-        margin-bottom: 41px!important;
-        margin-left: 2px!important;
+        margin-bottom: 41px !important;
+        margin-left: 2px !important;
     }
 }

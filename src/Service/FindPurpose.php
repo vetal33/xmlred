@@ -40,4 +40,31 @@ class FindPurpose
 
         return null;
     }
+
+    public function findAll(): array
+    {
+
+        return $this->convertObjectToArray($this->purposeDirRepository->findAll());
+    }
+
+    private function convertObjectToArray(array $purposeDirs): array
+    {
+        $arr = [];
+        $i = 0;
+        foreach ($purposeDirs as $purposeDir) {
+            $arr[$i]['id'] = $purposeDir->getId();
+            $arr[$i]['subsection'] = $purposeDir->getSubsection();
+            $arr[$i]['name'] = $purposeDir->getName();
+            $arr[$i]['kfValue'] = $purposeDir->getKfValue();
+            $i++;
+        }
+
+        return $arr;
+    }
+
+    public function convertToArray(array $purposeDirs): array
+    {
+        return $this->convertObjectToArray($purposeDirs);
+    }
+
 }
