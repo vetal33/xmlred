@@ -204,6 +204,7 @@ $(document).ready(function () {
         if (data.ValuationYear !== 'undefined') {
             $('#general-year').html('<i class="far fa-calendar-alt mr-1"></i>' + data.ValuationYear + ' р.');
             $('#card-general-year').html(data.ValuationYear + ' р.');
+            $('#normative-year').attr('value', data.ValuationYear);
         }
         if (data.Cnm !== 'Cnm') {
             $('#general-base-price').html('<i class="far fa-money-bill-alt mr-1"></i>' + data.Cnm + ' грн./м<sup>2</sup>');

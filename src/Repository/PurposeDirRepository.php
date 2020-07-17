@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\PurposeDir;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use FOS\ElasticaBundle\Manager\RepositoryManagerInterface;
 
 /**
  * @method PurposeDir|null find($id, $lockMode = null, $lockVersion = null)
@@ -14,37 +15,14 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class PurposeDirRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    /**
+     * @var RepositoryManagerInterface
+     */
+    private $finder;
+
+    public function __construct(ManagerRegistry $registry, RepositoryManagerInterface $finder)
     {
         parent::__construct($registry, PurposeDir::class);
+        $this->finder = $finder;
     }
-
-    // /**
-    //  * @return PurposeDir[] Returns an array of PurposeDir objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?PurposeDir
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }
