@@ -6,6 +6,7 @@ $(document).ready(function () {
         e.preventDefault();
         hideTooltip();
         let nameFile = $('#shp-card').attr('data-name');
+        let normativeYear =  $('#normative-year').attr('value');
         let feature = $('#geom-from-json').val();
         let cadNum;
         if (feature === '') {
@@ -20,14 +21,14 @@ $(document).ready(function () {
             return false;
         }
 
-        calculate(nameFile, feature, cadNum);
+        calculate(nameFile, feature, cadNum, normativeYear);
     });
 
-    function calculate(fileName, feature, cadNum) {
+    function calculate(fileName, feature, cadNum, normativeYear) {
         $.ajax({
             url: Routing.generate('calculateNormative'),
             method: 'POST',
-            data: {"fileName": fileName, "feature": feature, "cadNum": cadNum},
+            data: {"fileName": fileName, "feature": feature, "cadNum": cadNum, "normativeYear": normativeYear},
             dataType: 'json',
             beforeSend: function () {
                 overlay[0].hidden = false;
@@ -94,14 +95,57 @@ $(document).ready(function () {
         normativeTable.find('#normativeTable').append(baseZone);
         let localTotal = '<tr><td class="pl-3">Узагальнюючий локальний коефіцієнт ' + multString + '</td><td class="text-center pr-1" colspan="2">' + data.calculate.priceLocal + '</td></tr>';
         normativeTable.find('#normativeTable').append(localTotal);
-        let purposeIndex = '<tr><td class="pl-3">Коефіцієнт, який характеризує функціональне використання землі</td><td class="text-center pr-1" colspan="2">'+
-            '1.0</td></tr>';
-            // '</td><td>1.0</td></tr>' + '<tr><td><select id="select2-purpose" class="form-control select2"><option selected="selected" data-select2-id="3">Alabama</option><option data-select2-id="18">Alaska</option></select></td></tr>';
+
+        let recomendKf = data.calculate.kf.toFixed(2);
+
+        let purposeIndex = '<tr><td class="pl-3" colspan="3">Коефіцієнт, який характеризує функціональне використання землі</td></tr>';
+        let purposeList = $('<tr><td><select id="select2-purpose" class="form-control"></select></td><td id="kf-value" class="text-center pr-1" colspan="2" >' + recomendKf + '</td></tr>');
+        let optionSelected = '';
+
+        $.each(data.calculate.purposeArr, function (index, value) {
+            if (data.calculate.recommendPurpose == value.subsection) {
+                optionSelected = 'selected="selected"';
+            }
+            let option = '<option ' + optionSelected + ' data-id="' + value.id + '" data-value="' + value.kfValue + '">' + value.subsection + ' ' + value.name + '</option>';
+            let str = purposeList.find('#select2-purpose').append(option);
+            optionSelected = '';
+        });
+
         normativeTable.find('#normativeTable').append(purposeIndex);
-        let totalM2 = '<tr><td class="pl-3">Всього за 1 м<sup>2</sup> (' + data.calculate.priceZone + ' * ' + data.calculate.priceLocal + ' * ' + '1.0' + ')</td><td class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceByMeter + ' грн.</strong></td></tr>';
+        normativeTable.find('#normativeTable').append(purposeList);
+
+        let totalM2 = '<tr><td id="price-by-meter-title" class="pl-3">Всього за 1 м<sup>2</sup> (' + data.calculate.priceZone + ' * ' + data.calculate.priceLocal + ' * ' + recomendKf + ')</td><td id="price-by-meter" class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceByMeter + ' грн.</strong></td></tr>';
         normativeTable.find('#normativeTable').append(totalM2);
-        let total = '<tr><td class="pl-3">Всього за ділянку (' + data.calculate.priceByMeter + ' * ' + area + ' га)</td><td class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceTotal + ' грн.</strong></td></tr>';
+        let total = '<tr><td id="price-total-title" class="pl-3">Всього за ділянку (' + data.calculate.priceByMeter + ' * ' + area + ' га)</td><td id="price-total" class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceTotal + ' грн.</strong></td></tr>';
         normativeTable.find('#normativeTable').append(total);
+        let index = '<tr><td class="pl-3">Коефіцієнт індексації починаючи з ' + data.calculate.indexes.year + ' року</td><td class="text-center pr-1" colspan="2">' + data.calculate.indexes.possible + ' </td></tr>';
+        normativeTable.find('#normativeTable').append(index);
+        let totalWithindex = '<tr><td id="price-total-index-title" class="pl-3">Всього за ділянку з індексацією</td><td id="price-total-index" class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceTotalWithIndex + ' грн.</strong></td></tr>';
+        normativeTable.find('#normativeTable').append(totalWithindex);
+
+        $('#select2-purpose').select2();
+        $('#select2-purpose').on('select2:select', function () {
+            let kfValue = $(this).find(":selected").data("value");
+            $('#kf-value').html(kfValue);
+            calculatePrice(data, kfValue, area);
+
+        });
+    }
+
+
+    function calculatePrice(data, kf, area) {
+        $('#price-by-meter-title').html('Всього за 1 м<sup>2</sup> (' + data.calculate.priceZone + ' * ' + data.calculate.priceLocal + ' * ' + kf + ')');
+
+        let priceByMeter = (parseFloat(data.calculate.priceZone) * parseFloat(data.calculate.priceLocal) * parseFloat(kf)).toFixed(2);
+
+        let priceTotal = (parseFloat(priceByMeter) * parseFloat(data.calculate.area).toFixed(0)).toFixed(2);
+
+        let priceTotalWithIndex = (parseFloat(priceTotal) * parseFloat(data.calculate.indexes.possible)).toFixed(2);
+
+        $('#price-by-meter').html('<strong>' + priceByMeter + ' грн.</strong>');
+        $('#price-total-title').html('Всього за ділянку (' + priceByMeter + ' * ' + area + ' га)');
+        $('#price-total').html('<strong>' + priceTotal + ' грн.</strong>');
+        $('#price-total-index').html('<strong>' + priceTotalWithIndex + ' грн.</strong>');
     }
 
     function getMultLocalAsString(data) {
@@ -156,6 +200,5 @@ $(document).ready(function () {
         layer.nameLayer = "IntersectGeoJSON";
         intersectLocalLayersGroup.addLayer(layer);
     }
-
 
 });

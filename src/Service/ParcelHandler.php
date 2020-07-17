@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Parcel;
 use App\Entity\User;
+use App\Repository\IndexingRepository;
 use App\Repository\LocalFactorDirRepository;
 use App\Repository\ParcelRepository;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -38,19 +39,25 @@ class ParcelHandler
      * @var FindPurpose
      */
     private $findPurpose;
+    /**
+     * @var IndexingRepository
+     */
+    private $indexingRepository;
 
     public function __construct(
         ParcelRepository $parcelRepository,
         JsonUploader $jsonUploader,
         TokenStorageInterface $tokenStorage,
         LocalFactorDirRepository $localFactorDirRepository,
-        FindPurpose $findPurpose)
+        FindPurpose $findPurpose,
+        IndexingRepository $indexingRepository)
     {
         $this->parcelRepository = $parcelRepository;
         $this->jsonUploader = $jsonUploader;
         $this->user = $tokenStorage->getToken()->getUser();
         $this->localFactorDirRepository = $localFactorDirRepository;
         $this->findPurpose = $findPurpose;
+        $this->indexingRepository = $indexingRepository;
     }
 
     public function convertToJson(array $parcels): array
@@ -99,7 +106,7 @@ class ParcelHandler
         }
     }
 
-    public function calculateNormative(array $intersectArray)
+    public function calculateNormative(array $intersectArray, int $year)
     {
         $calculateArray = [];
         try {
@@ -117,18 +124,27 @@ class ParcelHandler
             }
 
             $calculateArray['area'] = $intersectArray['area'];
-            $calculateArray['kf'] = '1.0';
+
+            $purposeDir = $this->findPurpose->find($intersectArray);
+
+            $calculateArray['kf'] = (!is_null($purposeDir)) ? $purposeDir->getKfValue() : 1;
+            $calculateArray['recommendPurpose'] = (!is_null($purposeDir)) ? $purposeDir->getSubsection() : '02.01';
+
+            $calculateArray['purposeArr'] = $this->findPurpose->findAll();
 
             $calculateArray['priceByMeter'] = round((float)($calculateArray['priceZone']) * (float)$calculateArray['priceLocal'] * (float)$calculateArray['kf'], 2);
             $calculateArray['priceTotal'] = round($calculateArray['priceByMeter'] * round($calculateArray['area']), 2);
 
+            $calculateArray['indexes'] = $this->getRateIndex($year);
+            $calculateArray['indexes']['year'] = $year;
 
-            $purposeDir = $this->findPurpose->find($intersectArray);
-
-
-            $calculateArray['kf'] = (!is_null($purposeDir)) ? $purposeDir->getKfValue() : 1;
-            $calculateArray['recommendPurpose'] = (!is_null($purposeDir)) ? $purposeDir->getSubsection() : '1.0';
-
+            if (mb_strpos($calculateArray['recommendPurpose'], '01.') !== false) {
+                $calculateArray['priceTotalWithIndex'] = round(($calculateArray['priceTotal'] * $calculateArray['indexes']['sg']), 2);
+                $calculateArray['indexes']['possible'] = $calculateArray['indexes']['sg'];
+            } else {
+                $calculateArray['priceTotalWithIndex'] = round(($calculateArray['priceTotal'] * $calculateArray['indexes']['noSg']), 2);
+                $calculateArray['indexes']['possible'] = $calculateArray['indexes']['noSg'];
+            }
 
             return $calculateArray;
         } catch (\Exception $exception) {
@@ -203,6 +219,28 @@ class ParcelHandler
         return array_map(function ($value) {
             return $value['code'];
         }, $locals);
+    }
+
+    private function getRateIndex(string $currentYear)
+    {
+        $indexesArr = [];
+        $indexesArr['noSg'] = 1;
+        $indexesArr['sg'] = 1;
+
+        if ($currentYear === '') return $indexesArr;
+
+        $indexes = $this->indexingRepository->findAll();
+
+        foreach ($indexes as $index) {
+            if ($index->getYear() >= (int)$currentYear) {
+                $indexesArr['noSg'] *= $index->getValueNonAgro();
+                $indexesArr['sg'] *= $index->getValueAgro();
+            }
+        }
+        $indexesArr['noSg'] = round($indexesArr['noSg'], 2);
+        $indexesArr['sg'] = round($indexesArr['sg'], 2);
+
+        return $indexesArr;
     }
 
     /**
