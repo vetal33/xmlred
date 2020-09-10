@@ -6,7 +6,7 @@ $(document).ready(function () {
         e.preventDefault();
         hideTooltip();
         let nameFile = $('#shp-card').attr('data-name');
-        let normativeYear =  $('#normative-year').attr('value');
+        let normativeYear = $('#normative-year').attr('value');
         let feature = $('#geom-from-json').val();
         let cadNum;
         if (feature === '') {
@@ -66,6 +66,7 @@ $(document).ready(function () {
      */
 
     function createNormativeTable(data) {
+
         $('#calculate').remove();
         let area = (Math.round(data.area) / 10000).toFixed(4);
 
@@ -74,8 +75,8 @@ $(document).ready(function () {
         let normativeTable = $('<div id="calculate" class="p-2"><h6 class="text-truncate ml-3 mt-4">Розрахунок</h6>' +
             '<table class="table table-hover table-sm pl-2 pr-2 bc-gray">' +
             '<tbody id="normativeTable">' +
-            '<tr><td class="pl-3">Базова вартість</td><td class="text-center" colspan="2">' + basePriceStr + '</td></tr>' +
-            '<tr><td class="pl-3"><span class="text-bold test-success">' + data.zone.name + '</span> економіко-планувальна зона</td><td class="text-center" colspan="2">' +
+            '<tr><td class="pl-3" colspan="2">Базова вартість</td><td class="text-center" colspan="3">' + basePriceStr + '</td></tr>' +
+            '<tr><td class="pl-3" colspan="2"><span class="text-bold test-success">' + data.zone.name + '</span> економіко-планувальна зона</td><td class="text-center" colspan="3">' +
             data.zone.km2 + '</td></tr>' +
             '</tbody></table></div>');
         $('#feature-card #custom-content-calculate').append(normativeTable);
@@ -84,22 +85,22 @@ $(document).ready(function () {
             let percent = Math.round((value.area / data.area) * 100).toFixed() + '%';
             let row = '<tr data-id="' + value.id + '" data-code-local="' + value.code + '"><td class="pl-3 text-primary"><small>' + value.name + '</small></td>' +
                 '<td class="text-center pr-1"><small>' + percent + '</small></td><td class="text-center pr-1" style="width: 90px"><small>' +
-                value.minVal + ' - ' + value.maxVal + '</small></td></tr>';
+                value.minVal + ' - ' + value.maxVal + '</small></td><td><input type="text" class="form-control form-control-sm local-value" placeholder="" value="' + value.maxVal + '" style="width: 45px"></td><td class="pr-3 pl-2"><i class="fa fa-' + value.marker + '" aria-hidden="true"></i></td></tr>';
             let str = normativeTable.find('#normativeTable').append(row);
         });
         let multString = getMultLocalAsString(data.calculate.local);
 
         let price = (Math.round(basePrice * parseFloat(data.zone.km2) * area * 10000 * 100) / 100).toFixed(2);
         let priceStr = price + ' грн.';
-        let baseZone = '<tr><td class="pl-3">Вартість в <span class="text-bold test-success">' + data.zone.name + '</span>-й економіко-планувальній зоні</td><td class="text-center pr-1" colspan="2">' + data.calculate.priceZone + ' грн.</td></tr>';
+        let baseZone = '<tr><td class="pl-3" colspan="2">Вартість в <span class="text-bold test-success">' + data.zone.name + '</span>-й економіко-планувальній зоні</td><td class="text-center pr-1" colspan="3">' + data.calculate.priceZone + ' грн.</td></tr>';
         normativeTable.find('#normativeTable').append(baseZone);
-        let localTotal = '<tr><td class="pl-3">Узагальнюючий локальний коефіцієнт ' + multString + '</td><td class="text-center pr-1" colspan="2">' + data.calculate.priceLocal + '</td></tr>';
+        let localTotal = '<tr><td class="pl-3 local-total-text" colspan="2">Узагальнюючий локальний коефіцієнт ' + multString + '</td><td class="text-center pr-1 local-total" colspan="3">' + data.calculate.priceLocal + '</td></tr>';
         normativeTable.find('#normativeTable').append(localTotal);
 
         let recomendKf = data.calculate.kf.toFixed(2);
 
-        let purposeIndex = '<tr><td class="pl-3" colspan="3">Коефіцієнт, який характеризує функціональне використання землі</td></tr>';
-        let purposeList = $('<tr><td><select id="select2-purpose" class="form-control"></select></td><td id="kf-value" class="text-center pr-1" colspan="2" >' + recomendKf + '</td></tr>');
+        let purposeIndex = '<tr><td class="pl-3" colspan="5">Коефіцієнт, який характеризує функціональне використання землі</td></tr>';
+        let purposeList = $('<tr><td colspan="2"><select id="select2-purpose" class="form-control"></select></td><td id="kf-value" class="text-center pr-1" colspan="3" >' + recomendKf + '</td></tr>');
         let optionSelected = '';
 
         $.each(data.calculate.purposeArr, function (index, value) {
@@ -114,13 +115,13 @@ $(document).ready(function () {
         normativeTable.find('#normativeTable').append(purposeIndex);
         normativeTable.find('#normativeTable').append(purposeList);
 
-        let totalM2 = '<tr><td id="price-by-meter-title" class="pl-3">Всього за 1 м<sup>2</sup> (' + data.calculate.priceZone + ' * ' + data.calculate.priceLocal + ' * ' + recomendKf + ')</td><td id="price-by-meter" class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceByMeter + ' грн.</strong></td></tr>';
+        let totalM2 = '<tr><td id="price-by-meter-title" class="pl-3" colspan="2">Всього за 1 м<sup>2</sup> (' + data.calculate.priceZone + ' * ' + data.calculate.priceLocal + ' * ' + recomendKf + ')</td><td id="price-by-meter" class="text-center pr-1" colspan="3"><strong>' + data.calculate.priceByMeter + ' грн.</strong></td></tr>';
         normativeTable.find('#normativeTable').append(totalM2);
-        let total = '<tr><td id="price-total-title" class="pl-3">Всього за ділянку (' + data.calculate.priceByMeter + ' * ' + area + ' га)</td><td id="price-total" class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceTotal + ' грн.</strong></td></tr>';
+        let total = '<tr><td id="price-total-title" class="pl-3" colspan="2">Всього за ділянку (' + data.calculate.priceByMeter + ' * ' + area + ' га)</td><td id="price-total" class="text-center pr-1" colspan="3"><strong>' + data.calculate.priceTotal + ' грн.</strong></td></tr>';
         normativeTable.find('#normativeTable').append(total);
-        let index = '<tr><td class="pl-3">Коефіцієнт індексації починаючи з ' + data.calculate.indexes.year + ' року</td><td class="text-center pr-1" colspan="2">' + data.calculate.indexes.possible + ' </td></tr>';
+        let index = '<tr><td class="pl-3" colspan="2">Коефіцієнт індексації починаючи з ' + data.calculate.indexes.year + ' року</td><td class="text-center pr-1" colspan="3">' + data.calculate.indexes.possible + ' </td></tr>';
         normativeTable.find('#normativeTable').append(index);
-        let totalWithindex = '<tr><td id="price-total-index-title" class="pl-3">Всього за ділянку з індексацією</td><td id="price-total-index" class="text-center pr-1" colspan="2"><strong>' + data.calculate.priceTotalWithIndex + ' грн.</strong></td></tr>';
+        let totalWithindex = '<tr><td id="price-total-index-title" class="pl-3" colspan="2">Всього за ділянку з індексацією</td><td id="price-total-index" class="text-center pr-1" colspan="3"><strong>' + data.calculate.priceTotalWithIndex + ' грн.</strong></td></tr>';
         normativeTable.find('#normativeTable').append(totalWithindex);
 
         $('#select2-purpose').select2();
@@ -130,6 +131,46 @@ $(document).ready(function () {
             calculatePrice(data, kfValue, area);
 
         });
+
+        $('.local-value').focusout(function () {
+            let kfValue = $('#select2-purpose').find(":selected").data("value");
+            let index = $('.local-value').index(this);
+            let value = $(this).val();
+            $(this).val(value.replace(',', '.'));
+            value = value.replace(',', '.');
+
+            if (isNaN(+value)) {
+                $(this).val(data.local[index].minVal);
+            }
+
+            if (parseFloat($(this).val()) > data.local[index].maxVal) {
+                $(this).val(data.local[index].maxVal);
+            }
+            if (parseFloat($(this).val()) < data.local[index].minVal) {
+                $(this).val(data.local[index].minVal);
+            }
+
+            calcLocal($('.local-value'));
+            calculatePrice(data, kfValue, area);
+        });
+
+        function calcLocal(dataLocal) {
+            let local = 1;
+
+            $.each(dataLocal, function (index, value) {
+                let row = $(this).closest('tr');
+                let marker = row.children().last().children();
+
+                if (marker.attr('class').includes('fa-check')) {
+                    let code = row.attr('data-code-local');
+                    local = local.toFixed(2) * parseFloat($(this).val());
+                    data.calculate.local[code].index = parseFloat($(this).val());
+                }
+            });
+
+            local = parseFloat(local).toFixed(2);
+            data.calculate.priceLocal = parseFloat(local);
+        }
     }
 
 
@@ -146,6 +187,9 @@ $(document).ready(function () {
         $('#price-total-title').html('Всього за ділянку (' + priceByMeter + ' * ' + area + ' га)');
         $('#price-total').html('<strong>' + priceTotal + ' грн.</strong>');
         $('#price-total-index').html('<strong>' + priceTotalWithIndex + ' грн.</strong>');
+        $('.local-total').html(data.calculate.priceLocal);
+        let multString = 'Узагальнюючий локальний коефіцієнт ' + getMultLocalAsString(data.calculate.local);
+        $('.local-total-text').html(multString);
     }
 
     function getMultLocalAsString(data) {
@@ -200,5 +244,4 @@ $(document).ready(function () {
         layer.nameLayer = "IntersectGeoJSON";
         intersectLocalLayersGroup.addLayer(layer);
     }
-
 });
