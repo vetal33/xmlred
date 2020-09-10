@@ -172,7 +172,6 @@ class ParcelHandler
     private function calculateLocals(array $localsTruth, array $locals, float $areaParcel): ?array
     {
         $result = [];
-
         foreach ($localsTruth as $localTruth) {
             foreach ($locals as $local) {
                 if ($local['code'] === $localTruth) {
@@ -191,6 +190,26 @@ class ParcelHandler
         }
 
         return $result;
+    }
+
+    public function addMarkerToLocals(array $locals): array
+    {
+        $localsTruth = $this->regulateLocals($locals);
+        foreach ($locals as $key => $local) {
+
+            if (in_array($local['code'], $localsTruth)) {
+                $locals[$key]['marker'] = 'check';
+            } else {
+                if (in_array($local['code'], $this->codeLocalTypeA)) {
+                    $locals[$key]['marker'] = 'minus';
+                }
+                if (in_array($local['code'], $this->codeLocalTypeB)) {
+                    $locals[$key]['marker'] = 'plus';
+                }
+            }
+        }
+
+        return $locals;
     }
 
     private function regulateLocals(array $locals)

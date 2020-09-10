@@ -88,9 +88,33 @@
     width: 100%;
 }
 
+#calculate .form-control {
+    background-color: transparent;
+}
+#calculate .form-control:focus {
+    background-color: #ffffff;
+}
+
 #custom-content-parcels-list {
     max-height: 455px;
 }
+
+
+#calculate .fa-check {
+    color: #28a745;
+    font-size: 0.8em;
+}
+
+#calculate .fa-plus, #calculate .fa-minus {
+    font-size: 0.7em;
+}
+#calculate .fa-plus{
+    color: #191919;
+}
+#calculate .fa-minus {
+    color: #ffc107;
+}
+
 /*-------Change standart setting select2*/
 .select2-selection--single {
     padding-top: 0.13rem!important;

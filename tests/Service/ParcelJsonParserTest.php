@@ -7,13 +7,12 @@ namespace App\Tests\Service;
 use App\Service\ParcelHandler;
 use PHPUnit\Framework\TestCase;
 
-class ParcelHandlerTest extends TestCase
+class ParcelJsonParserTest extends TestCase
 {
-    public function testCalculateLocalsValue()
+    public function testThatYourComputerWorks()
     {
-        $parcelHandler = new ParcelHandler();
-        $parcelHandler->
-
+        $this->assertTrue(false);
     }
+
 
 }
