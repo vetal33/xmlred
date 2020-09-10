@@ -463,6 +463,10 @@ class FileController extends AbstractController
                 }
                 $resultIntersect['calculate'] = $calculate;
 
+                if (array_key_exists('local', $resultIntersect)) {
+                    $resultIntersect['local'] = $parcelHandler->addMarkerToLocals($resultIntersect['local']);
+                }
+
                 return new JsonResponse(json_encode($resultIntersect), Response::HTTP_OK);
             } catch (\Exception $exception) {
                 return $this->json(['message' => 'Виникла помилка, вибачте за незручності!'], Response::HTTP_INTERNAL_SERVER_ERROR);
